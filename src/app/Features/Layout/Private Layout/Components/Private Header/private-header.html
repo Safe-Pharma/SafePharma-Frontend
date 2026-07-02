@@ -1,0 +1,112 @@
+    <header class="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card/60 px-4 backdrop-blur md:px-6">
+      <!-- Branch / brand (desktop only) -->
+      <div class="hidden min-w-0 items-center gap-2 md:flex">
+        <div class="grid h-8 w-8 place-items-center rounded-md bg-primary-soft text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+            <path d="M10 12h4"></path>
+            <path d="M10 8h4"></path>
+            <path d="M14 21v-3a2 2 0 0 0-4 0v3"></path>
+            <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"></path>
+            <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path>
+          </svg>
+        </div>
+        <div class="min-w-0 leading-tight">
+          <div class="truncate text-sm font-semibold">{{ pharmacyName }}</div>
+          <div class="truncate text-[11px] text-muted-foreground">{{ branchName }}</div>
+        </div>
+      </div>
+
+      <!-- Breadcrumb -->
+      <nav aria-label="Breadcrumb" class="hidden items-center gap-1.5 text-sm text-muted-foreground lg:flex">
+        <span class="mx-2 h-4 w-px bg-border"></span>
+        <span class="flex items-center gap-1.5">Pharmacy</span>
+        @for (crumb of breadcrumbs; track crumb.label) {
+          <span class="flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 text-border-strong" aria-hidden="true">
+              <path d="m9 18 6-6-6-6"></path>
+            </svg>
+            <span [class.text-foreground]="crumb.active" [class.font-medium]="crumb.active">{{ crumb.label }}</span>
+          </span>
+        }
+      </nav>
+
+      <div class="ms-auto flex items-center gap-1.5 md:gap-2">
+        <!-- Search -->
+        <div class="relative hidden md:block">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true">
+            <path d="m21 21-4.34-4.34"></path>
+            <circle cx="11" cy="11" r="8"></circle>
+          </svg>
+          <input
+            type="text"
+            class="flex rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-9 w-64 pl-8"
+            placeholder="Search…"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="searchChange.emit($event)"
+          />
+        </div>
+
+        <!-- Theme toggle -->
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground h-9 w-9"
+          aria-label="Toggle theme"
+          (click)="themeToggle.emit()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+            <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path>
+          </svg>
+        </button>
+
+        <!-- Language toggle -->
+        <button
+          type="button"
+          class="inline-flex items-center justify-center whitespace-nowrap cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground rounded-md h-9 gap-1.5 px-2 text-xs font-semibold"
+          aria-label="Toggle language"
+          (click)="langToggle.emit()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+            <path d="m5 8 6 6"></path>
+            <path d="m4 14 6-6 2-3"></path>
+            <path d="M2 5h12"></path>
+            <path d="M7 2h1"></path>
+            <path d="m22 22-5-10-5 10"></path>
+            <path d="M14 18h6"></path>
+          </svg>
+          {{ lang }}
+        </button>
+
+        <!-- Notifications -->
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative h-9 w-9"
+          aria-label="Notifications"
+          (click)="notificationsClick.emit()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+            <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+            <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path>
+          </svg>
+          @if (hasUnreadNotifications) {
+            <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive"></span>
+          }
+        </button>
+
+        <!-- User menu -->
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="userMenuOpen"
+          (click)="userMenuToggle.emit()"
+        >
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-success text-xs font-semibold text-primary-foreground">
+            {{ userInitials }}
+          </span>
+          <span class="hidden text-start leading-tight md:block">
+            <span class="block text-xs font-semibold">{{ userName }}</span>
+            <span class="block text-[11px] text-muted-foreground">{{ userRole }}</span>
+          </span>
+        </button>
+      </div>
+    </header>

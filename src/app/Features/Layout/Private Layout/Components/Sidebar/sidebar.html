@@ -1,0 +1,80 @@
+<aside
+  class="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200"
+  [class.w-64]="!collapsed"
+  [class.w-16]="collapsed"
+>
+  <!-- Brand + collapse toggle -->
+  <div class="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+    <div class="flex items-center gap-2">
+      <div
+        class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-success text-primary-foreground shadow-card"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
+          <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
+          <path d="m8.5 8.5 7 7"></path>
+        </svg>
+      </div>
+      @if (!collapsed) {
+        <div class="leading-tight">
+          <div class="text-sm font-semibold tracking-tight text-foreground">MediRx</div>
+          <div class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pharmacy ERP</div>
+        </div>
+      }
+    </div>
+    <button
+      type="button"
+      class="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+      aria-label="Toggle sidebar"
+      (click)="toggleCollapsed()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 transition-transform" [class.rotate-180]="collapsed" aria-hidden="true">
+        <path d="m15 18-6-6 6-6"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 space-y-0.5 overflow-y-auto p-3">
+    @for (item of navItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive
+        #rla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        [ngClass]="rla.isActive ? 'bg-sidebar-primary/10 text-sidebar-primary' : 'text-sidebar-foreground/80'"
+        [attr.aria-current]="rla.isActive ? 'page' : null"
+      >
+        <span
+          class="h-4.5 w-4.5 shrink-0"
+          [ngClass]="rla.isActive ? 'text-sidebar-primary' : ''"
+          [innerHTML]="item.icon | safeHtml"
+        ></span>
+        @if (!collapsed) {
+          <span class="truncate">{{ item.label }}</span>
+          @if (rla.isActive) {
+            <span class="ms-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary"></span>
+          }
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Logout -->
+  <div class="border-t border-sidebar-border p-3">
+    <button
+      type="button"
+      class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-destructive-soft hover:text-destructive"
+      (click)="logout.emit()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0" aria-hidden="true">
+        <path d="m16 17 5-5-5-5"></path>
+        <path d="M21 12H9"></path>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+      </svg>
+      @if (!collapsed) {
+        <span>Logout</span>
+      }
+    </button>
+  </div>
+</aside>
