@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { PublicLayout } from './Features/Layout/Public Layout/Components/public-layout';
 import { privatelayout } from './Features/Layout/Private Layout/Components/private-layout';
+import { Subscribe } from './Features/subscribe/subscribe';
 
 export const routes: Routes = [
   {
@@ -14,6 +15,7 @@ export const routes: Routes = [
       },
       // { path: 'login', loadComponent: () => import().then(m => m.Login) },
       // { path: 'subscribe', loadComponent: () => import().then(m => m.Subscribe) },
+      { path: 'subscribe', component: Subscribe }
     ],
   },
 
