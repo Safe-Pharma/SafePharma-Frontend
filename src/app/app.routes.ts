@@ -27,6 +27,14 @@ export const routes: Routes = [
           import('./Features/dashboard/dashboard').then(m => m.Dashboard),
       }, */
       //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+        {
+            path: 'settings/pharmacy',
+            loadComponent: () =>
+                import('./Features/settings/pharmacy-settings/pharmacy-settings')
+                .then(m => m.PharmacySettings),
+        },
     ],
+
   },
 ];
