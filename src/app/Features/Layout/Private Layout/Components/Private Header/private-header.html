@@ -1,5 +1,4 @@
     <header class="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card/60 px-4 backdrop-blur md:px-6">
-      <!-- Branch / brand (desktop only) -->
       <div class="hidden min-w-0 items-center gap-2 md:flex">
         <div class="grid h-8 w-8 place-items-center rounded-md bg-primary-soft text-primary">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
@@ -12,11 +11,9 @@
         </div>
         <div class="min-w-0 leading-tight">
           <div class="truncate text-sm font-semibold">{{ pharmacyName }}</div>
-          <div class="truncate text-[11px] text-muted-foreground">{{ branchName }}</div>
         </div>
       </div>
 
-      <!-- Breadcrumb -->
       <nav aria-label="Breadcrumb" class="hidden items-center gap-1.5 text-sm text-muted-foreground lg:flex">
         <span class="mx-2 h-4 w-px bg-border"></span>
         <span class="flex items-center gap-1.5">Pharmacy</span>
@@ -31,32 +28,9 @@
       </nav>
 
       <div class="ms-auto flex items-center gap-1.5 md:gap-2">
-        <!-- Search -->
-        <div class="relative hidden md:block">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true">
-            <path d="m21 21-4.34-4.34"></path>
-            <circle cx="11" cy="11" r="8"></circle>
-          </svg>
-          <input
-            type="text"
-            class="flex rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-9 w-64 pl-8"
-            placeholder="Search…"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="searchChange.emit($event)"
-          />
-        </div>
+        
 
-        <!-- Theme toggle -->
-        <button
-          type="button"
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground h-9 w-9"
-          aria-label="Toggle theme"
-          (click)="themeToggle.emit()"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
-            <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path>
-          </svg>
-        </button>
+       
 
         <!-- Language toggle -->
         <button
