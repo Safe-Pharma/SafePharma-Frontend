@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { PublicLayout } from './Features/Layout/Public Layout/Components/public-layout';
 import { privatelayout } from './Features/Layout/Private Layout/Components/private-layout';
 import { Subscribe } from './Features/subscribe/subscribe';
+import { AuthLayout } from './Features/Layout/Auth Layout/Components/Auth-layout';
 
 export const routes: Routes = [
   {
@@ -14,6 +15,14 @@ export const routes: Routes = [
           import('./Features/landing-page/landing-page').then(m => m.LandingPage),
       },
       
+      
+    ],
+  },
+
+  {
+    path: '',
+    component: AuthLayout,
+    children: [
        {
             path: 'subscribe',
             loadComponent: () =>
@@ -36,18 +45,11 @@ export const routes: Routes = [
       },
     ],
   },
-
   {
     path: 'app',
     component: privatelayout,
     children: [
-     /* {
-        path: '',
-        loadComponent: () =>
-          import('./Features/dashboard/dashboard').then(m => m.Dashboard),
-      }, */
-      //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
+    
         {
             path: 'settings',
             loadComponent: () =>
