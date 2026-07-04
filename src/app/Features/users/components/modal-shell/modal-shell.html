@@ -1,0 +1,21 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <header class="panel-header">
+      <div>
+        <h2>{{ title() }}</h2>
+        @if (subtitle()) {
+          <p class="subtitle">{{ subtitle() }}</p>
+        }
+      </div>
+      <button class="close-btn" (click)="close.emit()" aria-label="Close dialog">✕</button>
+    </header>
+
+    <div class="panel-body">
+      <ng-content />
+    </div>
+
+    <footer class="panel-footer">
+      <ng-content select="[modalFooter]" />
+    </footer>
+  </div>
+</div>

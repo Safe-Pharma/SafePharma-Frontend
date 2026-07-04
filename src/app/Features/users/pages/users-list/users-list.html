@@ -1,0 +1,75 @@
+<div class="users-page">
+  <header class="page-header">
+    <div>
+      <h1>Users</h1>
+      <p class="subtitle">Manage staff access, roles and branches.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="onExport()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1.5v8.5m0 0L5 7m3 3 3-3M2.5 12.5v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1"
+            stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Export
+      </button>
+      <button class="btn btn-primary" (click)="onCreateUser()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        Create user
+      </button>
+    </div>
+  </header>
+
+  <section class="card">
+    <app-users-filter-bar
+      [search]="usersService.searchTerm()"
+      [role]="usersService.roleFilter()"
+      [status]="usersService.statusFilter()"
+      (searchChange)="usersService.setSearch($event)"
+      (roleChange)="usersService.setRoleFilter($event)"
+      (statusChange)="usersService.setStatusFilter($event)"
+    />
+
+    <app-users-table
+      [users]="usersService.users()"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+      (toggleStatus)="onToggleStatus($event)"
+    />
+
+    @if (usersService.isLoading()) {
+      <div class="loading">Loading users...</div>
+    }
+
+    @if (usersService.error()) {
+      <div class="error">{{ usersService.error() }}</div>
+    }
+
+    <app-pagination
+      [page]="usersService.page()"
+      [totalPages]="usersService.totalPages()"
+      [rangeStart]="usersService.rangeStart()"
+      [rangeEnd]="usersService.rangeEnd()"
+      [total]="usersService.totalCount()"
+      (prev)="usersService.prevPage()"
+      (next)="usersService.nextPage()"
+    />
+  </section>
+
+  @if (isCreateDialogOpen()) {
+    <app-create-user-dialog
+      (closed)="onCreateDialogClosed()"
+      (created)="onCreateDialogClosed()"
+    />
+  }
+
+  @if (editingUser(); as u) {
+    <app-edit-user-dialog
+      [user]="u"
+      (closed)="onEditDialogClosed()"
+      (updated)="onEditDialogClosed()"
+    />
+  }
+</div>

@@ -1,0 +1,100 @@
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+
+  .sortable { cursor: pointer; }
+  .sort-arrow { color: #9ca3af; }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f2f4;
+    &:hover { background: #fafafa; }
+    &:last-child { border-bottom: none; }
+  }
+
+  td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #111827;
+    vertical-align: middle;
+  }
+
+  .muted { color: #6b7280; }
+
+  .name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .name { font-weight: 500; }
+
+  .actions-col {
+    width: 56px;
+    text-align: right;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #9ca3af;
+    padding: 40px 16px;
+  }
+}
+
+.menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-trigger {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+
+  &:hover { background: #f1f2f4; }
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 10;
+  min-width: 150px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+
+  button {
+    text-align: left;
+    padding: 8px 10px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #111827;
+    cursor: pointer;
+
+    &:hover { background: #f9fafb; }
+    &.danger { color: #dc2626; }
+    &.danger:hover { background: #fef2f2; }
+  }
+}

@@ -1,0 +1,53 @@
+<table class="users-table" (click)="closeMenu()">
+  <thead>
+    <tr>
+      <th class="sortable">NAME <span class="sort-arrow">↕</span></th>
+      <th>EMAIL</th>
+      <th>ROLE</th>
+      <th>BRANCH</th>
+      <th>PHONE</th>
+      <th>STATUS</th>
+      <th>LAST LOGIN</th>
+      <th>CREATED</th>
+      <th class="actions-col">ACTIONS</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (user of users(); track user.id) {
+      <tr>
+        <td>
+          <div class="name-cell">
+            <app-user-avatar [name]="user.name" />
+            <span class="name">{{ user.name }}</span>
+          </div>
+        </td>
+        <td class="muted">{{ user.email }}</td>
+        <td><app-role-badge [role]="user.role" /></td>
+        <td class="muted">{{ user.branch }}</td>
+        <td class="muted">{{ user.phone }}</td>
+        <td><app-status-badge [isActive]="user.isActive" /></td>
+        <td class="muted">{{ user.lastLoginAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+        <td class="muted">{{ user.createdAt | date: 'yyyy-MM-dd' }}</td>
+        <td class="actions-col">
+          <div class="menu-wrap">
+            <button class="menu-trigger" (click)="toggleMenu(user.id, $event)" aria-label="Row actions">⋯</button>
+            @if (openMenuId() === user.id) {
+              <div class="menu" (click)="$event.stopPropagation()">
+                <button (click)="view.emit(user); closeMenu()">View details</button>
+                <button (click)="edit.emit(user); closeMenu()">Edit user</button>
+                <button (click)="toggleStatus.emit(user); closeMenu()">
+                  {{ user.isActive ? 'Deactivate' : 'Activate' }}
+                </button>
+                <button class="danger" (click)="delete.emit(user); closeMenu()">Delete user</button>
+              </div>
+            }
+          </div>
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="9" class="empty-state">No users match your filters.</td>
+      </tr>
+    }
+  </tbody>
+</table>
