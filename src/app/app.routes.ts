@@ -20,6 +20,22 @@ export const routes: Routes = [
                 import('./Features/subscribe/subscribe')
                 .then(m => m.Subscribe),
         },
+         {
+        path: 'login',
+        loadComponent: () =>
+          import('./Features/Authentication/login/login').then(
+            (m) => m.Login
+          ),
+      },
+         {
+        path: 'change-password',
+        loadComponent: () =>
+          import('./Features/Authentication/change-password/change-password').then(
+            (m) => m.ChangePassword
+          ),
+      },
+
+
     ],
   },
 
