@@ -1,10 +1,10 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SubscriptionService } from './Services/subscription.service';
 import { LocationService } from './Services/location.service';
 import { CreateSubscriptionRequest } from './Models/create-subscription.model';
-import { CountryWithCities } from './Models/country-with-cities.model';
+import { City, CountryWithCities } from './Models/country-with-cities.model';
 import { GeneralResult } from '../../Core/Models/general-result.model';
 
 interface PlanOption {
@@ -51,6 +51,7 @@ export class Subscribe implements OnInit {
   isSubmitting = signal(false);
   submitError = signal<string | null>(null);
   countries = signal<CountryWithCities[]>([]);
+  cities = signal<City[]>([]);
 
   form = this.fb.group({
     planTier: this.fb.control<'Starter' | 'Professional' | 'Enterprise'>('Professional', {
@@ -81,31 +82,31 @@ export class Subscribe implements OnInit {
     }),
   });
 
-  cities = computed(() => {
-    const selectedCountryId = this.form.controls.pharmacy.controls.country.value;
-
-    return this.countries().find((c) => c.id === selectedCountryId)?.cities ?? [];
-  });
-
   ngOnInit(): void {
-    this.locationService.getCountries().subscribe({
-      next: (result) => {
-        if (result.success && result.data) {
-          this.countries.set(result.data);
-        }
-      },
-      error: () => {
-        console.error('Failed to load countries');
-      },
-    });
+this.locationService.getCountries().subscribe({
+  next: (result) => {
+    console.log(result);
+
+    if (result.success && result.data) {
+      this.countries.set(result.data);
+
+      console.log('Countries signal:', this.countries());
+      console.log('First country:', this.countries()[0]);
+      console.log('Cities of first country:', this.countries()[0]?.cities);
+    }
+  }
+});
   }
 
-  onCountryChange(): void {
-    this.form.controls.pharmacy.controls.city.setValue('');
-    console.log('Selected country:', this.form.controls.pharmacy.controls.country.value);
+onCountryChange(): void {
+  const selectedCountryId = this.form.controls.pharmacy.controls.country.value;
 
-    console.log('Cities:', this.cities());
-  }
+  const country = this.countries().find(c => c.id === selectedCountryId);
+
+  this.cities.set(country?.cities ?? []);
+
+  this.form.controls.pharmacy.controls.city.setValue('');
+}
 
   selectPlan(tier: PlanOption['tier']): void {
     this.form.controls.planTier.setValue(tier);
