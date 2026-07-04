@@ -13,9 +13,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./Features/landing-page/landing-page').then(m => m.LandingPage),
       },
-      // { path: 'login', loadComponent: () => import().then(m => m.Login) },
-      // { path: 'subscribe', loadComponent: () => import().then(m => m.Subscribe) },
-      { path: 'subscribe', component: Subscribe }
+      
+       {
+            path: 'subscribe',
+            loadComponent: () =>
+                import('./Features/subscribe/subscribe')
+                .then(m => m.Subscribe),
+        },
     ],
   },
 
@@ -31,11 +35,18 @@ export const routes: Routes = [
       //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
         {
-            path: 'settings/pharmacy',
+            path: 'settings',
             loadComponent: () =>
                 import('./Features/settings/pharmacy-settings/pharmacy-settings')
                 .then(m => m.PharmacySettings),
         },
+         {
+            path: 'taxes',
+            loadComponent: () =>
+                import('./Features/Tax/taxes')
+                .then(m => m.Taxes),
+        },
+        
     ],
 
   },
