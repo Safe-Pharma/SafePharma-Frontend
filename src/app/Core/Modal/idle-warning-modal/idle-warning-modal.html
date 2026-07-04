@@ -1,0 +1,14 @@
+@if (idleTimerService.isWarningVisible()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-elevated max-w-sm w-full">
+      <h3 class="text-lg font-semibold">Still there?</h3>
+      <p class="mt-2 text-sm text-muted-foreground">
+        You'll be logged out in 60 seconds due to inactivity.
+      </p>
+      <button (click)="idleTimerService.extendSession()"
+        class="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        Stay logged in
+      </button>
+    </div>
+  </div>
+}
