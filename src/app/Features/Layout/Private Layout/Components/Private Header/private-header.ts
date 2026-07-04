@@ -15,19 +15,16 @@ export interface Breadcrumb {
 })
 export class PrivateHeader {
   @Input() pharmacyName = 'MediRx Pharmacy';
-  @Input() branchName = 'Main Branch · Dubai';
   @Input() breadcrumbs: Breadcrumb[] = [{ label: 'Dashboard', active: true }];
   @Input() lang: 'EN' | 'AR' = 'EN';
   @Input() hasUnreadNotifications = true;
-  @Input() userName = 'Sarah Khan';
+  @Input() userName = 'eman refaat';
   @Input() userRole = 'Administrator';
   @Input() userInitials = 'SK';
   @Input() userMenuOpen = false;
 
   searchTerm = '';
 
-  @Output() searchChange = new EventEmitter<string>();
-  @Output() themeToggle = new EventEmitter<void>();
   @Output() langToggle = new EventEmitter<void>();
   @Output() notificationsClick = new EventEmitter<void>();
   @Output() userMenuToggle = new EventEmitter<void>();
