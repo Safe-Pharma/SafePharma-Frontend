@@ -64,9 +64,6 @@ export class PharmacySettings implements OnInit {
       formData.append('LogoFile', this.selectedFile);
     }
 
-    for (const pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
     this.settingsService.updateSettings(formData).subscribe({
       next: (res) => {
         console.log('Updated successfully', res);

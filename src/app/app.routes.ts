@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { PublicLayout } from './Features/Layout/Public Layout/Components/public-layout';
 import { privatelayout } from './Features/Layout/Private Layout/Components/private-layout';
-import { Subscribe } from './Features/subscribe/subscribe';
 
 export const routes: Routes = [
   {
@@ -13,13 +12,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./Features/landing-page/landing-page').then(m => m.LandingPage),
       },
-      
-       {
-            path: 'subscribe',
-            loadComponent: () =>
-                import('./Features/subscribe/subscribe')
-                .then(m => m.Subscribe),
-        },
+      {
+        path: 'subscribe',
+        loadComponent: () =>
+          import('./Features/subscribe/subscribe').then(m => m.Subscribe),
+      },
     ],
   },
 
@@ -27,27 +24,17 @@ export const routes: Routes = [
     path: 'app',
     component: privatelayout,
     children: [
-     /* {
-        path: '',
+      {
+        path: 'settings',
         loadComponent: () =>
-          import('./Features/dashboard/dashboard').then(m => m.Dashboard),
-      }, */
-      //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
-        {
-            path: 'settings',
-            loadComponent: () =>
-                import('./Features/settings/pharmacy-settings/pharmacy-settings')
-                .then(m => m.PharmacySettings),
-        },
-         {
-            path: 'taxes',
-            loadComponent: () =>
-                import('./Features/Tax/taxes')
-                .then(m => m.Taxes),
-        },
-        
+          import('./Features/settings/pharmacy-settings/pharmacy-settings')
+          .then(m => m.PharmacySettings),
+      },
+      {
+        path: 'taxes',
+        loadComponent: () =>
+          import('./Features/Tax/taxes').then(m => m.Taxes),
+      },
     ],
-
   },
 ];
