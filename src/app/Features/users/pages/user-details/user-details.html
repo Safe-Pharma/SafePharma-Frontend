@@ -1,0 +1,63 @@
+@if (user(); as u) {
+  <div class="detail-page">
+    <header class="page-header">
+      <div>
+        <h1>{{ u.name }}</h1>
+        <p class="subtitle">Member since {{ u.createdAt | date: 'yyyy-MM-dd' }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="onBack()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M10 3.5 5 8l5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <button class="btn btn-primary" (click)="onEdit()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M11.3 2.3a1.5 1.5 0 0 1 2.1 2.1L5 12.8l-2.8.7.7-2.8 8.4-8.4Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+          </svg>
+          Edit user
+        </button>
+      </div>
+    </header>
+
+    <div class="detail-layout">
+      <app-profile-card [user]="u" />
+
+      <div class="detail-column">
+        <app-detail-card title="Personal information">
+          <app-detail-field label="First name" [value]="firstName()" />
+          <app-detail-field label="Last name"  [value]="lastName()" />
+          <app-detail-field label="Role"       [value]="u.role" />
+          <app-detail-field label="Branch"     [value]="u.branch ?? '—'" />
+        </app-detail-card>
+
+        <app-detail-card title="Contact information">
+          <app-detail-field label="Email" [value]="u.email" />
+          <app-detail-field label="Phone" [value]="u.phone ?? '—'" />
+        </app-detail-card>
+
+        <app-detail-card title="Account">
+          <app-detail-field label="Status"     [value]="u.isActive ? 'Active' : 'Inactive'" />
+          <app-detail-field label="Last login" [value]="u.lastLoginAt ?? '—'" />
+          <app-detail-field label="Created"    [value]="u.createdAt" />
+        </app-detail-card>
+
+        <section class="detail-card activity-card">
+          <h3 class="title">Recent activity</h3>
+          <app-activity-feed [activities]="activities()" />
+        </section>
+      </div>
+    </div>
+
+    @if (isEditDialogOpen()) {
+      <app-edit-user-dialog
+        [user]="u"
+        (closed)="onEditDialogClosed()"
+        (updated)="onEditDialogClosed()"
+      />
+    }
+  </div>
+} @else {
+  <div class="not-found">User not found.</div>
+}

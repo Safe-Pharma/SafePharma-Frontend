@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnDestroy, computed, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +11,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { Tax, TaxCreateDto, TaxStatus, TaxUpdateDto } from './Models/tax';
+import { Tax, TaxCreateDto, TaxStats, TaxStatus, TaxUpdateDto } from './Models/tax';
 import { TaxesService } from './Services/tax';
 
 interface TaxFormModel {
@@ -26,8 +26,10 @@ interface TaxFormModel {
   imports: [CommonModule, FormsModule],
   templateUrl: './taxes.html',
 })
-export class Taxes {
+export class Taxes implements OnDestroy {
+  // ---- Reactive inputs: changing these re-fires the backend calls automatically ----
   search = signal('');
+  /** bump this after any create/update/delete/toggle to refetch list + stats */
   private refreshTick = signal(0);
 
   loading = signal(false);
@@ -61,15 +63,32 @@ export class Taxes {
   // ---- stats: only needs to "listen" to refresh ticks ----
   private stats$ = this.refresh$.pipe(
     switchMap(() =>
-      this.taxesService.getStats().pipe(catchError(() => of(null)))
+      this.taxesService.getStats().pipe(catchError(() => of(null as TaxStats | null)))
     )
   );
-  stats = toSignal(this.stats$, { initialValue: null });
+  stats = toSignal(this.stats$, { initialValue: null as TaxStats | null });
 
   activeCount = computed(() => this.stats()?.active ?? 0);
 
   // ---- Dropdown menu (the "..." actions per row) ----
   openMenuId = signal<string | null>(null);
+  /** computed on open from the trigger button's position, so the menu renders as position:fixed
+   *  and is never clipped by the table's overflow-x-auto wrapper */
+  menuPosition = signal<{ top: number; left: number } | null>(null);
+
+  /** the Tax object the currently-open floating menu belongs to (or null if closed) */
+  menuTax = computed(() => this.taxes().find((t) => t.id === this.openMenuId()) ?? null);
+
+  private closeMenuOnScroll = () => this.closeMenu();
+
+  constructor(private taxesService: TaxesService) {
+    // capture:true so we catch scroll from the <main> container too (scroll doesn't bubble)
+    document.addEventListener('scroll', this.closeMenuOnScroll, true);
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('scroll', this.closeMenuOnScroll, true);
+  }
 
   // ---- Create / Edit modal ----
   showFormModal = signal(false);
@@ -82,8 +101,6 @@ export class Taxes {
   confirmDeleteTax = signal<Tax | null>(null);
   deleting = signal(false);
 
-  constructor(private taxesService: TaxesService) {}
-
   /** Triggers taxes$/stats$ to re-run without any manual subscribe/set dance. */
   private refresh(): void {
     this.refreshTick.update((v) => v + 1);
@@ -94,12 +111,35 @@ export class Taxes {
   }
 
   // ---- Dropdown menu ----
-  toggleMenu(id: string): void {
-    this.openMenuId.set(this.openMenuId() === id ? null : id);
+  toggleMenu(id: string, event: MouseEvent): void {
+    if (this.openMenuId() === id) {
+      this.closeMenu();
+      return;
+    }
+
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 176; // matches w-44
+    const estimatedMenuHeight = 140; // Edit + Activate/Deactivate + divider + Delete, with padding
+    const gap = 4;
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward = spaceBelow < estimatedMenuHeight;
+
+    const top = openUpward
+      ? Math.max(8, rect.top - estimatedMenuHeight - gap)
+      : rect.bottom + gap;
+
+    this.menuPosition.set({
+      top,
+      left: Math.max(8, rect.right - menuWidth),
+    });
+    this.openMenuId.set(id);
   }
 
   closeMenu(): void {
     this.openMenuId.set(null);
+    this.menuPosition.set(null);
   }
 
   // ---- Create / Edit modal ----
@@ -149,10 +189,12 @@ export class Taxes {
       },
       error: (err) => {
         this.submitting.set(false);
+        // الكونترولر بيرجّع { message: "..." } في حالة 409 (اسم مكرر)
         this.formError.set(
-          err?.status === 409
-            ? 'A tax with this name already exists.'
-      : 'An error occurred while saving. Please try again.'
+          err?.error?.message ??
+            (err?.status === 409
+              ? 'A tax with this name already exists.'
+              : 'An error occurred while saving. Please try again.')
         );
       },
     });

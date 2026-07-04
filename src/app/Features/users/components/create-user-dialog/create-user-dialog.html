@@ -1,0 +1,12 @@
+<app-modal-shell
+  title="Create new user"
+  subtitle="Invite a team member and assign role and branch."
+  (close)="onCancel()"
+>
+  <app-user-form mode="create" />
+
+  <div modalFooter class="footer-actions">
+    <button class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    <button class="btn btn-primary" (click)="onSubmit()">Create user</button>
+  </div>
+</app-modal-shell>

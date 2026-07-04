@@ -1,0 +1,103 @@
+<form [formGroup]="form" class="user-form">
+  <div class="row">
+    <div class="field">
+      <label for="firstName">First name</label>
+      <input
+        id="firstName"
+        type="text"
+        formControlName="firstName"
+        [class.invalid]="form.controls.firstName.invalid && form.controls.firstName.touched"
+      />
+    </div>
+    <div class="field">
+      <label for="lastName">Last name</label>
+      <input
+        id="lastName"
+        type="text"
+        formControlName="lastName"
+        [class.invalid]="form.controls.lastName.invalid && form.controls.lastName.touched"
+      />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        [class.invalid]="form.controls.email.invalid && form.controls.email.touched"
+      />
+    </div>
+    <div class="field">
+      <label for="phone">Phone</label>
+      <input
+        id="phone"
+        type="tel"
+        formControlName="phone"
+        [class.invalid]="form.controls.phone.invalid && form.controls.phone.touched"
+      />
+    </div>
+  </div>
+
+  @if (mode() === 'create') {
+    <div class="row">
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          [class.invalid]="form.controls.password.invalid && form.controls.password.touched"
+        />
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <input
+          id="confirmPassword"
+          type="password"
+          formControlName="confirmPassword"
+          [class.invalid]="form.errors?.['passwordsMismatch'] && form.controls.confirmPassword.touched"
+        />
+      </div>
+    </div>
+    @if (form.errors?.['passwordsMismatch'] && form.controls.confirmPassword.touched) {
+      <p class="error-text">Passwords do not match.</p>
+    }
+  }
+
+  <div class="row">
+    <div class="field">
+      <label for="role">Role</label>
+      <select id="role" formControlName="role" [disabled]="rolesLoading()">
+        @if (rolesLoading()) {
+          <option value="">Loading roles...</option>
+        } @else {
+          @for (r of roles(); track r.id) {
+            <option [value]="r.name">{{ r.name }}</option>
+          }
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="branch">Branch</label>
+      <select id="branch" formControlName="branch">
+        @for (b of branches; track b) {
+          <option [value]="b">{{ b }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="row single">
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" formControlName="status">
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</form>

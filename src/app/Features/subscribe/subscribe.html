@@ -1,255 +1,321 @@
 <div class="min-h-screen bg-background">
-  <header class="border-b border-border bg-background">
-    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-      <div class="flex items-center gap-2">
-        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-linear-to-br from-primary to-success text-primary-foreground shadow-card">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-            <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
-            <path d="m8.5 8.5 7 7"></path>
-          </svg>
-        </div>
-        <div class="leading-tight">
-          <div class="text-sm font-semibold tracking-tight text-foreground">MediRx</div>
-          <div class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pharmacy ERP</div>
-        </div>
-      </div>
-      <a routerLink="/" class="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5">
-          <path d="m12 19-7-7 7-7"></path>
-          <path d="M19 12H5"></path>
-        </svg>
-        Back
-      </a>
-    </div>
-  </header>
-
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mx-auto max-w-6xl space-y-8 px-6 py-10">
-    <div>
-      <h1 class="text-3xl font-semibold tracking-tight">Create your MediRx account</h1>
-      <p class="mt-2 text-sm text-muted-foreground">Three quick sections and you're in. 14-day free trial included.</p>
-    </div>
-
-    <!-- Section 1: Plan -->
-    <section class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
-      <div class="mb-6 flex items-start gap-4">
-        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">1</div>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mx-auto max-w-6xl space-y-8 px-6 py-10">
         <div>
-          <h2 class="text-lg font-semibold tracking-tight">Select your plan</h2>
-          <p class="text-sm text-muted-foreground">Switch anytime. You won't be charged until your trial ends.</p>
+            <h1 class="text-3xl font-semibold tracking-tight">Create your MediRx account</h1>
+            <p class="mt-2 text-sm text-muted-foreground">Three quick sections and you're in. 14-day free trial
+                included.</p>
         </div>
-      </div>
 
-      <div class="mb-5 inline-flex rounded-lg border border-border bg-muted/50 p-1 text-xs font-medium">
-        <button type="button" (click)="selectBilling('monthly')"
-          class="rounded-md px-4 py-1.5 capitalize transition-colors"
-          [class.bg-card]="form.controls.billingCycle.value === 'monthly'"
-          [class.text-foreground]="form.controls.billingCycle.value === 'monthly'"
-          [class.shadow-card]="form.controls.billingCycle.value === 'monthly'"
-          [class.text-muted-foreground]="form.controls.billingCycle.value !== 'monthly'">
-          monthly
-        </button>
-        <button type="button" (click)="selectBilling('yearly')"
-          class="rounded-md px-4 py-1.5 capitalize transition-colors"
-          [class.bg-card]="form.controls.billingCycle.value === 'yearly'"
-          [class.text-foreground]="form.controls.billingCycle.value === 'yearly'"
-          [class.shadow-card]="form.controls.billingCycle.value === 'yearly'"
-          [class.text-muted-foreground]="form.controls.billingCycle.value !== 'yearly'">
-          yearly
-          <span class="ml-1.5 rounded bg-success-soft px-1.5 py-0.5 text-[10px] text-success">−20%</span>
-        </button>
-      </div>
+        <!-- Section 1: Plan -->
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
+            <div class="mb-6 flex items-start gap-4">
+                <div
+                    class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                    1</div>
+                <div>
+                    <h2 class="text-lg font-semibold tracking-tight">Select your plan</h2>
+                    <p class="text-sm text-muted-foreground">Switch anytime. You won't be charged until your trial ends.
+                    </p>
+                </div>
+            </div>
 
-      <div class="grid gap-4 lg:grid-cols-3">
-        @for (plan of plans; track plan.tier) {
-          <button type="button" (click)="selectPlan(plan.tier)"
-            class="relative rounded-xl border bg-card p-5 text-left transition-all"
-            [class.border-primary]="form.controls.planTier.value === plan.tier"
-            [class.shadow-elevated]="form.controls.planTier.value === plan.tier"
-            [class.ring-1]="form.controls.planTier.value === plan.tier"
-            [class.ring-primary/20]="form.controls.planTier.value === plan.tier"
-            [class.border-border]="form.controls.planTier.value !== plan.tier"
-            [class.shadow-card]="form.controls.planTier.value !== plan.tier"
-            [class.hover:border-border-strong]="form.controls.planTier.value !== plan.tier">
-            <div class="flex items-center justify-between">
-              <div class="text-sm font-semibold">{{ plan.tier }}</div>
-              @if (form.controls.planTier.value === plan.tier) {
-                <span class="grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3">
-                    <path d="M20 6 9 17l-5-5"></path>
-                  </svg>
-                </span>
-              }
+            <div class="mb-5 inline-flex rounded-lg border border-border bg-muted/50 p-1 text-xs font-medium">
+                <button type="button" (click)="selectBilling('monthly')"
+                    class="rounded-md px-4 py-1.5 capitalize transition-colors"
+                    [class.bg-card]="form.controls.billingCycle.value === 'monthly'"
+                    [class.text-foreground]="form.controls.billingCycle.value === 'monthly'"
+                    [class.shadow-card]="form.controls.billingCycle.value === 'monthly'"
+                    [class.text-muted-foreground]="form.controls.billingCycle.value !== 'monthly'">
+                    monthly
+                </button>
+                <button type="button" (click)="selectBilling('yearly')"
+                    class="rounded-md px-4 py-1.5 capitalize transition-colors"
+                    [class.bg-card]="form.controls.billingCycle.value === 'yearly'"
+                    [class.text-foreground]="form.controls.billingCycle.value === 'yearly'"
+                    [class.shadow-card]="form.controls.billingCycle.value === 'yearly'"
+                    [class.text-muted-foreground]="form.controls.billingCycle.value !== 'yearly'">
+                    yearly
+                    <span class="ml-1.5 rounded bg-success-soft px-1.5 py-0.5 text-[10px] text-success">−20%</span>
+                </button>
             </div>
-            <div class="mt-3 flex items-baseline gap-1">
-              <span class="text-3xl font-semibold tracking-tight">{{ plan.price }}</span>
-              <span class="text-xs text-muted-foreground">{{ plan.period }}</span>
+
+            <div class="grid gap-4 lg:grid-cols-3">
+                @for (plan of plans; track plan.tier) {
+                <button type="button" (click)="selectPlan(plan.tier)"
+                    class="relative rounded-xl border bg-card p-5 text-left transition-all"
+                    [class.border-primary]="form.controls.planTier.value === plan.tier"
+                    [class.shadow-elevated]="form.controls.planTier.value === plan.tier"
+                    [class.ring-1]="form.controls.planTier.value === plan.tier"
+                    [class.ring-primary/20]="form.controls.planTier.value === plan.tier"
+                    [class.border-border]="form.controls.planTier.value !== plan.tier"
+                    [class.shadow-card]="form.controls.planTier.value !== plan.tier"
+                    [class.hover:border-border-strong]="form.controls.planTier.value !== plan.tier">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm font-semibold">{{ plan.tier }}</div>
+                        @if (form.controls.planTier.value === plan.tier) {
+                        <span class="grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="h-3 w-3">
+                                <path d="M20 6 9 17l-5-5"></path>
+                            </svg>
+                        </span>
+                        }
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-1">
+                        <span class="text-3xl font-semibold tracking-tight">{{ plan.price }}</span>
+                        <span class="text-xs text-muted-foreground">{{ plan.period }}</span>
+                    </div>
+                    <ul class="mt-4 space-y-1.5">
+                        @for (feature of plan.features; track feature) {
+                        <li class="flex items-center gap-2 text-xs text-muted-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="h-3 w-3 text-success">
+                                <path d="M20 6 9 17l-5-5"></path>
+                            </svg>
+                            {{ feature }}
+                        </li>
+                        }
+                    </ul>
+                </button>
+                }
             </div>
-            <ul class="mt-4 space-y-1.5">
-              @for (feature of plan.features; track feature) {
-                <li class="flex items-center gap-2 text-xs text-muted-foreground">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 text-success">
-                    <path d="M20 6 9 17l-5-5"></path>
-                  </svg>
-                  {{ feature }}
-                </li>
-              }
-            </ul>
-          </button>
+        </section>
+
+        <!-- Section 2: Pharmacy information -->
+        <section formGroupName="pharmacy" class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
+            <div class="mb-6 flex items-start gap-4">
+                <div
+                    class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                    2</div>
+                <div>
+                    <h2 class="text-lg font-semibold tracking-tight">Pharmacy information</h2>
+                    <p class="text-sm text-muted-foreground">Tell us about your business.</p>
+                </div>
+            </div>
+
+            <div class="grid gap-5 md:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="pname">Pharmacy name</label>
+                    <input formControlName="name" id="pname" placeholder="MediRx Pharmacy"
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.name)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.name)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.name); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Pharmacy logo</label>
+                    <label
+                        class="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-border-strong bg-muted/30 px-3 text-sm text-muted-foreground hover:bg-muted/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="h-4 w-4">
+                            <path d="M12 3v12"></path>
+                            <path d="m17 8-5-5-5 5"></path>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        </svg>
+                        Click to upload (PNG, SVG)
+                        <input type="file" accept="image/*" class="hidden">
+                    </label>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="tax">Tax number</label>
+                    <input formControlName="taxNumber" id="tax" placeholder="100-..."
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.taxNumber)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.taxNumber)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.taxNumber); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="cr">Commercial registration</label>
+                    <input formControlName="commercialRegistration" id="cr" placeholder="CR-..."
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.commercialRegistration)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.commercialRegistration)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.commercialRegistration); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2 md:col-span-2">
+                    <label class="text-sm font-medium leading-none" for="addr">Address</label>
+                    <input formControlName="address" id="addr" placeholder="Street, building, area"
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.address)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.address)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.address); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Country</label>
+                    <select formControlName="country" (change)="onCountryChange()"
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.country)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.country)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
+                        <option value="" disabled selected>Select a country</option>
+                        @for (country of countries(); track country.id) {
+                        <option [value]="country.id">
+                            {{ country.name }}
+                        </option>
+                        }
+                    </select>
+                    @if (getErrorMessage(form.controls.pharmacy.controls.country); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">City</label>
+                    <select formControlName="city"
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.city)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.city)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
+                        <option value="" disabled selected>Select a city</option>
+                        @for (city of cities(); track city.id) {
+                        <option [value]="city.name">{{ city.name }}</option>
+                        }
+                    </select>
+                    @if (getErrorMessage(form.controls.pharmacy.controls.city); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="phone">Phone</label>
+                    <input formControlName="phone" id="phone" placeholder="+971 ..."
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.phone)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.phone)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.phone); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="bemail">Email</label>
+                    <input type="email" formControlName="businessEmail" id="bemail" placeholder="ops@pharmacy.com"
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.businessEmail)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.businessEmail)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.businessEmail); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="br">Number of branches</label>
+                    <input type="number" formControlName="numberOfBranches" id="br" min="1"
+                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.numberOfBranches)"
+                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.numberOfBranches)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.pharmacy.controls.numberOfBranches); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Preferred language</label>
+                    <select formControlName="preferredLanguage"
+                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
+                        <option value="English">English</option>
+                        <option value="Arabic">العربية</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Time zone</label>
+                    <select formControlName="timeZone"
+                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
+                        <option value="(GMT+4) Gulf Standard Time">(GMT+4) Gulf Standard Time</option>
+                        <option value="(GMT+3) Arabia Standard Time">(GMT+3) Arabia Standard Time</option>
+                        <option value="(GMT+2) Eastern European Time">(GMT+2) Eastern European Time</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Primary contact -->
+        <section formGroupName="primaryContact" class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
+            <div class="mb-6 flex items-start gap-4">
+                <div
+                    class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                    3</div>
+                <div>
+                    <h2 class="text-lg font-semibold tracking-tight">Primary contact</h2>
+                    <p class="text-sm text-muted-foreground">This person will be your account admin.</p>
+                </div>
+            </div>
+
+            <div class="grid gap-5 md:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="cname">Full name</label>
+                    <input formControlName="fullName" id="cname" placeholder="Jane Doe"
+                        [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.fullName)"
+                        [class.border-input]="!isInvalid(form.controls.primaryContact.controls.fullName)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.primaryContact.controls.fullName); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="cmob">Mobile</label>
+                    <input formControlName="mobile" id="cmob" placeholder="+971 ..."
+                        [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.mobile)"
+                        [class.border-input]="!isInvalid(form.controls.primaryContact.controls.mobile)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.primaryContact.controls.mobile); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="cemail">Email</label>
+                    <input type="email" formControlName="email" id="cemail" placeholder="you@pharmacy.com"
+                        [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.email)"
+                        [class.border-input]="!isInvalid(form.controls.primaryContact.controls.email)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.primaryContact.controls.email); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none" for="cpass">Password</label>
+                    <input type="password" formControlName="password" id="cpass" placeholder="At least 8 characters"
+                        [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.password)"
+                        [class.border-input]="!isInvalid(form.controls.primaryContact.controls.password)"
+                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
+                    @if (getErrorMessage(form.controls.primaryContact.controls.password); as error) {
+                    <p class="text-xs text-destructive">{{ error }}</p>
+                    }
+                </div>
+            </div>
+        </section>
+
+        @if (submitError()) {
+        <div class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {{ submitError() }}
+        </div>
         }
-      </div>
-    </section>
 
-    <!-- Section 2: Pharmacy information -->
-    <section formGroupName="pharmacy" class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
-      <div class="mb-6 flex items-start gap-4">
-        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">2</div>
-        <div>
-          <h2 class="text-lg font-semibold tracking-tight">Pharmacy information</h2>
-          <p class="text-sm text-muted-foreground">Tell us about your business.</p>
+        <div
+            class="sticky bottom-0 -mx-6 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
+            <p class="text-xs text-muted-foreground">By subscribing you agree to our Terms and Privacy Policy.</p>
+            <button type="submit" [disabled]="isSubmitting()"
+                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 rounded-md px-8">
+                {{ isSubmitting() ? 'Submitting...' : 'Subscribe now' }}
+            </button>
         </div>
-      </div>
-
-      <div class="grid gap-5 md:grid-cols-2">
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="pname">Pharmacy name</label>
-          <input formControlName="name" id="pname" placeholder="MediRx Pharmacy"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none">Pharmacy logo</label>
-          <label class="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-border-strong bg-muted/30 px-3 text-sm text-muted-foreground hover:bg-muted/50">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-              <path d="M12 3v12"></path>
-              <path d="m17 8-5-5-5 5"></path>
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            </svg>
-            Click to upload (PNG, SVG)
-            <input type="file" accept="image/*" class="hidden">
-          </label>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="tax">Tax number</label>
-          <input formControlName="taxNumber" id="tax" placeholder="100-..."
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="cr">Commercial registration</label>
-          <input formControlName="commercialRegistration" id="cr" placeholder="CR-..."
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2 md:col-span-2">
-          <label class="text-sm font-medium leading-none" for="addr">Address</label>
-          <input formControlName="address" id="addr" placeholder="Street, building, area"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none">Country</label>
-          <select formControlName="country"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-            <option value="United Arab Emirates">United Arab Emirates</option>
-            <option value="Saudi Arabia">Saudi Arabia</option>
-            <option value="Egypt">Egypt</option>
-            <option value="Jordan">Jordan</option>
-          </select>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="city">City</label>
-          <input formControlName="city" id="city" placeholder="Dubai"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="phone">Phone</label>
-          <input formControlName="phone" id="phone" placeholder="+971 ..."
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="bemail">Email</label>
-          <input type="email" formControlName="businessEmail" id="bemail" placeholder="ops@pharmacy.com"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="br">Number of branches</label>
-          <input type="number" formControlName="numberOfBranches" id="br" min="1"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none">Preferred language</label>
-          <select formControlName="preferredLanguage"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-            <option value="English">English</option>
-            <option value="Arabic">العربية</option>
-          </select>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none">Time zone</label>
-          <select formControlName="timeZone"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-            <option value="(GMT+4) Gulf Standard Time">(GMT+4) Gulf Standard Time</option>
-            <option value="(GMT+3) Arabia Standard Time">(GMT+3) Arabia Standard Time</option>
-            <option value="(GMT+2) Eastern European Time">(GMT+2) Eastern European Time</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 3: Primary contact -->
-    <section formGroupName="primaryContact" class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
-      <div class="mb-6 flex items-start gap-4">
-        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">3</div>
-        <div>
-          <h2 class="text-lg font-semibold tracking-tight">Primary contact</h2>
-          <p class="text-sm text-muted-foreground">This person will be your account admin.</p>
-        </div>
-      </div>
-
-      <div class="grid gap-5 md:grid-cols-2">
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="cname">Full name</label>
-          <input formControlName="fullName" id="cname" placeholder="Jane Doe"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="cmob">Mobile</label>
-          <input formControlName="mobile" id="cmob" placeholder="+971 ..."
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="cemail">Email</label>
-          <input type="email" formControlName="email" id="cemail" placeholder="you@pharmacy.com"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium leading-none" for="cpass">Password</label>
-          <input type="password" formControlName="password" id="cpass" placeholder="At least 8 characters"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-        </div>
-      </div>
-    </section>
-
-    @if (submitError()) {
-      <p class="text-sm text-destructive">{{ submitError() }}</p>
-    }
-
-    <div class="sticky bottom-0 -mx-6 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
-      <p class="text-xs text-muted-foreground">By subscribing you agree to our Terms and Privacy Policy.</p>
-      <button type="submit" [disabled]="isSubmitting()"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 rounded-md px-8">
-        {{ isSubmitting() ? 'Submitting...' : 'Subscribe now' }}
-      </button>
-    </div>
-  </form>
+    </form>
 </div>

@@ -1,0 +1,13 @@
+<ul class="activity-list">
+  @for (activity of activities(); track activity.id) {
+    <li class="activity-item">
+      <span class="dot"></span>
+      <div class="content">
+        <p class="message">{{ activity.message }}</p>
+        <p class="time">{{ activity.timestamp | timeAgo }}</p>
+      </div>
+    </li>
+  } @empty {
+    <li class="empty-state">No recent activity.</li>
+  }
+</ul>
