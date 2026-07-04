@@ -1,1 +1,16 @@
-<p>toast works!</p>
+<div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div
+      class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white text-sm transition-all"
+      [class.bg-green-500]="toast.type === 'success'"
+      [class.bg-red-500]="toast.type === 'error'"
+    >
+      @if (toast.type === 'success') {
+        <span>✓</span>
+      } @else {
+        <span>✕</span>
+      }
+      {{ toast.message }}
+    </div>
+  }
+</div>

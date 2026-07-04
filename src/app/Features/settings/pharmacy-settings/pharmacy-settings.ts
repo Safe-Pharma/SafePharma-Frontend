@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PharmacySettings as PharmacySettingsService } from './Services/pharmacy-settings';
 import { ChangeDetectorRef } from '@angular/core';
 import { UserLanguage } from './Services/user-language';
+import { Toast } from '../../../Shared/Toasts/toast';
 
 @Component({
   selector: 'app-pharmacy-settings',
@@ -37,6 +38,7 @@ export class PharmacySettings implements OnInit {
     private settingsService: PharmacySettingsService,
     private userLanguageService: UserLanguage,
     private cdr: ChangeDetectorRef,
+    private toast: Toast,
   ) {}
 
   ngOnInit(): void {
@@ -67,6 +69,7 @@ export class PharmacySettings implements OnInit {
     this.settingsService.updateSettings(formData).subscribe({
       next: (res) => {
         console.log('Updated successfully', res);
+        this.toast.show('Settings saved successfully!', 'success');
       },
       error: (err) => {
         if (err.error?.errors) {
@@ -74,6 +77,9 @@ export class PharmacySettings implements OnInit {
           Object.keys(errors).forEach((key) => {
             this.validationErrors[key] = errors[key][0].errorMessage;
           });
+          this.toast.show('Please fix the errors below.', 'error');
+        } else {
+          this.toast.show('Something went wrong.', 'error');
         }
         this.cdr.detectChanges();
       },
