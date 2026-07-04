@@ -1,0 +1,27 @@
+<div class="filter-bar">
+  <div class="search-field">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="7" cy="7" r="5.25" stroke="currentColor" stroke-width="1.5" />
+      <path d="M14 14L11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+    </svg>
+    <input
+      type="text"
+      placeholder="Search by name or email..."
+      [ngModel]="search()"
+      (ngModelChange)="onSearchInput($event)"
+    />
+  </div>
+
+  <select class="select" [ngModel]="role()" (ngModelChange)="onRoleChange($event)">
+    <option value="">All roles</option>
+    @for (r of roles(); track r.id) {
+      <option [value]="r.name">{{ r.name }}</option>
+    }
+  </select>
+
+  <select class="select" [ngModel]="status()" (ngModelChange)="onStatusChange($event)">
+    @for (s of statuses; track s) {
+      <option [value]="s">{{ s === 'All' ? 'All statuses' : s }}</option>
+    }
+  </select>
+</div>
