@@ -43,12 +43,7 @@ export const routes: Routes = [
             (m) => m.Login
           ),
       },
-      {
-            path: 'users',
-            loadComponent: () =>
-                import('./Features/users/pages/users-list/users-list')
-                .then(m => m.UsersListComponent),
-        },
+     
     ],
   },
   {
@@ -68,7 +63,12 @@ export const routes: Routes = [
                 import('./Features/Tax/taxes')
                 .then(m => m.Taxes),
         },
-         
+          {
+            path: 'users',
+            loadComponent: () =>
+                import('./Features/users/pages/users-list/users-list')
+                .then(m => m.UsersListComponent),
+        },
         
     ],
 
