@@ -6,6 +6,7 @@ import { LocationService } from './Services/location.service';
 import { CreateSubscriptionRequest } from './Models/create-subscription.model';
 import { City, CountryWithCities } from './Models/country-with-cities.model';
 import { GeneralResult } from '../../Core/Models/general-result.model';
+import{ alphanumericHyphenValidator, fullNameValidator, passwordComplexityValidator, phoneValidator } from './Validators/custom-validators';  
 
 interface PlanOption {
   tier: 'Starter' | 'Professional' | 'Enterprise';
@@ -53,34 +54,37 @@ export class Subscribe implements OnInit {
   countries = signal<CountryWithCities[]>([]);
   cities = signal<City[]>([]);
 
-  form = this.fb.group({
-    planTier: this.fb.control<'Starter' | 'Professional' | 'Enterprise'>('Professional', {
-      validators: Validators.required,
-    }),
-    billingCycle: this.fb.control<'monthly' | 'yearly'>('monthly', {
-      validators: Validators.required,
-    }),
-    pharmacy: this.fb.group({
-      name: ['', Validators.required],
-      logoUrl: this.fb.control<string | null>(null),
-      taxNumber: this.fb.control<string | null>(null),
-      commercialRegistration: this.fb.control<string | null>(null),
-      address: ['', Validators.required],
-      country: ['', Validators.required],
-      city: ['', Validators.required],
-      phone: ['', Validators.required],
-      businessEmail: ['', [Validators.required, Validators.email]],
-      numberOfBranches: [1, [Validators.required, Validators.min(1)]],
-      preferredLanguage: ['English', Validators.required],
-      timeZone: ['(GMT+4) Gulf Standard Time', Validators.required],
-    }),
-    primaryContact: this.fb.group({
-      fullName: ['', Validators.required],
-      mobile: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-    }),
-  });
+form = this.fb.group({
+  planTier: this.fb.control<'Starter' | 'Professional' | 'Enterprise'>('Professional', {
+    validators: Validators.required,
+  }),
+  billingCycle: this.fb.control<'monthly' | 'yearly'>('monthly', {
+    validators: Validators.required,
+  }),
+  pharmacy: this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+    logoUrl: this.fb.control<string | null>(null),
+    taxNumber: this.fb.control<string | null>(null, [alphanumericHyphenValidator]),
+    commercialRegistration: this.fb.control<string | null>(null, [alphanumericHyphenValidator]),
+    address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
+    country: ['', [Validators.required, Validators.maxLength(100)]],
+    city: ['', [Validators.required, Validators.maxLength(100)]],
+    phone: ['', [Validators.required, phoneValidator]],
+    businessEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    numberOfBranches: [1, [Validators.required, Validators.min(1), Validators.max(1000)]],
+    preferredLanguage: ['English', Validators.required],
+    timeZone: ['(GMT+4) Gulf Standard Time', Validators.required],
+  }),
+  primaryContact: this.fb.group({
+    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100), fullNameValidator]],
+    mobile: ['', [Validators.required, phoneValidator]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+    password: [
+      '',
+      [Validators.required, Validators.minLength(8), Validators.maxLength(100), passwordComplexityValidator],
+    ],
+  }),
+});
 
   ngOnInit(): void {
 this.locationService.getCountries().subscribe({
@@ -120,21 +124,27 @@ onCountryChange(): void {
     return !!control && control.invalid && (control.touched || control.dirty);
   }
 
-  getErrorMessage(control: AbstractControl | null): string | null {
-    if (!control || !control.errors || !(control.touched || control.dirty)) return null;
+getErrorMessage(control: AbstractControl | null): string | null {
+  if (!control || !control.errors || !(control.touched || control.dirty)) return null;
 
-    const errors = control.errors;
-    if (errors['server']) return errors['server'];
-    if (errors['required']) return 'This field is required.';
-    if (errors['email']) return 'Please enter a valid email address.';
-    if (errors['minlength'])
-      return `Must be at least ${errors['minlength'].requiredLength} characters.`;
-    if (errors['maxlength'])
-      return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
-    if (errors['min']) return `Must be at least ${errors['min'].min}.`;
-    if (errors['pattern']) return 'Invalid format.';
-    return 'Invalid value.';
-  }
+  const errors = control.errors;
+  if (errors['server']) return errors['server'];
+  if (errors['required']) return 'This field is required.';
+  if (errors['email']) return 'Please enter a valid email address.';
+  if (errors['minlength']) return `Must be at least ${errors['minlength'].requiredLength} characters.`;
+  if (errors['maxlength']) return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
+  if (errors['min']) return `Must be at least ${errors['min'].min}.`;
+  if (errors['max']) return `Must not exceed ${errors['max'].max}.`;
+  if (errors['invalidPhone']) return 'Enter a valid international number (e.g. +971501234567).';
+  if (errors['invalidName']) return 'Only letters, spaces, hyphens, or apostrophes are allowed.';
+  if (errors['invalidFormat']) return 'Must be 5–20 characters: letters, numbers, or hyphens only.';
+  if (errors['missingUppercase']) return 'Password must contain at least one uppercase letter.';
+  if (errors['missingLowercase']) return 'Password must contain at least one lowercase letter.';
+  if (errors['missingDigit']) return 'Password must contain at least one digit.';
+  if (errors['missingSpecialChar']) return 'Password must contain at least one special character.';
+  if (errors['pattern']) return 'Invalid format.';
+  return 'Invalid value.';
+}
 
   onSubmit(): void {
     if (this.form.invalid) {
