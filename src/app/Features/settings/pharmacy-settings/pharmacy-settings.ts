@@ -17,6 +17,7 @@ export class PharmacySettings implements OnInit {
   previewUrl: string | null = null;
 
   selectedLanguage: string = 'en';
+  isLoading = false;
 
   languages = [
     { value: 'en', label: 'English' },
@@ -43,14 +44,26 @@ export class PharmacySettings implements OnInit {
 
   ngOnInit(): void {
     this.settingsService.getSettings().subscribe((res) => {
-      this.settings = res.data;
+      this.settings = {
+        name: res.data.name || '',
+        logoUrl: res.data.logoUrl || null,
+        street: res.data.street === 'null' ? '' : res.data.street || '',
+        city: res.data.city === 'null' ? '' : res.data.city || '',
+        governorate: res.data.governorate === 'null' ? '' : res.data.governorate || '',
+        phone: res.data.phone === 'null' ? '' : res.data.phone || '',
+        taxRegistrationNumber:
+          res.data.taxRegistrationNumber === 'null' ? '' : res.data.taxRegistrationNumber || '',
+      };
       this.cdr.detectChanges();
     });
-    this.userLanguageService.getLanguage().subscribe((data) => {
-      this.selectedLanguage = data.language ?? 'en';
+    this.userLanguageService.getLanguage().subscribe((res) => {
+      this.selectedLanguage = res.message ?? 'en';
     });
   }
   onSubmit(): void {
+    this.isLoading = true;
+    this.cdr.detectChanges();
+
     this.validationErrors = {};
 
     const formData = new FormData();
@@ -68,10 +81,15 @@ export class PharmacySettings implements OnInit {
 
     this.settingsService.updateSettings(formData).subscribe({
       next: (res) => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
         console.log('Updated successfully', res);
         this.toast.show('Settings saved successfully!', 'success');
       },
       error: (err) => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+
         if (err.error?.errors) {
           const errors = err.error.errors;
           Object.keys(errors).forEach((key) => {
