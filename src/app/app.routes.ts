@@ -14,18 +14,19 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./Features/landing-page/landing-page').then(m => m.LandingPage),
+          import('./Features/landing-page/landing-page').then((m) => m.LandingPage),
       },
-
+      {
+        path: 'subscribe',
+        loadComponent: () => import('./Features/subscribe/subscribe').then((m) => m.Subscribe),
+      },
     ],
   },
- 
+
   {
     path: '',
     component: AuthLayout,
-    children: [
-      { path: 'login', component: Login },
-    ],
+    children: [{ path: 'login', component: Login }],
   },
 
   {
@@ -35,21 +36,21 @@ export const routes: Routes = [
       {
         path: 'settings',
         loadComponent: () =>
-          import('./Features/settings/pharmacy-settings/pharmacy-settings').then(m => m.PharmacySettings),
+          import('./Features/settings/pharmacy-settings/pharmacy-settings').then(
+            (m) => m.PharmacySettings,
+          ),
       },
       { path: 'profile', component: ProfilePage },
       {
         path: 'taxes',
-        loadComponent: () =>
-          import('./Features/Tax/taxes').then(m => m.Taxes),
+        loadComponent: () => import('./Features/Tax/taxes').then((m) => m.Taxes),
       },
       {
         path: 'users',
         loadComponent: () =>
-          import('./Features/users/pages/users-list/users-list').then(m => m.UsersListComponent),
+          import('./Features/users/pages/users-list/users-list').then((m) => m.UsersListComponent),
       },
-            { path: 'change-password', component: ChangePassword },
-
+      { path: 'change-password', component: ChangePassword },
     ],
   },
 ];
