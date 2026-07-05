@@ -27,9 +27,9 @@ export class PharmacySettings implements OnInit {
   settings = {
     name: '',
     logoUrl: null,
-    street: '',
+    address: '',
     city: '',
-    governorate: '',
+    country: '',
     phone: '',
     taxRegistrationNumber: '',
   };
@@ -47,9 +47,9 @@ export class PharmacySettings implements OnInit {
       this.settings = {
         name: res.data.name || '',
         logoUrl: res.data.logoUrl || null,
-        street: res.data.street === 'null' ? '' : res.data.street || '',
+        address: res.data.address === 'null' ? '' : res.data.address || '',
         city: res.data.city === 'null' ? '' : res.data.city || '',
-        governorate: res.data.governorate === 'null' ? '' : res.data.governorate || '',
+        country: res.data.country === 'null' ? '' : res.data.country || '',
         phone: res.data.phone === 'null' ? '' : res.data.phone || '',
         taxRegistrationNumber:
           res.data.taxRegistrationNumber === 'null' ? '' : res.data.taxRegistrationNumber || '',
@@ -69,9 +69,9 @@ export class PharmacySettings implements OnInit {
     const formData = new FormData();
 
     formData.append('Name', this.settings.name);
-    formData.append('Street', this.settings.street);
+    formData.append('Address', this.settings.address);
     formData.append('City', this.settings.city);
-    formData.append('Governorate', this.settings.governorate);
+    formData.append('Country', this.settings.country);
     formData.append('Phone', this.settings.phone);
     formData.append('TaxRegistrationNumber', this.settings.taxRegistrationNumber);
 
