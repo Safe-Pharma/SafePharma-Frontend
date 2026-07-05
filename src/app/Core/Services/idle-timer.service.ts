@@ -4,8 +4,8 @@ import { switchMap, takeUntil, tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class IdleTimerService implements OnDestroy {
-  private readonly idleTimeoutMs = 15 * 60 * 1000;   // 15 minutes of inactivity
-  private readonly warningLeadMs = 60 * 1000;         // show warning 60s before logout
+  private readonly idleTimeoutMs = 20 * 1000;   // 15 minutes of inactivity15 * 60 * 1000;
+  private readonly warningLeadMs = 10 * 1000;         // show warning 60s before logout60 * 1000
 
   private readonly destroy$ = new Subject<void>();
   private readonly activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
