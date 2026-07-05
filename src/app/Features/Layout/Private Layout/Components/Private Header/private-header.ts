@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { AuthSessionService } from '../../../../../Core/Services/auth-session.service';
 
 export interface Breadcrumb {
   label: string;
@@ -10,22 +11,32 @@ export interface Breadcrumb {
 @Component({
   selector: 'app-Private-Header',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './private-header.html',
 })
 export class PrivateHeader {
-  @Input() pharmacyName = 'MediRx Pharmacy';
-  @Input() breadcrumbs: Breadcrumb[] = [{ label: 'Dashboard', active: true }];
-  @Input() lang: 'EN' | 'AR' = 'EN';
-  @Input() hasUnreadNotifications = true;
-  @Input() userName = 'eman refaat';
-  @Input() userRole = 'Administrator';
-  @Input() userInitials = 'SK';
-  @Input() userMenuOpen = false;
+  private readonly authSession = inject(AuthSessionService);
+
+  readonly pharmacyName = 'MediRx Pharmacy';
+  readonly breadcrumbs: Breadcrumb[] = [{ label: 'Dashboard', active: true }];
+  readonly lang: 'EN' | 'AR' = 'EN';
+  readonly hasUnreadNotifications = true;
+  readonly userMenuOpen = signal(false);
+  readonly user = this.authSession.user;
 
   searchTerm = '';
 
-  @Output() langToggle = new EventEmitter<void>();
-  @Output() notificationsClick = new EventEmitter<void>();
-  @Output() userMenuToggle = new EventEmitter<void>();
+  readonly menuItems = [
+    { label: 'Preferences', route: '/app/settings' },
+    { label: 'Profile', route: '/app/profile' },
+    { label: 'Change Password', route: '/app/change-password' },
+  ];
+
+  toggleUserMenu(): void {
+    this.userMenuOpen.update(value => !value);
+  }
+
+  closeUserMenu(): void {
+    this.userMenuOpen.set(false);
+  }
 }

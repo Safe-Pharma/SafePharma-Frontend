@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { PublicLayout } from './Features/Layout/Public Layout/Components/public-layout';
 import { privatelayout } from './Features/Layout/Private Layout/Components/private-layout';
 import { AuthLayout } from './Features/Layout/Auth Layout/Components/Auth-layout';
+import { Login } from './Features/Authentication/login/login';
+import { ChangePassword } from './Features/Authentication/change-password/change-password';
+import { ProfilePage } from './Features/Profile/profile-page';
 
 export const routes: Routes = [
   {
@@ -13,29 +16,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./Features/landing-page/landing-page').then(m => m.LandingPage),
       },
+
     ],
   },
+ 
   {
     path: '',
     component: AuthLayout,
     children: [
-      {
-        path: 'subscribe',
-        loadComponent: () =>
-          import('./Features/subscribe/subscribe').then(m => m.Subscribe),
-      },
-      {
-        path: 'change-password',
-        loadComponent: () =>
-          import('./Features/Authentication/change-password/change-password').then(m => m.ChangePassword),
-      },
-      {
-        path: 'login',
-        loadComponent: () =>
-          import('./Features/Authentication/login/login').then(m => m.Login),
-      },
+      { path: 'login', component: Login },
     ],
   },
+
   {
     path: 'app',
     component: privatelayout,
@@ -45,6 +37,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./Features/settings/pharmacy-settings/pharmacy-settings').then(m => m.PharmacySettings),
       },
+      { path: 'profile', component: ProfilePage },
       {
         path: 'taxes',
         loadComponent: () =>
@@ -55,6 +48,8 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./Features/users/pages/users-list/users-list').then(m => m.UsersListComponent),
       },
+            { path: 'change-password', component: ChangePassword },
+
     ],
   },
 ];

@@ -28,34 +28,18 @@
       </nav>
 
       <div class="ms-auto flex items-center gap-1.5 md:gap-2">
-        
-
-       
-
-        <!-- Language toggle -->
         <button
           type="button"
           class="inline-flex items-center justify-center whitespace-nowrap cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground rounded-md h-9 gap-1.5 px-2 text-xs font-semibold"
           aria-label="Toggle language"
-          (click)="langToggle.emit()"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
-            <path d="m5 8 6 6"></path>
-            <path d="m4 14 6-6 2-3"></path>
-            <path d="M2 5h12"></path>
-            <path d="M7 2h1"></path>
-            <path d="m22 22-5-10-5 10"></path>
-            <path d="M14 18h6"></path>
-          </svg>
           {{ lang }}
         </button>
 
-        <!-- Notifications -->
         <button
           type="button"
           class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative h-9 w-9"
           aria-label="Notifications"
-          (click)="notificationsClick.emit()"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true">
             <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
@@ -66,21 +50,43 @@
           }
         </button>
 
-        <!-- User menu -->
-        <button
-          type="button"
-          class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
-          aria-haspopup="menu"
-          [attr.aria-expanded]="userMenuOpen"
-          (click)="userMenuToggle.emit()"
-        >
-          <span class="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-success text-xs font-semibold text-primary-foreground">
-            {{ userInitials }}
-          </span>
-          <span class="hidden text-start leading-tight md:block">
-            <span class="block text-xs font-semibold">{{ userName }}</span>
-            <span class="block text-[11px] text-muted-foreground">{{ userRole }}</span>
-          </span>
-        </button>
+        <div class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="userMenuOpen()"
+            (click)="toggleUserMenu()"
+          >
+            <span class="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-success text-xs font-semibold text-primary-foreground">
+              {{ user()?.initials ?? 'U' }}
+            </span>
+            <span class="hidden text-start leading-tight md:block">
+              <span class="block text-xs font-semibold">{{ user()?.fullName ?? 'User' }}</span>
+              <span class="block text-[11px] text-muted-foreground">{{ user()?.role ?? 'User' }}</span>
+            </span>
+          </button>
+
+          @if (userMenuOpen()) {
+            <div class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+              <div class="border-b border-border px-4 py-3">
+                <p class="text-sm font-semibold text-foreground">{{ user()?.fullName ?? 'User' }}</p>
+                <p class="text-xs text-muted-foreground">{{ user()?.role ?? 'User' }}</p>
+              </div>
+
+              <div class="p-2">
+                @for (item of menuItems; track item.route) {
+                  <a
+                    [routerLink]="item.route"
+                    (click)="closeUserMenu()"
+                    class="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+                  >
+                    {{ item.label }}
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
       </div>
     </header>
