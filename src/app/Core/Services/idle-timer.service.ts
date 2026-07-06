@@ -3,7 +3,7 @@ import { fromEvent, merge, Subject, takeUntil, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class IdleTimerService implements OnDestroy {
-  private readonly idleTimeoutMs = 20*1000; // 8 hours8 * 60 * 60 * 1000
+  private readonly idleTimeoutMs = 2 * 60 * 60 * 1000; // 2 hours
 
   private readonly destroy$ = new Subject<void>();
   private readonly activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
