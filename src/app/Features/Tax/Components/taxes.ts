@@ -11,8 +11,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { Tax, TaxCreateDto, TaxStats, TaxStatus, TaxUpdateDto } from './Models/tax';
-import { TaxesService } from './Services/tax';
+import { Tax, TaxCreateDto, TaxStats, TaxStatus, TaxUpdateDto } from '../Models/tax';
+import { TaxesService } from '../Services/tax';
 
 interface TaxFormModel {
   name: string;

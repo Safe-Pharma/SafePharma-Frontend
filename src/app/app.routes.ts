@@ -43,7 +43,7 @@ export const routes: Routes = [
       { path: 'profile', component: ProfilePage },
       {
         path: 'taxes',
-        loadComponent: () => import('./Features/Tax/taxes').then((m) => m.Taxes),
+        loadComponent: () => import('./Features/Tax/Components/taxes').then((m) => m.Taxes),
       },
       {
         path: 'users',
@@ -51,6 +51,13 @@ export const routes: Routes = [
           import('./Features/users/pages/users-list/users-list').then((m) => m.UsersListComponent),
       },
       { path: 'change-password', component: ChangePassword },
+      {
+        path: 'suppliers',
+        loadComponent: () =>
+          import('./Features/Supplier/Components/Supplier').then(m => m.Suppliers),
+      },
+
     ],
   },
+   
 ];
