@@ -6,6 +6,7 @@ export interface AuthUserInfo {
   email?: string;
   initials: string;
   token: string;
+  pharmacyName: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -62,6 +63,7 @@ export class AuthSessionService {
       if (!payloadPart) return null;
 
       const payload = JSON.parse(this.base64UrlDecode(payloadPart)) as Record<string, unknown>;
+      console.log('JWT Payload:', payload);
       const fullName =
         this.firstString(payload, [
           'fullName',
@@ -84,12 +86,18 @@ export class AuthSessionService {
         'sub',
         'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
       ]);
+      const pharmacyName = this.firstString(payload, [
+        'PharmacyName',
+        'pharmacyName',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/pharmacyname',
+      ])?? 'Unknown Pharmacy';
 
       return {
         fullName,
         role,
         email: email ?? undefined,
         token,
+        pharmacyName: pharmacyName ,
         initials: this.buildInitials(fullName, email),
       };
     } catch {
