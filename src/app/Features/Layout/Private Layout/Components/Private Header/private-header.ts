@@ -16,8 +16,7 @@ export interface Breadcrumb {
 })
 export class PrivateHeader {
   private readonly authSession = inject(AuthSessionService);
-
-  readonly pharmacyName = 'MediRx Pharmacy';
+  readonly pharmacyName = this.authSession.user()?.pharmacyName ?? 'Pharmacy Name';
   readonly breadcrumbs: Breadcrumb[] = [{ label: 'Dashboard', active: true }];
   readonly lang: 'EN' | 'AR' = 'EN';
   readonly hasUnreadNotifications = true;
