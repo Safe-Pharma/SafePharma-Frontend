@@ -54,10 +54,15 @@ export const routes: Routes = [
       {
         path: 'suppliers',
         loadComponent: () =>
-          import('./Features/Supplier/Components/Supplier').then(m => m.Suppliers),
+          import('./Features/Supplier/Components/Supplier').then((m) => m.Suppliers),
       },
-
+      {
+        path: 'purchases',
+        loadComponent: () =>
+          import('./Features/PurchaseOrder/purchase-order-page/purchase-order-page').then(
+            (m) => m.PurchaseOrderPage,
+          ),
+      },
     ],
   },
-   
 ];
