@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { PurchaseOrderApiService } from '../Services/purchase-order-api';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Toast } from '../../../Shared/Toasts/toast';
 
 @Component({
   selector: 'app-purchase-order-page',
@@ -37,6 +38,7 @@ export class PurchaseOrderPage implements OnInit {
   constructor(
     private purchaseOrderService: PurchaseOrderApiService,
     private cdr: ChangeDetectorRef,
+    private toast: Toast,
   ) {}
 
   ngOnInit(): void {
@@ -78,6 +80,21 @@ export class PurchaseOrderPage implements OnInit {
         console.error(err);
       },
     });
+  }
+
+  resetForm() {
+    this.purchaseOrder = {
+      orderDate: '',
+      expectedDate: '',
+      supplierId: '',
+      items: [
+        {
+          medicineId: '',
+          quantityOrdered: 1,
+          unitPrice: 0,
+        },
+      ],
+    };
   }
 
   get openOrders() {
@@ -131,14 +148,50 @@ export class PurchaseOrderPage implements OnInit {
   }
 
   createPurchaseOrder() {
+    if (!this.purchaseOrder.supplierId) {
+      this.toast.show('Please select a supplier', 'error');
+      return;
+    }
+
+    if (!this.purchaseOrder.orderDate) {
+      this.toast.show('Please select an order date', 'error');
+      return;
+    }
+    if (!this.purchaseOrder.expectedDate) {
+      this.toast.show('Please select an Expected Date', 'error');
+      return;
+    }
+
+    if (this.purchaseOrder.items.length === 0) {
+      this.toast.show('Please add at least one medicine', 'error');
+      return;
+    }
+
+    for (const item of this.purchaseOrder.items) {
+      if (!item.medicineId) {
+        this.toast.show('Please select a medicine', 'error');
+        return;
+      }
+
+      if (item.quantityOrdered <= 0) {
+        this.toast.show('Quantity must be greater than 0', 'error');
+        return;
+      }
+
+      if (item.unitPrice <= 0) {
+        this.toast.show('Unit price must be greater than 0', 'error');
+        return;
+      }
+    }
     console.log(this.purchaseOrder);
 
     this.purchaseOrderService.addPurchaseOrder(this.purchaseOrder).subscribe({
       next: (res) => {
         console.log(res);
-
+        this.resetForm();
         this.closeCreateModal();
         this.loadPurchaseOrders();
+        this.toast.show('Order Created Successfully!', 'success');
       },
       error: (err) => {
         console.log(err);
