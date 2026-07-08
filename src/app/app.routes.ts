@@ -67,22 +67,35 @@ export const routes: Routes = [
           import('./Features/settings/pharmacy-settings/pharmacy-settings').then(
             (m) => m.PharmacySettings,
           ),
+           data: {
+               title: 'Settings'
+                         }
       },
       { path: 'profile', component: ProfilePage },
       {
         path: 'taxes',
         loadComponent: () => import('./Features/Tax/Components/taxes').then((m) => m.Taxes),
+              data: {
+               title: 'Taxes'
+                         }
+      
       },
       {
         path: 'users',
         loadComponent: () =>
           import('./Features/users/pages/users-list/users-list').then((m) => m.UsersListComponent),
+              data: {
+               title: 'Users'
+                         }
       },
       { path: 'change-password', component: ChangePassword },
       {
         path: 'suppliers',
         loadComponent: () =>
           import('./Features/Supplier/Components/Supplier').then((m) => m.Suppliers),
+              data: { 
+               title: 'Suppliers'
+                         }
       },
       {
         path: 'purchases',
@@ -90,6 +103,9 @@ export const routes: Routes = [
           import('./Features/PurchaseOrder/purchase-order-page/purchase-order-page').then(
             (m) => m.PurchaseOrderPage,
           ),
+              data: { 
+               title: 'Purchases'
+                         }
       },
     ],
   },
