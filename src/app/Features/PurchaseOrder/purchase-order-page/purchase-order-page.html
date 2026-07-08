@@ -10,15 +10,10 @@
     </div>
 
     <button
+      (click)="openCreateModal()"
       class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-4 w-4"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
 
@@ -199,4 +194,169 @@
       </table>
     </div>
   </div>
+  @if (showCreateModal) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div class="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
+        <!-- Header -->
+
+        <div class="flex items-center justify-between p-4">
+          <div>
+            <h2 class="text-xl font-medium">New purchase order</h2>
+
+            <p class="mt-1 text-gray-500">Select a supplier and add medicines with quantities.</p>
+          </div>
+
+          <button (click)="closeCreateModal()" class="text-3xl text-gray-500 hover:text-red-500">
+            ×
+          </button>
+        </div>
+
+        <!-- Body -->
+
+        <div class="px-6 py-4">
+          <div class="grid grid-cols-3 gap-5">
+            <div>
+              <label class="mb-2 block font-medium"> Supplier </label>
+              <select [(ngModel)]="purchaseOrder.supplierId" class="w-full rounded-lg border p-2">
+                <option value="">Select supplier</option>
+                @for (supplier of suppliers; track supplier.id) {
+                  <option [value]="supplier.id">
+                    {{ supplier.name }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="mb-2 block font-medium"> Order Date </label>
+
+              <input
+                type="date"
+                class="w-full rounded-lg border p-2"
+                [(ngModel)]="purchaseOrder.orderDate"
+              />
+            </div>
+            <div>
+              <label class="mb-2 block font-medium"> Expected Date </label>
+
+              <input
+                type="date"
+                class="w-full rounded-lg border p-2"
+                [(ngModel)]="purchaseOrder.expectedDate"
+              />
+            </div>
+          </div>
+
+          <div class="mt-6 rounded-xl border-gray-400 border">
+            <div
+              class="flex items-center justify-between border-b border-gray-400 rounded-t-xl bg-blue-50 px-3 py-2"
+            >
+              <h3 class="font-semibold text-gray-700">Line Items</h3>
+
+              <button
+                class="rounded-lg border border-gray-500 px-4 py-2 hover:bg-blue-100"
+                (click)="addLine()"
+              >
+                + Add line
+              </button>
+            </div>
+
+            <div class="p-4 space-y-3">
+              <div
+                class="grid grid-cols-12 gap-3 border-b border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
+              >
+                <div class="col-span-3">Medicine</div>
+
+                <div class="col-span-2">Qty</div>
+
+                <div class="col-span-3">Unit Price</div>
+
+                <div class="col-span-2 text-right">Total</div>
+                <div class="col-span-2 text-right">Action</div>
+              </div>
+              @if (purchaseOrder.items.length === 0) {
+                <div class="text-center text-gray-400">No line items added.</div>
+              } @else {
+                @for (line of purchaseOrder.items; track $index) {
+                  <div class="grid grid-cols-12 gap-3 items-center">
+                    <!-- Medicine -->
+                    <div class="col-span-3">
+                      <select
+                        [(ngModel)]="line.medicineId"
+                        (ngModelChange)="onMedicineChange(line)"
+                        class="w-full rounded-lg border p-2"
+                      >
+                        <option value="">Select medicine</option>
+
+                        @for (medicine of Medicines; track medicine.id) {
+                          <option [value]="medicine.id">
+                            {{ medicine.tradeNameEn }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="col-span-2">
+                      <input
+                        type="number"
+                        [(ngModel)]="line.quantityOrdered"
+                        class="w-full rounded-lg border p-2"
+                      />
+                    </div>
+
+                    <!-- Unit Price -->
+                    <div class="col-span-3">
+                      <input
+                        type="number"
+                        [(ngModel)]="line.unitPrice"
+                        class="w-full rounded-lg border p-2"
+                      />
+                    </div>
+
+                    <div class="col-span-2 text-right">
+                      <span class="font-semibold text-gray-500">
+                        {{ line.quantityOrdered * line.unitPrice | number }}$
+                      </span>
+                    </div>
+
+                    <!-- Delete -->
+                    <div class="col-span-2 text-right">
+                      <button
+                        (click)="removeLine($index)"
+                        class="rounded-md bg-red-100 px-3 py-2 text-sm text-red-600 hover:bg-red-200"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                }
+                <div class="flex justify-end px-1 font-semibold text-gray-600">
+                  Total {{ totalPrice | number }}$
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+
+        <div class="flex justify-end gap-3 py-2 px-4">
+          <button
+            (click)="closeCreateModal()"
+            class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+
+          <button
+            class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+            (click)="createPurchaseOrder()"
+          >
+            Create Order
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
