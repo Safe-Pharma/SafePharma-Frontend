@@ -1,0 +1,102 @@
+@if (isLoading()) {
+  <div class="mx-auto max-w-3xl px-6 py-10 text-sm text-muted-foreground">Loading…</div>
+} @else {
+  <form class="mx-auto max-w-3xl space-y-6 px-6 py-10" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Submit payment proof</h1>
+      <p class="mt-1.5 text-sm text-muted-foreground">{{ summaryLabel() }}</p>
+    </div>
+
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="space-y-2">
+          <label for="paymentMethod" class="text-sm font-medium leading-none">Payment method</label>
+          <select
+            id="paymentMethod"
+            formControlName="paymentMethod"
+            class="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            @for (method of instructions()?.paymentMethods; track method.id) {
+              <option [value]="method.methodName">{{ method.methodName }}</option>
+            }
+          </select>
+          @if (getErrorMessage(form.controls.paymentMethod); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
+        </div>
+
+        <div class="space-y-2">
+          <label for="txn" class="text-sm font-medium leading-none">Transaction reference</label>
+          <input
+            id="txn"
+            type="text"
+            formControlName="transactionReference"
+            placeholder="e.g. INSTA-8891"
+            maxlength="64"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          @if (getErrorMessage(form.controls.transactionReference); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
+        </div>
+
+        <div class="space-y-2">
+          <label for="paidon" class="text-sm font-medium leading-none">Payment date</label>
+          <input
+            id="paidon"
+            type="date"
+            formControlName="paymentDate"
+            [attr.max]="today"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          @if (getErrorMessage(form.controls.paymentDate); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
+        </div>
+
+        <div class="space-y-2">
+          <label for="amount" class="text-sm font-medium leading-none">Paid amount (USD)</label>
+          <input
+            id="amount"
+            type="number"
+            formControlName="paidAmount"
+            min="0"
+            step="0.01"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          @if (getErrorMessage(form.controls.paidAmount); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
+        </div>
+
+        <div class="space-y-2 md:col-span-2">
+          <label class="text-sm font-medium leading-none">Receipt / screenshot</label>
+          <label
+            class="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong bg-muted/30 text-sm text-muted-foreground hover:bg-muted/50"
+          >
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12" /><path d="m17 8-5-5-5 5" />
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            </svg>
+            <span>{{ selectedFileName() ?? 'Click to upload (PNG, JPG, PDF · max 5MB)' }}</span>
+            <input type="file" accept="image/*,.pdf" class="hidden" (change)="onFileSelected($event)" />
+          </label>
+          @if (getErrorMessage(form.controls.receipt); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky bottom-0 -mx-6 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
+      <p class="text-xs text-muted-foreground">By submitting, you confirm the details are accurate.</p>
+      <button
+        type="submit"
+        [disabled]="isSubmitting()"
+        class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+      >
+        {{ isSubmitting() ? 'Submitting…' : 'Submit for verification' }}
+      </button>
+    </div>
+  </form>
+}

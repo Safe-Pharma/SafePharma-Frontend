@@ -7,7 +7,9 @@ import { CreateSubscriptionRequest } from './Models/create-subscription.model';
 import { City, CountryWithCities } from './Models/country-with-cities.model';
 import { GeneralResult } from '../../Core/Models/general-result.model';
 import{ alphanumericHyphenValidator, fullNameValidator, passwordComplexityValidator, phoneValidator } from './Validators/custom-validators';  
-
+import { Toast } from '../../Shared/Toasts/toast';
+import { SubscriptionPlanService } from './Services/subscription-plan.service';
+import { SubscriptionPlanRead } from './Models/subscription-plan.model';
 interface PlanOption {
   tier: 'Starter' | 'Professional' | 'Enterprise';
   price: string;
@@ -27,32 +29,17 @@ export class Subscribe implements OnInit {
   private subscriptionService = inject(SubscriptionService);
   private locationService = inject(LocationService);
   private router = inject(Router);
+  private toast = inject(Toast);
+  private planService = inject(SubscriptionPlanService);
 
-  readonly plans: PlanOption[] = [
-    {
-      tier: 'Starter',
-      price: '$49',
-      period: '/mo',
-      features: ['1 branch', '5 users', 'Inventory + POS'],
-    },
-    {
-      tier: 'Professional',
-      price: '$129',
-      period: '/mo',
-      features: ['5 branches', 'Unlimited users', 'All modules'],
-    },
-    {
-      tier: 'Enterprise',
-      price: 'Custom',
-      period: '',
-      features: ['Unlimited branches', 'SSO', 'Dedicated CSM'],
-    },
-  ];
-
+  isLoadingPlans = signal(true);
   isSubmitting = signal(false);
   submitError = signal<string | null>(null);
   countries = signal<CountryWithCities[]>([]);
   cities = signal<City[]>([]);
+  isUploadingLogo = signal(false);
+  logoFileName = signal<string | null>(null);
+  plans = signal<SubscriptionPlanRead[]>([]);
 
 form = this.fb.group({
   planTier: this.fb.control<'Starter' | 'Professional' | 'Enterprise'>('Professional', {
@@ -86,21 +73,26 @@ form = this.fb.group({
   }),
 });
 
-  ngOnInit(): void {
-this.locationService.getCountries().subscribe({
-  next: (result) => {
-    console.log(result);
+ngOnInit(): void {
+  this.locationService.getCountries().subscribe({
+    next: (result) => {
+      if (result.success && result.data) {
+        this.countries.set(result.data);
+      }
+    },
+  });
 
-    if (result.success && result.data) {
-      this.countries.set(result.data);
-
-      console.log('Countries signal:', this.countries());
-      console.log('First country:', this.countries()[0]);
-      console.log('Cities of first country:', this.countries()[0]?.cities);
-    }
-  }
-});
-  }
+  this.planService.getActivePlans().subscribe({
+    next: (plans) => {
+      this.isLoadingPlans.set(false);
+      this.plans.set(plans.sort((a, b) => a.sortOrder - b.sortOrder));
+    },
+    error: () => {
+      this.isLoadingPlans.set(false);
+      this.toast.show('Could not load subscription plans.', 'error');
+    },
+  });
+}
 
 onCountryChange(): void {
   const selectedCountryId = this.form.controls.pharmacy.controls.country.value;
@@ -123,6 +115,25 @@ onCountryChange(): void {
   isInvalid(control: AbstractControl | null): boolean {
     return !!control && control.invalid && (control.touched || control.dirty);
   }
+  planPrice(plan: SubscriptionPlanRead): string {
+  const amount = this.form.controls.billingCycle.value === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
+  return `${plan.currency} ${amount}`;
+}
+
+planPeriod(): string {
+  return this.form.controls.billingCycle.value === 'yearly' ? '/yr' : '/mo';
+}
+
+yearlyDiscountLabel(): string | null {
+  const plan = this.plans().find((p) => p.tier === this.form.controls.planTier.value);
+  if (!plan || plan.monthlyPrice <= 0) return null;
+
+  const yearlyEquivalentOfMonthly = plan.monthlyPrice * 12;
+  if (yearlyEquivalentOfMonthly <= plan.yearlyPrice) return null; // no real savings, don't show a badge
+
+  const discountPercent = Math.round((1 - plan.yearlyPrice / yearlyEquivalentOfMonthly) * 100);
+  return `−${discountPercent}%`;
+}
 
 getErrorMessage(control: AbstractControl | null): string | null {
   if (!control || !control.errors || !(control.touched || control.dirty)) return null;
@@ -162,7 +173,7 @@ getErrorMessage(control: AbstractControl | null): string | null {
       next: (result) => {
         this.isSubmitting.set(false);
         if (result.success) {
-          this.router.navigate(['/']); // swap for a real confirmation route once you build one
+          this.router.navigate(['/subscribe', result.data!.id, 'payment']);
         } else {
           this.applyResultErrors(result);
         }
@@ -202,4 +213,29 @@ getErrorMessage(control: AbstractControl | null): string | null {
     }
     return control;
   }
+  onLogoSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  this.isUploadingLogo.set(true);
+
+  this.subscriptionService.uploadLogo(file).subscribe({
+    next: (result) => {
+      this.isUploadingLogo.set(false);
+      if (result.success && result.data) {
+        this.form.controls.pharmacy.controls.logoUrl.setValue(result.data);
+        this.logoFileName.set(file.name);
+      } else {
+        this.toast.show(result.message ?? 'Logo upload failed.', 'error');
+      }
+      input.value = '';
+    },
+    error: () => {
+      this.isUploadingLogo.set(false);
+      this.toast.show('Logo upload failed. Please try again.', 'error');
+      input.value = '';
+    },
+  });
+}
 }

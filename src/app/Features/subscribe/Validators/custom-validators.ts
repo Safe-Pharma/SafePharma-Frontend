@@ -37,3 +37,17 @@ export function alphanumericHyphenValidator(control: AbstractControl): Validatio
   const valid = /^[A-Za-z0-9\-]{5,20}$/.test(value);
   return valid ? null : { invalidFormat: true };
 }
+
+export function receiptFileValidator(control: AbstractControl): ValidationErrors | null {
+  const file = control.value as File | null;
+  if (!file) return null; // required handled separately by Validators.required
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  const maxSizeBytes = 5 * 1024 * 1024;
+
+  const errors: ValidationErrors = {};
+  if (!allowedTypes.includes(file.type)) errors['invalidFileType'] = true;
+  if (file.size > maxSizeBytes) errors['fileTooLarge'] = true;
+
+  return Object.keys(errors).length > 0 ? errors : null;
+}

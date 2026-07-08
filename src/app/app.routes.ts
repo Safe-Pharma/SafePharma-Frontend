@@ -20,6 +20,34 @@ export const routes: Routes = [
         path: 'subscribe',
         loadComponent: () => import('./Features/subscribe/subscribe').then((m) => m.Subscribe),
       },
+      {
+        path: 'subscribe/:subscriptionId/payment',
+        loadComponent: () =>
+          import('./Features/subscribe/payment-instructions/payment-instructions').then(
+            (m) => m.PaymentInstructions,
+          ),
+      },
+      {
+        path: 'subscribe/:subscriptionId/payment/proof',
+        loadComponent: () =>
+          import('./Features/subscribe/submit-payment-proof/submit-payment-proof').then(
+            (m) => m.SubmitPaymentProof,
+          ),
+      },
+      {
+        path: 'subscribe/:subscriptionId/payment/review',
+        loadComponent: () =>
+          import('./Features/subscribe/payment-under-review/payment-under-review').then(
+            (m) => m.PaymentUnderReview,
+          ),
+      },
+      {
+        path: 'subscribe/:subscriptionId/status',
+        loadComponent: () =>
+          import('./Features/subscribe/subscription-status/subscription-status').then(
+            (m) => m.SubscriptionStatus,
+          ),
+      },
     ],
   },
 
