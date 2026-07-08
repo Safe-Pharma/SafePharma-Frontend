@@ -1,0 +1,41 @@
+@if (variant() === 'hero') {
+  <div class="mt-1.5 flex items-center gap-2">
+    <span class="font-mono text-lg font-semibold tracking-tight text-primary">{{ value() }}</span>
+    <button
+      type="button"
+      (click)="copy()"
+      class="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      [attr.aria-label]="'Copy ' + (label() ?? 'value')"
+    >
+      <ng-container [ngTemplateOutlet]="icon" />
+    </button>
+  </div>
+} @else {
+  <div class="flex items-center justify-between gap-3">
+    <dt class="text-xs uppercase tracking-wider text-muted-foreground">{{ label() }}</dt>
+    <dd class="flex items-center gap-2 truncate font-medium">
+      <span class="truncate">{{ value() }}</span>
+      <button
+        type="button"
+        (click)="copy()"
+        class="grid size-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        [attr.aria-label]="'Copy ' + label()"
+      >
+        <ng-container [ngTemplateOutlet]="icon" />
+      </button>
+    </dd>
+  </div>
+}
+
+<ng-template #icon>
+  @if (copied()) {
+    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  } @else {
+    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  }
+</ng-template>
