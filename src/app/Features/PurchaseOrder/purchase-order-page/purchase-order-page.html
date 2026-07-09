@@ -164,7 +164,14 @@
 
               <td class="px-5 py-4 text-right">
                 <button
-                  class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-slate-100"
+                  (click)="openReceiveModal(order)"
+                  [disabled]="order.status === 'Received'"
+                  class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition"
+                  [ngClass]="
+                    order.status === 'Received'
+                      ? 'cursor-not-allowed border border-green-200 bg-green-100 text-green-700'
+                      : 'border border-gray-300 bg-white hover:bg-slate-100'
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -181,7 +188,7 @@
                     />
                   </svg>
 
-                  Receive
+                  {{ order.status === 'Received' ? 'Received' : 'Receive' }}
                 </button>
               </td>
             </tr>
@@ -354,6 +361,113 @@
             (click)="createPurchaseOrder()"
           >
             Create Order
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  @if (showReceiveModal) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div class="w-full max-w-4xl rounded-2xl bg-white shadow-xl">
+        <!-- Header -->
+
+        <div class="flex justify-between px-5 py-2">
+          <div>
+            <h2 class="text-xl font-semibold">Receive goods · {{ selectedOrder.orderNumber }}</h2>
+
+            <p class="text-sm text-gray-500">
+              Enter batch number and expiry per line, then confirm receipt.
+            </p>
+          </div>
+
+          <button (click)="showReceiveModal = false" class="text-2xl text-gray-500">×</button>
+        </div>
+
+        <div class="px-6 py-3">
+          <!-- Invoice -->
+
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div>
+              <label class="text-sm font-medium"> Invoice Number </label>
+
+              <input [(ngModel)]="receipt.invoiceNumber" class="w-full rounded-lg border p-2" />
+            </div>
+
+            <div>
+              <label class="text-sm font-medium"> Invoice Date </label>
+
+              <input
+                type="date"
+                [(ngModel)]="receipt.invoiceDate"
+                class="w-full rounded-lg border p-2"
+              />
+            </div>
+
+            <div>
+              <label class="text-sm font-medium"> Invoice Total </label>
+
+              <input
+                type="number"
+                [(ngModel)]="receipt.invoiceTotal"
+                class="w-full rounded-lg border p-2"
+              />
+            </div>
+          </div>
+
+          <!-- Items -->
+
+          <div class="rounded-xl border border-gray-400">
+            <div class="grid grid-cols-12 bg-blue-50 rounded-t-2xl p-3 text-sm font-semibold">
+              <div class="col-span-4">Medicine</div>
+
+              <div class="col-span-2">Qty</div>
+
+              <div class="col-span-3">Batch #</div>
+
+              <div class="col-span-3">Expiry</div>
+            </div>
+
+            @for (item of receipt.items; track $index) {
+              <div class="grid grid-cols-12 items-center gap-3 border-gray-500 border-t p-3">
+                <div class="col-span-4">
+                  <p class="font-medium">
+                    {{ item.medicineName }}
+                  </p>
+                </div>
+
+                <div class="col-span-2">
+                  {{ item.quantity }}
+                </div>
+
+                <div class="col-span-3">
+                  <input
+                    [(ngModel)]="item.batchNumber"
+                    placeholder="BATCH-###"
+                    class="w-full rounded-lg border p-2"
+                  />
+                </div>
+
+                <div class="col-span-3">
+                  <input
+                    type="date"
+                    [(ngModel)]="item.expiryDate"
+                    class="w-full rounded-lg border p-2"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer -->
+
+        <div class="flex justify-end gap-3 px-5 py-3">
+          <button (click)="showReceiveModal = false" class="rounded-lg border px-5 py-2">
+            Cancel
+          </button>
+
+          <button (click)="confirmReceipt()" class="rounded-lg bg-blue-600 px-5 py-2 text-white">
+            Confirm receipt
           </button>
         </div>
       </div>
