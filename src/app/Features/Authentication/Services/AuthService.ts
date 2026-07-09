@@ -9,6 +9,14 @@ export class AuthService {
       login(data: any) {
          return this.http.post(`${this.baseUrl}/login`, data);
          }
+
+        setPassword(data: { email: string; token: string; newPassword: string }) {
+            return this.http.post(`${this.baseUrl}/set-password`, data);
+        }
+
+
+
+
      changePassword(data: any) {
           const token = this.authSession.getToken();
                         const headers = token
