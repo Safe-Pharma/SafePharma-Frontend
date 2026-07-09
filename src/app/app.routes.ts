@@ -20,6 +20,11 @@ export const routes: Routes = [
         path: 'subscribe',
         loadComponent: () => import('./Features/subscribe/subscribe').then((m) => m.Subscribe),
       },
+      {
+      path: 'create-password',
+      loadComponent: () =>
+        import('./Features/Authentication/set-password/set-password').then(m => m.CreatePasswordComponent),
+    }
     ],
   },
 
