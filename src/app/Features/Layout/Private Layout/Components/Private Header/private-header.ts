@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterLink,
+} from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthSessionService } from '../../../../../Core/Services/auth-session.service';
 
 export interface Breadcrumb {
@@ -16,13 +22,18 @@ export interface Breadcrumb {
 })
 export class PrivateHeader {
   private readonly authSession = inject(AuthSessionService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  readonly pharmacyName = 'MediRx Pharmacy';
-  readonly breadcrumbs: Breadcrumb[] = [{ label: 'Dashboard', active: true }];
+  readonly pharmacyName =
+    this.authSession.user()?.pharmacyName ?? 'Pharmacy Name';
+
   readonly lang: 'EN' | 'AR' = 'EN';
   readonly hasUnreadNotifications = true;
   readonly userMenuOpen = signal(false);
   readonly user = this.authSession.user;
+
+  pageTitle = signal('Dashboard');
 
   searchTerm = '';
 
@@ -31,6 +42,20 @@ export class PrivateHeader {
     { label: 'Profile', route: '/app/profile' },
     { label: 'Change Password', route: '/app/change-password' },
   ];
+
+  constructor() {
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        let current = this.route;
+
+        while (current.firstChild) {
+          current = current.firstChild;
+        }
+
+        this.pageTitle.set(current.snapshot.data['title'] ?? 'Dashboard');
+      });
+  }
 
   toggleUserMenu(): void {
     this.userMenuOpen.update(value => !value);

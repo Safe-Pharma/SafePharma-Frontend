@@ -17,6 +17,7 @@ export class PharmacySettings implements OnInit {
   previewUrl: string | null = null;
 
   selectedLanguage: string = 'en';
+  isLoading = false;
 
   languages = [
     { value: 'en', label: 'English' },
@@ -26,9 +27,9 @@ export class PharmacySettings implements OnInit {
   settings = {
     name: '',
     logoUrl: null,
-    street: '',
+    address: '',
     city: '',
-    governorate: '',
+    country: '',
     phone: '',
     taxRegistrationNumber: '',
   };
@@ -43,22 +44,34 @@ export class PharmacySettings implements OnInit {
 
   ngOnInit(): void {
     this.settingsService.getSettings().subscribe((res) => {
-      this.settings = res.data;
+      this.settings = {
+        name: res.data.name || '',
+        logoUrl: res.data.logoUrl || null,
+        address: res.data.address === 'null' ? '' : res.data.address || '',
+        city: res.data.city === 'null' ? '' : res.data.city || '',
+        country: res.data.country === 'null' ? '' : res.data.country || '',
+        phone: res.data.phone === 'null' ? '' : res.data.phone || '',
+        taxRegistrationNumber:
+          res.data.taxRegistrationNumber === 'null' ? '' : res.data.taxRegistrationNumber || '',
+      };
       this.cdr.detectChanges();
     });
-    this.userLanguageService.getLanguage().subscribe((data) => {
-      this.selectedLanguage = data.language ?? 'en';
+    this.userLanguageService.getLanguage().subscribe((res) => {
+      this.selectedLanguage = res.message ?? 'en';
     });
   }
   onSubmit(): void {
+    this.isLoading = true;
+    this.cdr.detectChanges();
+
     this.validationErrors = {};
 
     const formData = new FormData();
 
     formData.append('Name', this.settings.name);
-    formData.append('Street', this.settings.street);
+    formData.append('Address', this.settings.address);
     formData.append('City', this.settings.city);
-    formData.append('Governorate', this.settings.governorate);
+    formData.append('Country', this.settings.country);
     formData.append('Phone', this.settings.phone);
     formData.append('TaxRegistrationNumber', this.settings.taxRegistrationNumber);
 
@@ -68,10 +81,15 @@ export class PharmacySettings implements OnInit {
 
     this.settingsService.updateSettings(formData).subscribe({
       next: (res) => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
         console.log('Updated successfully', res);
         this.toast.show('Settings saved successfully!', 'success');
       },
       error: (err) => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+
         if (err.error?.errors) {
           const errors = err.error.errors;
           Object.keys(errors).forEach((key) => {

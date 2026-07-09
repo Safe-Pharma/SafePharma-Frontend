@@ -24,7 +24,35 @@ export const routes: Routes = [
       path: 'create-password',
       loadComponent: () =>
         import('./Features/Authentication/set-password/set-password').then(m => m.CreatePasswordComponent),
-    }
+      },
+      {
+        path: 'subscribe/:subscriptionId/payment',
+        loadComponent: () =>
+          import('./Features/subscribe/payment-instructions/payment-instructions').then(
+            (m) => m.PaymentInstructions,
+          ),
+      },
+      {
+        path: 'subscribe/:subscriptionId/payment/proof',
+        loadComponent: () =>
+          import('./Features/subscribe/submit-payment-proof/submit-payment-proof').then(
+            (m) => m.SubmitPaymentProof,
+          ),
+      },
+      {
+        path: 'subscribe/:subscriptionId/payment/review',
+        loadComponent: () =>
+          import('./Features/subscribe/payment-under-review/payment-under-review').then(
+            (m) => m.PaymentUnderReview,
+          ),
+      },
+      {
+        path: 'subscribe/:subscriptionId/status',
+        loadComponent: () =>
+          import('./Features/subscribe/subscription-status/subscription-status').then(
+            (m) => m.SubscriptionStatus,
+          ),
+      },
     ],
   },
 
@@ -44,18 +72,46 @@ export const routes: Routes = [
           import('./Features/settings/pharmacy-settings/pharmacy-settings').then(
             (m) => m.PharmacySettings,
           ),
+           data: {
+               title: 'Settings'
+                         }
       },
       { path: 'profile', component: ProfilePage },
       {
         path: 'taxes',
-        loadComponent: () => import('./Features/Tax/taxes').then((m) => m.Taxes),
+        loadComponent: () => import('./Features/Tax/Components/taxes').then((m) => m.Taxes),
+              data: {
+               title: 'Taxes'
+                         }
+      
       },
       {
         path: 'users',
         loadComponent: () =>
           import('./Features/users/pages/users-list/users-list').then((m) => m.UsersListComponent),
+              data: {
+               title: 'Users'
+                         }
       },
       { path: 'change-password', component: ChangePassword },
+      {
+        path: 'suppliers',
+        loadComponent: () =>
+          import('./Features/Supplier/Components/Supplier').then((m) => m.Suppliers),
+              data: { 
+               title: 'Suppliers'
+                         }
+      },
+      {
+        path: 'purchases',
+        loadComponent: () =>
+          import('./Features/PurchaseOrder/purchase-order-page/purchase-order-page').then(
+            (m) => m.PurchaseOrderPage,
+          ),
+              data: { 
+               title: 'Purchases'
+                         }
+      },
     ],
   },
 ];

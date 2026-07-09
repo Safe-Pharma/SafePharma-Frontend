@@ -16,4 +16,9 @@ export class SubscriptionService {
   create(request: CreateSubscriptionRequest): Observable<GeneralResult<SubscriptionReadResponse>> {
     return this.http.post<GeneralResult<SubscriptionReadResponse>>(this.baseUrl, request);
   }
+  uploadLogo(file: File): Observable<GeneralResult<string>> {
+  const formData = new FormData();
+  formData.append('logo', file);
+  return this.http.post<GeneralResult<string>>(`${this.baseUrl}/logo`, formData);
+}
 }
