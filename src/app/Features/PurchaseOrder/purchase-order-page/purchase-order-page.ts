@@ -35,6 +35,17 @@ export class PurchaseOrderPage implements OnInit {
     ],
   };
 
+  showReceiveModal = false;
+
+  selectedOrder: any = null;
+
+  receipt = {
+    invoiceNumber: '',
+    invoiceDate: null,
+    invoiceTotal: 0,
+    items: [] as any[],
+  };
+
   constructor(
     private purchaseOrderService: PurchaseOrderApiService,
     private cdr: ChangeDetectorRef,
@@ -195,6 +206,95 @@ export class PurchaseOrderPage implements OnInit {
       },
       error: (err) => {
         console.log(err);
+        this.toast.show('Failed to create Purchase Order', 'error');
+      },
+    });
+  }
+
+  openReceiveModal(order: any) {
+    console.log(order.items);
+    this.selectedOrder = order;
+    console.log(this.selectedOrder);
+
+    this.receipt = {
+      invoiceNumber: '',
+      invoiceDate: null,
+      invoiceTotal: order.totalAmount,
+      items: order.items.map((item: any) => ({
+        purchaseOrderItemId: item.id,
+
+        medicineName: item.medicineName,
+
+        quantity: item.quantityOrdered,
+
+        batchNumber: '',
+
+        expiryDate: '',
+      })),
+    };
+
+    this.showReceiveModal = true;
+  }
+
+  confirmReceipt() {
+    if (!this.receipt.invoiceNumber || this.receipt.invoiceNumber.trim() === '') {
+      this.toast.show('Invoice number is required', 'error');
+      return;
+    }
+
+    if (!this.receipt.invoiceDate) {
+      this.toast.show('Invoice date is required', 'error');
+      return;
+    }
+
+    if (!this.receipt.invoiceTotal || this.receipt.invoiceTotal <= 0) {
+      this.toast.show('Invoice total must be greater than 0', 'error');
+      return;
+    }
+
+    if (!this.receipt.items || this.receipt.items.length === 0) {
+      this.toast.show('Please add at least one item', 'error');
+      return;
+    }
+
+    for (let item of this.receipt.items) {
+      if (!item.batchNumber || item.batchNumber.trim() === '') {
+        this.toast.show(`Batch number is required for ${item.medicineName}`, 'error');
+        return;
+      }
+
+      if (!item.expiryDate) {
+        this.toast.show(`Expiry date is required for ${item.medicineName}`, 'error');
+        return;
+      }
+
+      const expiryDate = new Date(item.expiryDate);
+      const today = new Date();
+
+      today.setHours(0, 0, 0, 0);
+
+      if (expiryDate < today) {
+        this.toast.show(`Expiry date cannot be in the past for ${item.medicineName}`, 'error');
+        return;
+      }
+    }
+
+    console.log(this.receipt);
+
+    this.purchaseOrderService.receivePurchaseOrder(this.selectedOrder.id, this.receipt).subscribe({
+      next: (res) => {
+        this.toast.show('Receipt created successfully', 'success');
+
+        this.showReceiveModal = false;
+
+        this.loadPurchaseOrders();
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+        console.log(err);
+
+        this.toast.show('Failed to receive goods', 'error');
       },
     });
   }

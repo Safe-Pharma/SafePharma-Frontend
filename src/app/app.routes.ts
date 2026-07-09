@@ -78,7 +78,7 @@ export const routes: Routes = [
               data: {
                title: 'Taxes'
                          }
-      
+
       },
       {
         path: 'users',
@@ -93,7 +93,7 @@ export const routes: Routes = [
         path: 'suppliers',
         loadComponent: () =>
           import('./Features/Supplier/Components/Supplier').then((m) => m.Suppliers),
-              data: { 
+              data: {
                title: 'Suppliers'
                          }
       },
@@ -103,7 +103,7 @@ export const routes: Routes = [
           import('./Features/PurchaseOrder/purchase-order-page/purchase-order-page').then(
             (m) => m.PurchaseOrderPage,
           ),
-              data: { 
+              data: {
                title: 'Purchases'
                          }
       },
