@@ -8,9 +8,9 @@ export interface Supplier {
   email: string;
   taxNumber: string;
   address: string;
-  country: string; 
+  country: string; // country name, resolved server-side from countryId
   status: SupplierStatus;
-  outstanding: number; 
+  outstanding: number; // current outstanding balance
 }
 
 export interface SupplierStats {
@@ -18,6 +18,7 @@ export interface SupplierStats {
   active: number;
   inactive: number;
   countriesCount: number;
+  paymentsRecorded: number;
 }
 
 export interface SupplierCreateDto {

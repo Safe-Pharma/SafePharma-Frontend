@@ -18,7 +18,14 @@ import {
   SupplierStatus,
   SupplierUpdateDto,
 } from '../Models/Supplier';
+import {
+  PAYMENT_METHODS,
+  PaymentMethod,
+  RecordSupplierPaymentDto,
+  SupplierPayment,
+} from '../Models/Supplier-payment';
 import { SuppliersService } from '../Services/Supplier';
+import { SupplierPaymentsService } from '../Services/Supplier-Payment';
 import { CountryWithCities } from '../../subscribe/Models/country-with-cities.model';
 import { LocationService } from '../../subscribe/Services/location.service';
 
@@ -54,6 +61,9 @@ const EMPTY_FORM: SupplierFormModel = {
   templateUrl: './supplier.html',
 })
 export class Suppliers implements OnInit, OnDestroy {
+  // ---- Tabs ----
+  activeTab = signal<'suppliers' | 'history'>('suppliers');
+
   search = signal('');
   private refreshTick = signal(0);
 
@@ -93,6 +103,16 @@ export class Suppliers implements OnInit, OnDestroy {
 
   countries = signal<CountryWithCities[]>([]);
 
+  // ---- payment history: "listens" to refresh ticks too (record payment bumps it) ----
+  private history$ = this.refresh$.pipe(
+    switchMap(() =>
+      this.paymentsService.getHistory().pipe(catchError(() => of([] as SupplierPayment[])))
+    )
+  );
+  paymentHistory = toSignal(this.history$, { initialValue: [] as SupplierPayment[] });
+
+  readonly paymentMethods = PAYMENT_METHODS;
+
   openMenuId = signal<string | null>(null);
   menuPosition = signal<{ top: number; left: number } | null>(null);
   menuSupplier = computed(() => this.suppliers().find((s) => s.id === this.openMenuId()) ?? null);
@@ -100,23 +120,26 @@ export class Suppliers implements OnInit, OnDestroy {
   private closeMenuOnScroll = () => this.closeMenu();
 
   constructor(
-  private suppliersService: SuppliersService,
-  private LocationService: LocationService
-) {
+    private suppliersService: SuppliersService,
+    private LocationService: LocationService,
+    private paymentsService: SupplierPaymentsService
+  ) {
     document.addEventListener('scroll', this.closeMenuOnScroll, true);
   }
-ngOnInit(): void {
-  this.LocationService.getCountries().subscribe({
-    next: (result) => {
-      if (result.success && result.data) {
-        this.countries.set(result.data);
-      }
-    },
-    error: () => {
-      this.errorMsg.set('An error occurred while loading countries.');
-    },
-  });
-}
+
+  ngOnInit(): void {
+    this.LocationService.getCountries().subscribe({
+      next: (result) => {
+        if (result.success && result.data) {
+          this.countries.set(result.data);
+        }
+      },
+      error: () => {
+        this.errorMsg.set('An error occurred while loading countries.');
+      },
+    });
+  }
+
   ngOnDestroy(): void {
     document.removeEventListener('scroll', this.closeMenuOnScroll, true);
   }
@@ -181,20 +204,20 @@ ngOnInit(): void {
     this.editingSupplier.set(supplier);
 
     const matchedCountry = this.countries().find(
-  (c) => c.name === supplier.country
-);
+      (c) => c.name === supplier.country
+    );
 
-this.formModel = {
-  name: supplier.name,
-  contactPerson: supplier.contactPerson,
-  phone: supplier.phone,
-  email: supplier.email,
-  taxNumber: supplier.taxNumber,
-  address: supplier.address,
-  countryId: matchedCountry?.id ?? '',
-  status: supplier.status,
-  outstanding: supplier.outstanding,
-};
+    this.formModel = {
+      name: supplier.name,
+      contactPerson: supplier.contactPerson,
+      phone: supplier.phone,
+      email: supplier.email,
+      taxNumber: supplier.taxNumber,
+      address: supplier.address,
+      countryId: matchedCountry?.id ?? '',
+      status: supplier.status,
+      outstanding: supplier.outstanding,
+    };
     this.formError.set(null);
     this.showFormModal.set(true);
   }
@@ -286,6 +309,87 @@ this.formModel = {
       error: () => {
         this.deleting.set(false);
         this.errorMsg.set('An error occurred while deleting the supplier.');
+      },
+    });
+  }
+
+  // ---- Record payment modal ----
+  recordPaymentSupplier = signal<Supplier | null>(null);
+  recordingPayment = signal(false);
+  recordPaymentError = signal<string | null>(null);
+  paymentFormModel: {
+    amount: number;
+    paidAt: string;
+    paymentMethod: PaymentMethod;
+    note: string;
+  } = {
+    amount: 0,
+    paidAt: this.today(),
+    paymentMethod: 'Bank Transfer',
+    note: '',
+  };
+
+  private today(): string {
+    return new Date().toISOString().slice(0, 10); // yyyy-MM-dd for <input type="date">
+  }
+
+  openRecordPaymentModal(supplier: Supplier): void {
+    this.closeMenu();
+    this.recordPaymentSupplier.set(supplier);
+    this.paymentFormModel = {
+      amount: supplier.outstanding,
+      paidAt: this.today(),
+      paymentMethod: 'Bank Transfer',
+      note: '',
+    };
+    this.recordPaymentError.set(null);
+    this.showFormModal.set(false);
+  }
+
+  closeRecordPaymentModal(): void {
+    this.recordPaymentSupplier.set(null);
+  }
+
+  submitRecordPayment(): void {
+    const supplier = this.recordPaymentSupplier();
+    if (!supplier) return;
+
+    const amount = Number(this.paymentFormModel.amount);
+
+    if (!amount || amount <= 0) {
+      this.recordPaymentError.set('Enter a valid amount.');
+      return;
+    }
+
+    if (amount > supplier.outstanding) {
+      this.recordPaymentError.set(
+        `Amount can't exceed the outstanding balance (${supplier.outstanding}).`
+      );
+      return;
+    }
+
+    this.recordingPayment.set(true);
+    this.recordPaymentError.set(null);
+
+    const dto: RecordSupplierPaymentDto = {
+      supplierId: supplier.id,
+      amount,
+      paymentMethod: this.paymentFormModel.paymentMethod,
+      note: this.paymentFormModel.note?.trim() || undefined,
+      paidAt: this.paymentFormModel.paidAt,
+    };
+
+    this.paymentsService.record(dto).subscribe({
+      next: () => {
+        this.recordingPayment.set(false);
+        this.recordPaymentSupplier.set(null);
+        this.refresh();
+      },
+      error: (err) => {
+        this.recordingPayment.set(false);
+        this.recordPaymentError.set(
+          err?.error?.message ?? 'An error occurred while recording the payment.'
+        );
       },
     });
   }
