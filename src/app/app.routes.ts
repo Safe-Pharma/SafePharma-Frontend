@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
 import { PublicLayout } from './Features/Layout/Public Layout/Components/public-layout';
 import { privatelayout } from './Features/Layout/Private Layout/Components/private-layout';
+import { AuditPage } from './Features/audit-page/audit-page';
 import { AuthLayout } from './Features/Layout/Auth Layout/Components/Auth-layout';
 import { Login } from './Features/Authentication/login/login';
-import { ChangePassword } from './Features/Authentication/change-password/change-password';
 import { ProfilePage } from './Features/Profile/profile-page';
+import { ChangePassword } from './Features/Authentication/change-password/change-password';
 
 export const routes: Routes = [
   {
@@ -21,9 +22,11 @@ export const routes: Routes = [
         loadComponent: () => import('./Features/subscribe/subscribe').then((m) => m.Subscribe),
       },
       {
-      path: 'create-password',
-      loadComponent: () =>
-        import('./Features/Authentication/set-password/set-password').then(m => m.CreatePasswordComponent),
+        path: 'create-password',
+        loadComponent: () =>
+          import('./Features/Authentication/set-password/set-password').then(
+            (m) => m.CreatePasswordComponent,
+          ),
       },
       {
         path: 'subscribe/:subscriptionId/payment',
@@ -72,35 +75,34 @@ export const routes: Routes = [
           import('./Features/settings/pharmacy-settings/pharmacy-settings').then(
             (m) => m.PharmacySettings,
           ),
-           data: {
-               title: 'Settings'
-                         }
+        data: {
+          title: 'Settings',
+        },
       },
       { path: 'profile', component: ProfilePage },
       {
         path: 'taxes',
         loadComponent: () => import('./Features/Tax/Components/taxes').then((m) => m.Taxes),
-              data: {
-               title: 'Taxes'
-                         }
-
+        data: {
+          title: 'Taxes',
+        },
       },
       {
         path: 'users',
         loadComponent: () =>
           import('./Features/users/pages/users-list/users-list').then((m) => m.UsersListComponent),
-              data: {
-               title: 'Users'
-                         }
+        data: {
+          title: 'Users',
+        },
       },
       { path: 'change-password', component: ChangePassword },
       {
         path: 'suppliers',
         loadComponent: () =>
           import('./Features/Supplier/Components/Supplier').then((m) => m.Suppliers),
-              data: {
-               title: 'Suppliers'
-                         }
+        data: {
+          title: 'Suppliers',
+        },
       },
       {
         path: 'purchases',
@@ -108,10 +110,22 @@ export const routes: Routes = [
           import('./Features/PurchaseOrder/purchase-order-page/purchase-order-page').then(
             (m) => m.PurchaseOrderPage,
           ),
-              data: {
-               title: 'Purchases'
-                         }
+        data: {
+          title: 'Purchases',
+        },
       },
+
+      /* {
+      
+        path: '',
+        loadComponent: () =>
+          import('./Features/dashboard/dashboard').then(m => m.Dashboard),
+      }, */
+      {
+        path: 'audit',
+        component: AuditPage,
+      },
+      //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
 ];
