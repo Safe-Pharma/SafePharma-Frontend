@@ -284,19 +284,20 @@
               @if (purchaseOrder.items.length === 0) {
                 <div class="text-center text-gray-400">No line items added.</div>
               } @else {
+
                 @for (line of purchaseOrder.items; track $index) {
                   <div class="grid grid-cols-12 gap-3 items-center">
                     <!-- Medicine -->
                     <div class="col-span-3">
                       <select
-                        [(ngModel)]="line.medicineId"
+                        [(ngModel)]="line.pharmacyMedicineId"
                         (ngModelChange)="onMedicineChange(line)"
                         class="w-full rounded-lg border p-2"
                       >
                         <option value="">Select medicine</option>
 
-                        @for (medicine of Medicines; track medicine.id) {
-                          <option [value]="medicine.id">
+                        @for (medicine of Medicines; track medicine.pharmacyMedicineId) {
+                          <option [value]="medicine.pharmacyMedicineId">
                             {{ medicine.tradeNameEn }}
                           </option>
                         }
