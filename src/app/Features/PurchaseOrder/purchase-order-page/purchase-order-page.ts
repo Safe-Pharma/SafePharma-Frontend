@@ -28,7 +28,7 @@ export class PurchaseOrderPage implements OnInit {
     supplierId: '',
     items: [
       {
-        medicineId: '',
+        pharmacyMedicineId: '',
         quantityOrdered: 1,
         unitPrice: 0,
       },
@@ -84,7 +84,7 @@ export class PurchaseOrderPage implements OnInit {
     this.purchaseOrderService.getMedicines().subscribe({
       next: (res: any) => {
         this.Medicines = res;
-        console.log(res);
+        console.log("medddddddddddddddddddddd", res);
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -100,7 +100,7 @@ export class PurchaseOrderPage implements OnInit {
       supplierId: '',
       items: [
         {
-          medicineId: '',
+          pharmacyMedicineId: '',
           quantityOrdered: 1,
           unitPrice: 0,
         },
@@ -141,7 +141,7 @@ export class PurchaseOrderPage implements OnInit {
 
   addLine() {
     this.purchaseOrder.items.push({
-      medicineId: '',
+      pharmacyMedicineId: '',
       quantityOrdered: 1,
       unitPrice: 0,
     });
@@ -151,7 +151,7 @@ export class PurchaseOrderPage implements OnInit {
   }
 
   onMedicineChange(line: any) {
-    const medicine = this.Medicines.find((m) => m.id === line.medicineId);
+    const medicine = this.Medicines.find((m) => m.pharmacyMedicineId === line.pharmacyMedicineId);
 
     if (medicine) {
       line.unitPrice = medicine.purchasePrice;
@@ -179,7 +179,7 @@ export class PurchaseOrderPage implements OnInit {
     }
 
     for (const item of this.purchaseOrder.items) {
-      if (!item.medicineId) {
+      if (!item.pharmacyMedicineId) {
         this.toast.show('Please select a medicine', 'error');
         return;
       }
