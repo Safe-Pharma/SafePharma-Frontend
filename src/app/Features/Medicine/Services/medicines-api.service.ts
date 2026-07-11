@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { AddManufacturerBarcodeDto, AddPharmacyBarcodeDto, GlobalMedicineSearchResult, LinkExistingMedicineDto, Medicine, MedicineCreateDto, MedicineDetails, MedicineStats } from '../Models/medicine.model';
+import { AddManufacturerBarcodeDto, AddPharmacyBarcodeDto, GlobalMedicineSearchResult, LinkExistingMedicineDto, Medicine, MedicineCreateDto, MedicineDetails, MedicineStats, PharmacyMedicineUpdateDto } from '../Models/medicine.model';
 import { GeneralResult } from '../../../Core/Models/general-result.model';
 
 @Injectable({ providedIn: 'root' })
@@ -63,4 +63,8 @@ delete(id: string): Observable<void> {
   addPharmacyBarcode(dto: AddPharmacyBarcodeDto): Observable<GeneralResult<null>> {
     return this.http.post<GeneralResult<null>>(`${this.barcodeUrl}/pharmacy`, dto);
   }
+
+  updatePharmacyMedicine(id: string, dto: PharmacyMedicineUpdateDto): Observable<Medicine> {
+  return this.http.put<Medicine>(`${this.baseUrl}/${id}`, dto);
+}
 }

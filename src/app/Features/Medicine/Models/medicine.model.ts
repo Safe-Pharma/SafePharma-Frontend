@@ -145,3 +145,10 @@ export interface AddPharmacyBarcodeDto {
   barcode: string | null;
   isPrimary: boolean;
 }
+export interface PharmacyMedicineUpdateDto {
+  taxIds: string[];
+  purchasePrice: number;
+  sellingPrice: number;
+  minStockLevel: number;
+  sKU?: string | null;
+}

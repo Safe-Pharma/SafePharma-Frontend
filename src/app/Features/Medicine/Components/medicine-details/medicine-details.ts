@@ -7,13 +7,14 @@ import { MedicinesApiService } from '../../Services/medicines-api.service';
 import { MedicineDetails } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddBarcodeDialogComponent } from '../add-barcode-dialog/add-barcode-dialog';
+import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
 
 type Tab = 'general' | 'pharmacy' | 'barcodes' | 'batches';
 
 @Component({
   selector: 'app-medicine-details',
   standalone: true,
-  imports: [CommonModule, RouterLink,AddBarcodeDialogComponent],
+  imports: [CommonModule, RouterLink,AddBarcodeDialogComponent,EditPharmacyMedicineDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicine-details.html',
 })
@@ -22,6 +23,7 @@ export class MedicineDetailsComponent {
   private readonly api = inject(MedicinesApiService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly showEditDialog = signal(false);
   protected readonly showAddBarcodeDialog = signal(false);
   protected readonly activeTab = signal<Tab>('general');
   protected readonly loading = signal(true);
@@ -94,6 +96,20 @@ addBarcode(): void {
   // TODO: wire up once the "add batch" dialog/route exists
   addBatch(): void {}
 
-  // TODO: wire up once the edit page/dialog exists
-  editMedicine(): void {}
+editMedicine(): void {
+  this.showEditDialog.set(true);
+}
+
+onEditDialogClosed(): void {
+  this.showEditDialog.set(false);
+}
+
+onMedicineSaved(): void {
+  const id = this.route.snapshot.paramMap.get('id');
+  if (!id) return;
+
+  this.api.getDetails(id).subscribe({
+    next: (data) => this.medicine.set(data),
+  });
+}
 }
