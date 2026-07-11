@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 export class PurchaseOrderApiService {
   private api = `${environment.apiUrl}/PurchaseOrder`;
   private SupplierApi = `${environment.apiUrl}/Suppliers`;
-  private MedicineApi = `${environment.apiUrl}/Medicines`;
+  private PharmacyMedicineApi = `${environment.apiUrl}/pharmacy-medicines`;
   private PurchaseReceiptApi = `${environment.apiUrl}/PurchaseReceipt`;
 
   constructor(private http: HttpClient) {}
@@ -20,7 +20,7 @@ export class PurchaseOrderApiService {
   getSuppliers(): Observable<any> {
     return this.http.get(this.SupplierApi);
   }
-  getMedicines(): Observable<any> {
+   getMedicines(): Observable<any> {
     return this.http.get(this.PharmacyMedicineApi);
   }
   addPurchaseOrder(data: any): Observable<any> {
