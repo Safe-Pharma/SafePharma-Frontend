@@ -12,7 +12,6 @@ export class PurchaseOrderApiService {
   private PharmacyMedicineApi = `https://localhost:7259/api/pharmacy-medicines`;
   private PurchaseReceiptApi = `https://localhost:7259/api/PurchaseReceipt`;
 
-
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<any> {
@@ -24,16 +23,19 @@ export class PurchaseOrderApiService {
   getMedicines(): Observable<any> {
     return this.http.get(this.PharmacyMedicineApi);
   }
+  getReceiptHistory(): Observable<any> {
+    return this.http.get(this.PurchaseReceiptApi);
+  }
   addPurchaseOrder(data: any): Observable<any> {
     return this.http.post(this.api, data);
   }
-  getPurchaseOrderById(id:string):Observable<any>{
-  return this.http.get(`${this.api}/${id}`);
-}
-receivePurchaseOrder(id:string,data:any):Observable<any>{
-  return this.http.post(
-    `${this.PurchaseReceiptApi}/${id}`,
-    data
-  );
-}
+  getPurchaseOrderById(id: string): Observable<any> {
+    return this.http.get(`${this.api}/${id}`);
+  }
+  receivePurchaseOrder(id: string, data: any): Observable<any> {
+    return this.http.post(`${this.PurchaseReceiptApi}/${id}`, data);
+  }
+  updateReceiptItem(id: string, data: any) {
+    return this.http.put(`${this.PurchaseReceiptApi}/item/${id}`, data);
+  }
 }

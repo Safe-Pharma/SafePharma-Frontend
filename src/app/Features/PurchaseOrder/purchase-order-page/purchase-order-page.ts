@@ -4,6 +4,7 @@ import { PurchaseOrderApiService } from '../Services/purchase-order-api';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-purchase-order-page',
@@ -31,6 +32,7 @@ export class PurchaseOrderPage implements OnInit {
         pharmacyMedicineId: '',
         quantityOrdered: 1,
         unitPrice: 0,
+        sellingPrice: 0,
       },
     ],
   };
@@ -45,6 +47,11 @@ export class PurchaseOrderPage implements OnInit {
     invoiceTotal: 0,
     items: [] as any[],
   };
+
+  showReceiptHistoryModal = false;
+  receiptHistory: any[] = [];
+  selectedReceipt: any = null;
+  showReceiptDetailsModal = false;
 
   constructor(
     private purchaseOrderService: PurchaseOrderApiService,
@@ -84,7 +91,7 @@ export class PurchaseOrderPage implements OnInit {
     this.purchaseOrderService.getMedicines().subscribe({
       next: (res: any) => {
         this.Medicines = res;
-        console.log("medddddddddddddddddddddd", res);
+        console.log('medddddddddddddddddddddd', res);
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -103,6 +110,7 @@ export class PurchaseOrderPage implements OnInit {
           pharmacyMedicineId: '',
           quantityOrdered: 1,
           unitPrice: 0,
+          sellingPrice: 0,
         },
       ],
     };
@@ -144,6 +152,7 @@ export class PurchaseOrderPage implements OnInit {
       pharmacyMedicineId: '',
       quantityOrdered: 1,
       unitPrice: 0,
+      sellingPrice: 0,
     });
   }
   removeLine(index: number) {
@@ -155,6 +164,7 @@ export class PurchaseOrderPage implements OnInit {
 
     if (medicine) {
       line.unitPrice = medicine.purchasePrice;
+      line.sellingPrice = medicine.sellingPrice;
     }
   }
 
@@ -199,10 +209,12 @@ export class PurchaseOrderPage implements OnInit {
     this.purchaseOrderService.addPurchaseOrder(this.purchaseOrder).subscribe({
       next: (res) => {
         console.log(res);
-        this.resetForm();
-        this.closeCreateModal();
-        this.loadPurchaseOrders();
         this.toast.show('Order Created Successfully!', 'success');
+        setTimeout(() => {
+          this.resetForm();
+          this.closeCreateModal();
+          this.loadPurchaseOrders();
+        });
       },
       error: (err) => {
         console.log(err);
@@ -212,9 +224,7 @@ export class PurchaseOrderPage implements OnInit {
   }
 
   openReceiveModal(order: any) {
-    console.log(order.items);
     this.selectedOrder = order;
-    console.log(this.selectedOrder);
 
     this.receipt = {
       invoiceNumber: '',
@@ -222,13 +232,9 @@ export class PurchaseOrderPage implements OnInit {
       invoiceTotal: order.totalAmount,
       items: order.items.map((item: any) => ({
         purchaseOrderItemId: item.id,
-
         medicineName: item.medicineName,
-
         quantity: item.quantityOrdered,
-
         batchNumber: '',
-
         expiryDate: '',
       })),
     };
@@ -295,6 +301,50 @@ export class PurchaseOrderPage implements OnInit {
         console.log(err);
 
         this.toast.show('Failed to receive goods', 'error');
+      },
+    });
+  }
+  openReceiptHistory() {
+    this.showReceiptHistoryModal = true;
+    this.loadReceiptHistory();
+  }
+
+  loadReceiptHistory() {
+    this.purchaseOrderService.getReceiptHistory().subscribe({
+      next: (res: any) => {
+        this.receiptHistory = res.data ?? [];
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.log(err);
+      },
+    });
+  }
+  openReceiptDetails(receipt: any) {
+    this.selectedReceipt = receipt;
+    this.showReceiptDetailsModal = true;
+  }
+  saveReceiptPrices() {
+    const requests = this.selectedReceipt.items.map((item: any) =>
+      this.purchaseOrderService.updateReceiptItem(item.purchaseReceiptItemId, {
+        unitPrice: item.unitPrice,
+        sellingPrice: item.sellingPrice,
+      }),
+    );
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.toast.show('Prices updated successfully', 'success');
+
+        this.showReceiptDetailsModal = false;
+        this.cdr.detectChanges();
+
+        this.loadReceiptHistory();
+      },
+
+      error: (err) => {
+        console.log(err);
+        this.toast.show('Failed to update prices', 'error');
       },
     });
   }
