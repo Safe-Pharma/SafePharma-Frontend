@@ -13,9 +13,14 @@ import { Toast } from '../../../Shared/Toasts/toast';
   styleUrl: './purchase-order-page.css',
 })
 export class PurchaseOrderPage implements OnInit {
-  purchaseOrders: any[] = [];
 
+  activeTab: 'orders' | 'invoices' = 'orders';
+ 
+  invoices: any[] = [];
+  private invoicesLoaded = false;
+ 
   showCreateModal = false;
+  purchaseOrders: any[] = [];
 
   suppliers: any[] = [];
 
@@ -45,7 +50,8 @@ export class PurchaseOrderPage implements OnInit {
     invoiceTotal: 0,
     items: [] as any[],
   };
-
+expandedOrderNumber: string | null = null;
+  expandedInvoiceId: string | null = null;
   constructor(
     private purchaseOrderService: PurchaseOrderApiService,
     private cdr: ChangeDetectorRef,
@@ -56,6 +62,13 @@ export class PurchaseOrderPage implements OnInit {
     this.loadPurchaseOrders();
   }
 
+   switchTab(tab: 'orders' | 'invoices') {
+    this.activeTab = tab;
+    if (tab === 'invoices' && !this.invoicesLoaded) {
+      this.loadInvoices();
+    }
+  }
+
   loadPurchaseOrders() {
     this.purchaseOrderService.getAll().subscribe({
       next: (res: any) => {
@@ -64,6 +77,20 @@ export class PurchaseOrderPage implements OnInit {
       },
       error: (err) => {
         console.error(err);
+      },
+    });
+  }
+
+  loadInvoices() {
+    this.purchaseOrderService.getReceipts().subscribe({
+      next: (res: any) => {
+        this.invoices = res.data ?? res;
+        this.invoicesLoaded = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.show('Failed to load invoices', 'error');
       },
     });
   }
@@ -288,6 +315,7 @@ export class PurchaseOrderPage implements OnInit {
         this.showReceiveModal = false;
 
         this.loadPurchaseOrders();
+        this.invoicesLoaded = false;
         this.cdr.detectChanges();
       },
 
@@ -313,5 +341,26 @@ export class PurchaseOrderPage implements OnInit {
       default:
         return 'bg-yellow-100 text-yellow-700';
     }
+  }
+   toggleOrderExpand(order: any): void {
+    this.expandedOrderNumber = this.expandedOrderNumber === order.orderNumber ? null : order.orderNumber;
+  }
+ 
+  toggleInvoiceExpand(invoice: any): void {
+    this.expandedInvoiceId = this.expandedInvoiceId === invoice.id ? null : invoice.id;
+  }
+ 
+  getOrderNumber(purchaseOrderId: string): string {
+    const order = this.purchaseOrders.find((o) => o.id === purchaseOrderId);
+    return order ? order.orderNumber : '—';
+  }
+ 
+  getSupplierName(purchaseOrderId: string): string {
+    const order = this.purchaseOrders.find((o) => o.id === purchaseOrderId);
+    return order ? order.supplierName : '—';
+  }
+ 
+  lineTotal(item: any): number {
+    return (item.quantityOrdered ?? item.quantity ?? 0) * (item.unitPrice ?? 0);
   }
 }
