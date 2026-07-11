@@ -1,0 +1,331 @@
+<div class="mx-auto w-full max-w-7xl p-6 md:p-8">
+  @if (loading()) {
+    <div class="p-8 text-center text-sm text-muted-foreground">Loading medicine…</div>
+  } @else if (errorMsg(); as msg) {
+    <div class="p-8 text-center text-sm text-destructive">{{ msg }}</div>
+  } @else if (medicine(); as m) {
+    <nav class="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+      <a routerLink="/app/products" class="hover:text-foreground">Medicines</a>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+      <span class="font-medium text-foreground">{{ m.tradeNameEn }}</span>
+    </nav>
+
+    <div class="sticky top-0 z-10 -mx-6 mb-6 border-b border-border bg-background/95 px-6 py-4 backdrop-blur md:-mx-8 md:px-8">
+      <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
+        <div class="flex min-w-0 items-start gap-4">
+          <div class="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary-soft to-primary/10 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6">
+              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
+              <path d="M12 22V12" />
+              <polyline points="3.29 7 12 12 20.71 7" />
+              <path d="m7.5 4.27 9 5.15" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="truncate text-xl font-semibold tracking-tight sm:text-2xl">{{ m.tradeNameEn }}</h1>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                [ngClass]="m.isPharmacyActive ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground'"
+              >
+                <span class="size-1.5 rounded-full bg-current"></span>{{ m.isPharmacyActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span><span class="font-medium text-foreground/80">Scientific:</span> {{ m.scientificName }}</span>
+              <span class="hidden text-border sm:inline">•</span>
+              <span><span class="font-medium text-foreground/80">Mfr:</span> {{ m.manufacturer ?? '—' }}</span>
+              <span class="hidden text-border sm:inline">•</span>
+              <span><span class="font-medium text-foreground/80">Strength:</span> {{ m.strength }}</span>
+              <span class="hidden text-border sm:inline">•</span>
+              <span><span class="font-medium text-foreground/80">Form:</span> {{ m.dosageForm }}</span>
+              <span class="hidden text-border sm:inline">•</span>
+              <span class="font-mono text-[11px]">{{ m.sku }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          
+            <a routerLink="/app/products"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+              <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
+            </svg>
+            Back
+          </a>
+
+          <button
+            type="button"
+            (click)="addBarcode()"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+              <path d="M3 5v14" /><path d="M8 5v14" /><path d="M12 5v14" /><path d="M17 5v14" /><path d="M21 5v14" />
+            </svg>
+            Add barcode
+          </button>
+
+          <button
+            type="button"
+            (click)="addBatch()"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+              <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+              <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+              <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+            </svg>
+            Add batch
+          </button>
+
+          <button
+            type="button"
+            (click)="editMedicine()"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+              <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+              <path d="m15 5 4 4" />
+            </svg>
+            Edit
+          </button>
+
+          <button
+            type="button"
+            (click)="toggleStatus()"
+            [disabled]="updatingStatus()"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent h-8 rounded-md px-3 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            [ngClass]="m.isPharmacyActive ? 'text-destructive hover:text-destructive' : 'text-success hover:text-success'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+              <path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.77.04" />
+            </svg>
+            {{ m.isPharmacyActive ? 'Deactivate' : 'Activate' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+      <div class="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total stock</div>
+          <div class="grid size-7 place-items-center rounded-lg bg-primary-soft text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+              <path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
+              <path d="m7 16.5-4.74-2.85" /><path d="m7 16.5 5-3" /><path d="M7 16.5v5.17" />
+              <path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" />
+              <path d="m17 16.5-5-3" /><path d="m17 16.5 4.74-2.85" /><path d="M17 16.5v5.17" />
+              <path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" />
+              <path d="M12 8 7.26 5.15" /><path d="m12 8 4.74-2.85" /><path d="M12 13.5V8" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-semibold tracking-tight">{{ m.inventory.totalStock }}</div>
+      </div>
+      <div class="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Available qty</div>
+          <div class="grid size-7 place-items-center rounded-lg bg-success-soft text-success">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
+              <path d="M12 22V12" />
+              <polyline points="3.29 7 12 12 20.71 7" />
+              <path d="m7.5 4.27 9 5.15" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-semibold tracking-tight">{{ m.inventory.availableQuantity }}</div>
+      </div>
+      <div class="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Batches</div>
+          <div class="grid size-7 place-items-center rounded-lg bg-primary-soft text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+              <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+              <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+              <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-semibold tracking-tight">{{ m.inventory.numberOfBatches }}</div>
+      </div>
+      <div class="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Expiring soon</div>
+          <div class="grid size-7 place-items-center rounded-lg bg-warning-soft text-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+              <path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-semibold tracking-tight">{{ m.inventory.expiringSoon }}</div>
+      </div>
+      <div class="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Local barcodes</div>
+          <div class="grid size-7 place-items-center rounded-lg bg-muted text-muted-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+              <path d="M3 5v14" /><path d="M8 5v14" /><path d="M12 5v14" /><path d="M17 5v14" /><path d="M21 5v14" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-semibold tracking-tight">{{ m.pharmacyBarcodes.length }}</div>
+      </div>
+      <div class="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Mfr barcodes</div>
+          <div class="grid size-7 place-items-center rounded-lg bg-muted text-muted-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+              <path d="M3 5v14" /><path d="M8 5v14" /><path d="M12 5v14" /><path d="M17 5v14" /><path d="M21 5v14" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2 text-2xl font-semibold tracking-tight">{{ m.manufacturerBarcodes.length }}</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground grid w-full grid-cols-4 sm:inline-flex sm:w-auto">
+      @for (t of [
+        { id: 'general', label: 'General' },
+        { id: 'pharmacy', label: 'Pharmacy' },
+        { id: 'barcodes', label: 'Barcodes' },
+        { id: 'batches', label: 'Inventory' }
+      ]; track t.id) {
+        <button
+          type="button"
+          (click)="setTab($any(t.id))"
+          class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all"
+          [ngClass]="activeTab() === t.id ? 'bg-background text-foreground shadow' : ''"
+        >
+          {{ t.label }}
+        </button>
+      }
+    </div>
+
+    <div class="mt-5">
+      @switch (activeTab()) {
+        @case ('general') {
+          <div class="rounded-xl border border-border bg-card shadow-card">
+            <div class="flex items-start gap-3 border-b border-border p-5">
+              <div class="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+                  <path d="M10 12h4" /><path d="M10 8h4" /><path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+                  <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" />
+                  <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold">Global medicine information</div>
+                <div class="mt-0.5 text-xs text-muted-foreground">Shared across all pharmacies.</div>
+              </div>
+            </div>
+            <div class="p-5">
+              <dl class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Trade name</dt><dd class="mt-1 text-sm font-medium">{{ m.tradeNameEn }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Scientific name</dt><dd class="mt-1 text-sm font-medium">{{ m.scientificName }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Manufacturer</dt><dd class="mt-1 text-sm font-medium">{{ m.manufacturer ?? '—' }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Category</dt><dd class="mt-1 text-sm font-medium">{{ m.category }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Dosage form</dt><dd class="mt-1 text-sm font-medium">{{ m.dosageForm }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Strength</dt><dd class="mt-1 text-sm font-medium">{{ m.strength }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Unit</dt><dd class="mt-1 text-sm font-medium">{{ m.unitOfSale }}</dd></div>
+                <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Country of origin</dt><dd class="mt-1 text-sm font-medium">{{ m.countryOfOrigin ?? '—' }}</dd></div>
+                <div class="border-b border-border/60 pb-3">
+                  <dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Global status</dt>
+                  <dd class="mt-1">
+                    <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" [ngClass]="m.isGlobalActive ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground'">
+                      <span class="size-1.5 rounded-full bg-current"></span>{{ m.isGlobalActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+              @if (m.storageConditions) {
+                <div class="mt-5 border-t border-border pt-4">
+                  <div class="mb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Storage</div>
+                  <p class="text-sm text-foreground/80">{{ m.storageConditions }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @case ('pharmacy') {
+          <div class="rounded-xl border border-border bg-card p-5 shadow-card">
+            <dl class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">SKU</dt><dd class="mt-1 font-mono text-sm font-medium">{{ m.sku }}</dd></div>
+              <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Purchase price</dt><dd class="mt-1 text-sm font-medium">{{ m.purchasePrice | currency }}</dd></div>
+              <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selling price</dt><dd class="mt-1 text-sm font-medium">{{ m.sellingPrice | currency }}</dd></div>
+              <div class="border-b border-border/60 pb-3"><dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Min stock level</dt><dd class="mt-1 text-sm font-medium">{{ m.minStockLevel }}</dd></div>
+              <div class="border-b border-border/60 pb-3 sm:col-span-2 lg:col-span-1">
+                <dt class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Taxes</dt>
+                <dd class="mt-1 flex flex-wrap gap-1">
+                  @for (tax of m.taxes; track tax.id) {
+                    <span class="inline-flex items-center gap-1 rounded-md bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+                      {{ tax.name }} <span class="text-primary/70">{{ tax.rate }}%</span>
+                    </span>
+                  } @empty {
+                    <span class="text-xs text-muted-foreground">—</span>
+                  }
+                </dd>
+              </div>
+            </dl>
+          </div>
+        }
+
+        @case ('barcodes') {
+          <div class="space-y-5">
+            <div class="rounded-xl border border-border bg-card p-5 shadow-card">
+              <div class="mb-3 text-sm font-semibold">Manufacturer barcodes</div>
+              <div class="flex flex-wrap gap-2">
+                @for (b of m.manufacturerBarcodes; track b) {
+                  <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-mono text-xs">{{ b }}</span>
+                } @empty {
+                  <span class="text-xs text-muted-foreground">No manufacturer barcodes.</span>
+                }
+              </div>
+            </div>
+            <div class="rounded-xl border border-border bg-card p-5 shadow-card">
+              <div class="mb-3 text-sm font-semibold">Pharmacy barcodes</div>
+              <div class="flex flex-wrap gap-2">
+                @for (b of m.pharmacyBarcodes; track b) {
+                  <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-mono text-xs">{{ b }}</span>
+                } @empty {
+                  <span class="text-xs text-muted-foreground">No pharmacy-specific barcodes.</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        @case ('batches') {
+          <div class="rounded-xl border border-border bg-card p-5 shadow-card">
+            <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div><dt class="text-[11px] uppercase text-muted-foreground">Total stock</dt><dd class="mt-1 text-lg font-semibold">{{ m.inventory.totalStock }}</dd></div>
+              <div><dt class="text-[11px] uppercase text-muted-foreground">Available</dt><dd class="mt-1 text-lg font-semibold">{{ m.inventory.availableQuantity }}</dd></div>
+              <div><dt class="text-[11px] uppercase text-muted-foreground">Batches</dt><dd class="mt-1 text-lg font-semibold">{{ m.inventory.numberOfBatches }}</dd></div>
+              <div><dt class="text-[11px] uppercase text-muted-foreground">Expiring soon</dt><dd class="mt-1 text-lg font-semibold">{{ m.inventory.expiringSoon }}</dd></div>
+            </dl>
+            <p class="mt-4 text-xs text-muted-foreground">
+              Per-batch details (expiry dates, received quantities) aren't wired up yet — that needs a
+              <code class="font-mono">GET /api/batch/by-medicine/{{ '{id}' }}</code> endpoint on the backend.
+            </p>
+          </div>
+        }
+      }
+    </div>
+    @if (showAddBarcodeDialog()) {
+      <app-add-barcode-dialog
+        [medicineId]="m.id"
+        [pharmacyMedicineId]="m.pharmacyMedicineId"
+        (closed)="onBarcodeDialogClosed()"
+        (added)="onBarcodeAdded()"
+      />
+    }
+  }
+</div>

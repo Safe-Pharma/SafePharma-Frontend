@@ -114,6 +114,22 @@ export const routes: Routes = [
           title: 'Purchases',
         },
       },
+      {
+        path: 'products',
+        loadComponent: () =>
+          import('./Features/Medicine/Components/medicines-list/medicines-list').then(
+            (m) => m.MedicinesListComponent,
+          ),
+        data: { title: 'Medicines' },
+      },
+      {
+        path: 'products/:id',
+        loadComponent: () =>
+          import('./Features/Medicine/Components/medicine-details/medicine-details').then(
+            (m) => m.MedicineDetailsComponent,
+          ),
+        data: { title: 'Medicine Details' },
+      },
 
       /* {
       
