@@ -7,11 +7,10 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class PurchaseOrderApiService {
-  private api = `https://localhost:7259/api/PurchaseOrder`;
-  private SupplierApi = `https://localhost:7259/api/Suppliers`;
-  private PharmacyMedicineApi = `https://localhost:7259/api/pharmacy-medicines`;
-  private PurchaseReceiptApi = `https://localhost:7259/api/PurchaseReceipt`;
-
+  private api = `${environment.apiUrl}/PurchaseOrder`;
+  private SupplierApi = `${environment.apiUrl}/Suppliers`;
+  private MedicineApi = `${environment.apiUrl}/Medicines`;
+  private PurchaseReceiptApi = `${environment.apiUrl}/PurchaseReceipt`;
 
   constructor(private http: HttpClient) {}
 
@@ -36,4 +35,13 @@ receivePurchaseOrder(id:string,data:any):Observable<any>{
     data
   );
 }
+
+
+
+getReceipts(): Observable<any> {
+    return this.http.get(this.PurchaseReceiptApi);
+  }
+  getReceiptById(id: string): Observable<any> {
+    return this.http.get(`${this.PurchaseReceiptApi}/${id}`);
+  }
 }
