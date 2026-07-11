@@ -327,5 +327,13 @@
         (added)="onBarcodeAdded()"
       />
     }
+    @if (showEditDialog()) {
+  <app-edit-pharmacy-medicine-dialog
+    [medicineId]="m.id"
+    [medicine]="m"
+    (closed)="onEditDialogClosed()"
+    (saved)="onMedicineSaved()"
+  />
+}
   }
 </div>
