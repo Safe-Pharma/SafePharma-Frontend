@@ -20,7 +20,7 @@ export class PurchaseOrderApiService {
   getSuppliers(): Observable<any> {
     return this.http.get(this.SupplierApi);
   }
-  getMedicines(): Observable<any> {
+   getMedicines(): Observable<any> {
     return this.http.get(this.PharmacyMedicineApi);
   }
   getReceiptHistory(): Observable<any> {
