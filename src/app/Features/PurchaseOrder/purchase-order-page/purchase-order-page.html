@@ -108,8 +108,6 @@
 
   <!-- Table -->
 
-  <!-- ================= ORDERS TAB ================= -->
-  @if (activeTab === 'orders') {
   <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -117,7 +115,6 @@
           <tr
             class="border-b border-gray-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-gray-500"
           >
-            <th class="w-8 px-5 py-3"></th>
             <th class="px-5 py-3 font-medium">PO #</th>
 
             <th class="px-5 py-3 font-medium">Supplier</th>
@@ -138,19 +135,7 @@
 
         <tbody>
           @for (order of purchaseOrders; track order.orderNumber) {
-            <tr
-              class="cursor-pointer border-b border-gray-200 transition-colors hover:bg-slate-50"
-              (click)="toggleOrderExpand(order)"
-            >
-              <td class="px-5 py-4 text-gray-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform"
-                  [ngClass]="expandedOrderNumber === order.orderNumber ? 'rotate-90' : ''"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
-                </svg>
-              </td>
+            <tr class="border-b border-gray-200 transition-colors hover:bg-slate-50">
               <td class="px-5 py-4 font-mono text-xs">
                 {{ order.orderNumber }}
               </td>
@@ -188,7 +173,7 @@
 
               <td class="px-5 py-4 text-right">
                 <button
-                  (click)="openReceiveModal(order); $event.stopPropagation()"
+                  (click)="openReceiveModal(order)"
                   [disabled]="order.status === 'Received'"
                   class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition"
                   [ngClass]="
@@ -216,131 +201,15 @@
                 </button>
               </td>
             </tr>
-
-            @if (expandedOrderNumber === order.orderNumber) {
-              <tr class="border-b border-gray-200 bg-slate-50/60">
-                <td colspan="9" class="p-0">
-                  <div class="px-5 py-3">
-                    <table class="w-full text-xs">
-                      <thead>
-                        <tr class="text-left uppercase tracking-wider text-gray-400">
-                          <th class="py-2 pr-4 font-medium">Medicine</th>
-                          <th class="py-2 pr-4 font-medium">Qty</th>
-                          <th class="py-2 pr-4 font-medium">Unit Price</th>
-                          <th class="py-2 pr-4 text-right font-medium">Line Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of order.items; track item.id) {
-                          <tr class="border-t border-gray-200">
-                            <td class="py-2 pr-4 font-medium text-gray-700">{{ item.medicineName }}</td>
-                            <td class="py-2 pr-4 text-gray-500">{{ item.quantityOrdered }}</td>
-                            <td class="py-2 pr-4 text-gray-500">{{ item.unitPrice | number }}</td>
-                            <td class="py-2 pr-4 text-right font-semibold text-gray-700">
-                              {{ lineTotal(item) | number }}
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                </td>
-              </tr>
-            }
           } @empty {
             <tr>
-              <td colspan="9" class="py-10 text-center text-gray-400">No purchase orders found.</td>
+              <td colspan="8" class="py-10 text-center text-gray-400">No purchase orders found.</td>
             </tr>
           }
         </tbody>
       </table>
     </div>
   </div>
-  }
-
-  <!-- ================= INVOICES TAB ================= -->
-  @if (activeTab === 'invoices') {
-  <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr
-            class="border-b border-gray-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-gray-500"
-          >
-            <th class="w-8 px-5 py-3"></th>
-            <th class="px-5 py-3 font-medium">Invoice #</th>
-            <th class="px-5 py-3 font-medium">PO #</th>
-            <th class="px-5 py-3 font-medium">Supplier</th>
-            <th class="px-5 py-3 font-medium">Invoice Date</th>
-            <th class="px-5 py-3 font-medium">Received At</th>
-            <th class="px-5 py-3 font-medium">Total</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          @for (invoice of invoices; track invoice.id) {
-            <tr
-              class="cursor-pointer border-b border-gray-200 transition-colors hover:bg-slate-50"
-              (click)="toggleInvoiceExpand(invoice)"
-            >
-              <td class="px-5 py-4 text-gray-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform"
-                  [ngClass]="expandedInvoiceId === invoice.id ? 'rotate-90' : ''"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
-                </svg>
-              </td>
-              <td class="px-5 py-4 font-mono text-xs">{{ invoice.invoiceNumber }}</td>
-              <td class="px-5 py-4 font-mono text-xs text-gray-500">{{ getOrderNumber(invoice.purchaseOrderId) }}</td>
-              <td class="px-5 py-4 font-medium">{{ getSupplierName(invoice.purchaseOrderId) }}</td>
-              <td class="px-5 py-4 text-gray-500">{{ invoice.invoiceDate | date: 'dd/MM/yyyy' }}</td>
-              <td class="px-5 py-4 text-gray-500">{{ invoice.receivedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-              <td class="px-5 py-4 font-semibold">{{ invoice.invoiceTotal | number }}</td>
-            </tr>
-
-            @if (expandedInvoiceId === invoice.id) {
-              <tr class="border-b border-gray-200 bg-slate-50/60">
-                <td colspan="7" class="p-0">
-                  <div class="px-5 py-3">
-                    <table class="w-full text-xs">
-                      <thead>
-                        <tr class="text-left uppercase tracking-wider text-gray-400">
-                          <th class="py-2 pr-4 font-medium">Medicine</th>
-                          <th class="py-2 pr-4 font-medium">Qty</th>
-                          <th class="py-2 pr-4 font-medium">Batch #</th>
-                          <th class="py-2 pr-4 font-medium">Expiry</th>
-                          <th class="py-2 pr-4 text-right font-medium">Unit Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of invoice.items; track item.id) {
-                          <tr class="border-t border-gray-200">
-                            <td class="py-2 pr-4 font-medium text-gray-700">{{ item.medicineName }}</td>
-                            <td class="py-2 pr-4 text-gray-500">{{ item.quantity }}</td>
-                            <td class="py-2 pr-4 font-mono text-gray-500">{{ item.batchNumber }}</td>
-                            <td class="py-2 pr-4 text-gray-500">{{ item.expiryDate | date: 'dd/MM/yyyy' }}</td>
-                            <td class="py-2 pr-4 text-right text-gray-500">{{ item.unitPrice | number }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr>
-              <td colspan="7" class="py-10 text-center text-gray-400">No invoices recorded yet.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-  }
-
   @if (showCreateModal) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div class="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
