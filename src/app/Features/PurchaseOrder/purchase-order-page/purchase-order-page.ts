@@ -4,6 +4,7 @@ import { PurchaseOrderApiService } from '../Services/purchase-order-api';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-purchase-order-page',
@@ -13,14 +14,9 @@ import { Toast } from '../../../Shared/Toasts/toast';
   styleUrl: './purchase-order-page.css',
 })
 export class PurchaseOrderPage implements OnInit {
-
-  activeTab: 'orders' | 'invoices' = 'orders';
- 
-  invoices: any[] = [];
-  private invoicesLoaded = false;
- 
-  showCreateModal = false;
   purchaseOrders: any[] = [];
+
+  showCreateModal = false;
 
   suppliers: any[] = [];
 
@@ -36,6 +32,7 @@ export class PurchaseOrderPage implements OnInit {
         pharmacyMedicineId: '',
         quantityOrdered: 1,
         unitPrice: 0,
+        sellingPrice: 0,
       },
     ],
   };
@@ -50,8 +47,12 @@ export class PurchaseOrderPage implements OnInit {
     invoiceTotal: 0,
     items: [] as any[],
   };
-expandedOrderNumber: string | null = null;
-  expandedInvoiceId: string | null = null;
+
+  showReceiptHistoryModal = false;
+  receiptHistory: any[] = [];
+  selectedReceipt: any = null;
+  showReceiptDetailsModal = false;
+
   constructor(
     private purchaseOrderService: PurchaseOrderApiService,
     private cdr: ChangeDetectorRef,
@@ -62,13 +63,6 @@ expandedOrderNumber: string | null = null;
     this.loadPurchaseOrders();
   }
 
-   switchTab(tab: 'orders' | 'invoices') {
-    this.activeTab = tab;
-    if (tab === 'invoices' && !this.invoicesLoaded) {
-      this.loadInvoices();
-    }
-  }
-
   loadPurchaseOrders() {
     this.purchaseOrderService.getAll().subscribe({
       next: (res: any) => {
@@ -77,20 +71,6 @@ expandedOrderNumber: string | null = null;
       },
       error: (err) => {
         console.error(err);
-      },
-    });
-  }
-
-  loadInvoices() {
-    this.purchaseOrderService.getReceipts().subscribe({
-      next: (res: any) => {
-        this.invoices = res.data ?? res;
-        this.invoicesLoaded = true;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error(err);
-        this.toast.show('Failed to load invoices', 'error');
       },
     });
   }
@@ -111,7 +91,7 @@ expandedOrderNumber: string | null = null;
     this.purchaseOrderService.getMedicines().subscribe({
       next: (res: any) => {
         this.Medicines = res;
-        console.log("medddddddddddddddddddddd", res);
+        console.log('medddddddddddddddddddddd', res);
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -130,6 +110,7 @@ expandedOrderNumber: string | null = null;
           pharmacyMedicineId: '',
           quantityOrdered: 1,
           unitPrice: 0,
+          sellingPrice: 0,
         },
       ],
     };
@@ -171,6 +152,7 @@ expandedOrderNumber: string | null = null;
       pharmacyMedicineId: '',
       quantityOrdered: 1,
       unitPrice: 0,
+      sellingPrice: 0,
     });
   }
   removeLine(index: number) {
@@ -182,6 +164,7 @@ expandedOrderNumber: string | null = null;
 
     if (medicine) {
       line.unitPrice = medicine.purchasePrice;
+      line.sellingPrice = medicine.sellingPrice;
     }
   }
 
@@ -226,10 +209,12 @@ expandedOrderNumber: string | null = null;
     this.purchaseOrderService.addPurchaseOrder(this.purchaseOrder).subscribe({
       next: (res) => {
         console.log(res);
-        this.resetForm();
-        this.closeCreateModal();
-        this.loadPurchaseOrders();
         this.toast.show('Order Created Successfully!', 'success');
+        setTimeout(() => {
+          this.resetForm();
+          this.closeCreateModal();
+          this.loadPurchaseOrders();
+        });
       },
       error: (err) => {
         console.log(err);
@@ -239,9 +224,7 @@ expandedOrderNumber: string | null = null;
   }
 
   openReceiveModal(order: any) {
-    console.log(order.items);
     this.selectedOrder = order;
-    console.log(this.selectedOrder);
 
     this.receipt = {
       invoiceNumber: '',
@@ -249,13 +232,9 @@ expandedOrderNumber: string | null = null;
       invoiceTotal: order.totalAmount,
       items: order.items.map((item: any) => ({
         purchaseOrderItemId: item.id,
-
         medicineName: item.medicineName,
-
         quantity: item.quantityOrdered,
-
         batchNumber: '',
-
         expiryDate: '',
       })),
     };
@@ -315,7 +294,6 @@ expandedOrderNumber: string | null = null;
         this.showReceiveModal = false;
 
         this.loadPurchaseOrders();
-        this.invoicesLoaded = false;
         this.cdr.detectChanges();
       },
 
@@ -323,6 +301,50 @@ expandedOrderNumber: string | null = null;
         console.log(err);
 
         this.toast.show('Failed to receive goods', 'error');
+      },
+    });
+  }
+  openReceiptHistory() {
+    this.showReceiptHistoryModal = true;
+    this.loadReceiptHistory();
+  }
+
+  loadReceiptHistory() {
+    this.purchaseOrderService.getReceiptHistory().subscribe({
+      next: (res: any) => {
+        this.receiptHistory = res.data ?? [];
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.log(err);
+      },
+    });
+  }
+  openReceiptDetails(receipt: any) {
+    this.selectedReceipt = receipt;
+    this.showReceiptDetailsModal = true;
+  }
+  saveReceiptPrices() {
+    const requests = this.selectedReceipt.items.map((item: any) =>
+      this.purchaseOrderService.updateReceiptItem(item.purchaseReceiptItemId, {
+        unitPrice: item.unitPrice,
+        sellingPrice: item.sellingPrice,
+      }),
+    );
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.toast.show('Prices updated successfully', 'success');
+
+        this.showReceiptDetailsModal = false;
+        this.cdr.detectChanges();
+
+        this.loadReceiptHistory();
+      },
+
+      error: (err) => {
+        console.log(err);
+        this.toast.show('Failed to update prices', 'error');
       },
     });
   }
@@ -341,26 +363,5 @@ expandedOrderNumber: string | null = null;
       default:
         return 'bg-yellow-100 text-yellow-700';
     }
-  }
-   toggleOrderExpand(order: any): void {
-    this.expandedOrderNumber = this.expandedOrderNumber === order.orderNumber ? null : order.orderNumber;
-  }
- 
-  toggleInvoiceExpand(invoice: any): void {
-    this.expandedInvoiceId = this.expandedInvoiceId === invoice.id ? null : invoice.id;
-  }
- 
-  getOrderNumber(purchaseOrderId: string): string {
-    const order = this.purchaseOrders.find((o) => o.id === purchaseOrderId);
-    return order ? order.orderNumber : '—';
-  }
- 
-  getSupplierName(purchaseOrderId: string): string {
-    const order = this.purchaseOrders.find((o) => o.id === purchaseOrderId);
-    return order ? order.supplierName : '—';
-  }
- 
-  lineTotal(item: any): number {
-    return (item.quantityOrdered ?? item.quantity ?? 0) * (item.unitPrice ?? 0);
   }
 }

@@ -15,10 +15,10 @@ export class Toast {
 
   show(message: string, type: 'success' | 'error' = 'success') {
     const id = this.counter++;
-    setTimeout(() => {
-      this.toasts.update((t) => [...t, { message, type, id }]);
-      setTimeout(() => this.remove(id), 3000);
-    }, 0);
+
+    this.toasts.update((t) => [...t, { message, type, id }]);
+
+    setTimeout(() => this.remove(id), 3000);
   }
 
   remove(id: number) {

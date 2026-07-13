@@ -7,10 +7,10 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class PurchaseOrderApiService {
-  private api = `${environment.apiUrl}/PurchaseOrder`;
-  private SupplierApi = `${environment.apiUrl}/Suppliers`;
-  private PharmacyMedicineApi = `${environment.apiUrl}/pharmacy-medicines`;
-  private PurchaseReceiptApi = `${environment.apiUrl}/PurchaseReceipt`;
+  private api = `https://localhost:7259/api/PurchaseOrder`;
+  private SupplierApi = `https://localhost:7259/api/Suppliers`;
+  private PharmacyMedicineApi = `https://localhost:7259/api/pharmacy-medicines`;
+  private PurchaseReceiptApi = `https://localhost:7259/api/PurchaseReceipt`;
 
   constructor(private http: HttpClient) {}
 
@@ -20,28 +20,22 @@ export class PurchaseOrderApiService {
   getSuppliers(): Observable<any> {
     return this.http.get(this.SupplierApi);
   }
-   getMedicines(): Observable<any> {
+  getMedicines(): Observable<any> {
     return this.http.get(this.PharmacyMedicineApi);
+  }
+  getReceiptHistory(): Observable<any> {
+    return this.http.get(this.PurchaseReceiptApi);
   }
   addPurchaseOrder(data: any): Observable<any> {
     return this.http.post(this.api, data);
   }
-  getPurchaseOrderById(id:string):Observable<any>{
-  return this.http.get(`${this.api}/${id}`);
-}
-receivePurchaseOrder(id:string,data:any):Observable<any>{
-  return this.http.post(
-    `${this.PurchaseReceiptApi}/${id}`,
-    data
-  );
-}
-
-
-
-getReceipts(): Observable<any> {
-    return this.http.get(this.PurchaseReceiptApi);
+  getPurchaseOrderById(id: string): Observable<any> {
+    return this.http.get(`${this.api}/${id}`);
   }
-  getReceiptById(id: string): Observable<any> {
-    return this.http.get(`${this.PurchaseReceiptApi}/${id}`);
+  receivePurchaseOrder(id: string, data: any): Observable<any> {
+    return this.http.post(`${this.PurchaseReceiptApi}/${id}`, data);
+  }
+  updateReceiptItem(id: string, data: any) {
+    return this.http.put(`${this.PurchaseReceiptApi}/item/${id}`, data);
   }
 }
