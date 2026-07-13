@@ -93,9 +93,6 @@ addBarcode(): void {
     });
   }
 
-  // TODO: wire up once the "add batch" dialog/route exists
-  addBatch(): void {}
-
 editMedicine(): void {
   this.showEditDialog.set(true);
 }
