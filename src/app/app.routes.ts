@@ -146,9 +146,14 @@ export const routes: Routes = [
           ),
         data: { title: 'Customer Details' },
       },
+      {
+        path: 'pos',
+        loadComponent: () => import('./Features/Sales/pos/pos').then((m) => m.Pos),
+        data: { title: 'Pos' },
+      },
 
       /* {
-      
+
         path: '',
         loadComponent: () =>
           import('./Features/dashboard/dashboard').then(m => m.Dashboard),
