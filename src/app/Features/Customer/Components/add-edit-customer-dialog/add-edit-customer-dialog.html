@@ -1,0 +1,88 @@
+<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+  <div
+    class="relative grid w-full max-w-lg gap-4 rounded-lg border border-border bg-background p-6 shadow-lg max-h-[92vh] overflow-y-auto"
+    (click)="$event.stopPropagation()">
+    <button type="button"
+      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      (click)="onClose()" aria-label="Close">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+        <path d="M18 6 6 18"></path>
+        <path d="m6 6 12 12"></path>
+      </svg>
+    </button>
+
+    <div class="text-center sm:text-left">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">
+        {{ isEdit() ? 'Edit customer' : 'New customer' }}
+      </h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">
+        Customers are shared across every pharmacy on the platform.
+      </p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="grid gap-4">
+      <div class="grid gap-2">
+        <label class="text-sm font-medium" for="c-name">Name</label>
+        <input id="c-name" formControlName="name"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="grid gap-2">
+          <label class="text-sm font-medium" for="c-phone">Phone</label>
+          <input id="c-phone" formControlName="phone"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        </div>
+        <div class="grid gap-2">
+          <label class="text-sm font-medium" for="c-email">Email</label>
+          <input id="c-email" type="email" formControlName="email"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        </div>
+      </div>
+
+      <div class="grid gap-2">
+        <label class="text-sm font-medium" for="c-address">Address</label>
+        <input id="c-address" formControlName="address"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="grid gap-2">
+          <label class="text-sm font-medium" for="c-dob">Date of birth</label>
+          <input id="c-dob" type="date" formControlName="dateOfBirth"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        </div>
+        <div class="grid gap-2">
+          <label class="text-sm font-medium" for="c-status">Status</label>
+          <select id="c-status" formControlName="status"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid gap-2">
+        <label class="text-sm font-medium" for="c-notes">Notes</label>
+        <textarea id="c-notes" formControlName="notes" rows="2"
+          class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"></textarea>
+      </div>
+
+      @if (errorMsg(); as msg) {
+      <div class="text-sm text-destructive">{{ msg }}</div>
+      }
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" (click)="onClose()"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-4 text-sm">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="submitting()"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
+          {{ submitting() ? 'Saving…' : (isEdit() ? 'Save changes' : 'Create customer') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
