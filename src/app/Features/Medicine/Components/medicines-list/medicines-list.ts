@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, signal } from '@angular/core';
+import {
+  AfterViewChecked,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -9,7 +18,6 @@ import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddMedicineDialogComponent } from '../add-medicine-dialog/add-medicine-dialog';
 import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
 
-
 @Component({
   selector: 'app-medicines-list',
   standalone: true,
@@ -17,7 +25,7 @@ import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-d
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicines-list.html',
 })
-export class MedicinesListComponent {
+export class MedicinesListComponent implements AfterViewChecked {
   private readonly api = inject(MedicinesApiService);
 
   protected readonly search = signal('');
@@ -25,15 +33,11 @@ export class MedicinesListComponent {
   protected readonly loading = signal(false);
   protected readonly errorMsg = signal<string | null>(null);
   private readonly refreshTick = signal(0);
-  protected readonly editingMedicine = computed(() => {
-  const id = this.editingMedicineId();
-  return id ? this.medicines().find(m => m.id === id) ?? null : null;
-});
 
   private readonly search$ = toObservable(this.search).pipe(debounceTime(300), distinctUntilChanged());
   private readonly showInactive$ = toObservable(this.showInactive);
   private readonly refresh$ = toObservable(this.refreshTick);
-  
+
   private readonly medicines$ = combineLatest([this.search$, this.showInactive$, this.refresh$]).pipe(
     tap(() => {
       this.loading.set(true);
@@ -56,6 +60,11 @@ export class MedicinesListComponent {
     switchMap(() => this.api.getStats().pipe(catchError(() => of(null as MedicineStats | null)))),
   );
   protected readonly stats = toSignal(this.stats$, { initialValue: null as MedicineStats | null });
+
+  protected readonly editingMedicine = computed(() => {
+    const id = this.editingMedicineId();
+    return id ? this.medicines().find((m) => m.id === id) ?? null : null;
+  });
 
   onSearchInput(value: string): void {
     this.search.set(value);
@@ -82,72 +91,98 @@ export class MedicinesListComponent {
 
   protected readonly showAddDialog = signal(false);
 
-onOpenAddDialog(): void {
-  this.showAddDialog.set(true);
-}
+  onOpenAddDialog(): void {
+    this.showAddDialog.set(true);
+  }
 
-onCloseAddDialog(): void {
-  this.showAddDialog.set(false);
-}
+  onCloseAddDialog(): void {
+    this.showAddDialog.set(false);
+  }
 
-onMedicineCreated(): void {
-  this.onRefresh();
-}
+  onMedicineCreated(): void {
+    this.onRefresh();
+  }
 
-protected readonly openMenuId = signal<string | null>(null);
+  protected readonly openMenuId = signal<string | null>(null);
   protected readonly showEditDialog = signal(false);
   protected readonly editingMedicineId = signal<string | null>(null);
 
-onToggleStatus(med: Medicine): void {
-  this.openMenuId.set(null);
-  this.api.toggleStatus(med.id).subscribe({   // was med.pharmacyMedicineId — FIXED
-    next: () => this.onRefresh(),
-    error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not update status.')),
-  });
-}
-
-onDelete(med: Medicine): void {
-  this.openMenuId.set(null);
-  if (!confirm(`Delete "${med.tradeNameEn}"?`)) return;
-  this.api.delete(med.id).subscribe({   // was med.pharmacyMedicineId — FIXED
-    next: () => this.onRefresh(),
-    error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not delete medicine.')),
-  });
-}
-
-menuPosition = signal<{ top: number; left: number } | null>(null);
-
-menuMedicine = computed(() => {
-  const id = this.openMenuId();
-  return id ? this.medicines().find(m => m.id === id) ?? null : null;
-});
-
-onToggleMenu(id: string, event: MouseEvent) {
-  event.stopPropagation();
-  if (this.openMenuId() === id) {
-    this.closeMenu();
-    return;
+  onToggleStatus(med: Medicine): void {
+    this.openMenuId.set(null);
+    this.api.toggleStatus(med.id).subscribe({
+      next: () => this.onRefresh(),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not update status.')),
+    });
   }
 
-  const btn = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const menuWidth = 176;   // w-44
-  const menuHeight = 180;  // approx height of the menu (4 items + divider)
-  const gap = 4;
+  onDelete(med: Medicine): void {
+    this.openMenuId.set(null);
+    if (!confirm(`Delete "${med.tradeNameEn}"?`)) return;
+    this.api.delete(med.id).subscribe({
+      next: () => this.onRefresh(),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not delete medicine.')),
+    });
+  }
 
-  const spaceBelow = window.innerHeight - btn.bottom;
-  const openUpward = spaceBelow < menuHeight + gap;
+  // --- Menu positioning (measured, not guessed) ---
 
-  this.menuPosition.set({
-    top: openUpward ? btn.top - menuHeight - gap : btn.bottom + gap,
-    left: Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8),
+  @ViewChild('menuEl') menuEl?: ElementRef<HTMLDivElement>;
+  private pendingBtnRect: DOMRect | null = null;
+
+  menuPosition = signal<{ top: number; left: number } | null>(null);
+  protected readonly menuVisible = signal(false);
+
+  menuMedicine = computed(() => {
+    const id = this.openMenuId();
+    return id ? this.medicines().find((m) => m.id === id) ?? null : null;
   });
-  this.openMenuId.set(id);
-}
 
-closeMenu() {
-  this.openMenuId.set(null);
-  this.menuPosition.set(null);
-}
+  onToggleMenu(id: string, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.openMenuId() === id) {
+      this.closeMenu();
+      return;
+    }
+
+    const btn = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.pendingBtnRect = btn;
+    this.menuVisible.set(false);
+
+    const menuWidth = 176; // w-44, used only for the provisional placement pre-measurement
+    this.menuPosition.set({
+      top: btn.bottom + 4,
+      left: Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8),
+    });
+    this.openMenuId.set(id);
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.openMenuId() && !this.menuVisible() && this.menuEl && this.pendingBtnRect) {
+      const menuHeight = this.menuEl.nativeElement.offsetHeight;
+      const menuWidth = this.menuEl.nativeElement.offsetWidth;
+      const gap = 4;
+      const btn = this.pendingBtnRect;
+
+      const spaceBelow = window.innerHeight - btn.bottom;
+      const openUpward = spaceBelow < menuHeight + gap;
+
+      this.menuPosition.set({
+        top: openUpward ? btn.top - menuHeight - gap : btn.bottom + gap,
+        left: Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8),
+      });
+      this.menuVisible.set(true);
+    }
+  }
+
+  closeMenu(): void {
+    this.openMenuId.set(null);
+    this.menuPosition.set(null);
+    this.menuVisible.set(false);
+    this.pendingBtnRect = null;
+  }
+
+  // --- Edit dialog ---
+
   onEdit(med: Medicine): void {
     this.openMenuId.set(null);
     this.editingMedicineId.set(med.id);

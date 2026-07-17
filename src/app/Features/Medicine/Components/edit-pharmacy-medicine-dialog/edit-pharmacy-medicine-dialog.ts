@@ -3,7 +3,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { MedicinesApiService } from '../../Services/medicines-api.service';
 import { TaxesService } from '../../../Tax/Services/tax';
 import { Tax } from '../../../Tax/Models/tax';
-import { MedicineDetails } from '../../Models/medicine.model';
+import { MedicineDetails, MedicineEditFields } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 
 @Component({
@@ -20,7 +20,7 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
 
   // id used for the PUT — this is the global Medicine.Id, same one the details route/page uses
   medicineId = input.required<string>();
-  medicine = input.required<MedicineDetails>();
+  medicine = input.required<MedicineEditFields>();
 
   closed = output<void>();
   saved = output<void>();

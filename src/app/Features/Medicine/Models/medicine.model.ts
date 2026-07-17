@@ -152,3 +152,5 @@ export interface PharmacyMedicineUpdateDto {
   minStockLevel: number;
   sKU?: string | null;
 }
+
+export type MedicineEditFields = Pick<MedicineDetails, 'sellingPrice' | 'purchasePrice' | 'minStockLevel' | 'taxes'>;

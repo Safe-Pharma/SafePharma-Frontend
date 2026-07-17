@@ -230,8 +230,11 @@
 @if (menuPosition(); as pos) {
 <div class="fixed inset-0 z-40" (click)="closeMenu()"></div>
 
-<div class="fixed z-50 w-44 overflow-hidden rounded-md border border-border bg-popover text-left shadow-popover"
-  [style.top.px]="pos.top" [style.left.px]="pos.left" (click)="$event.stopPropagation()">
+<div #menuEl
+  class="fixed z-50 w-44 overflow-hidden rounded-md border border-border bg-popover text-left shadow-popover"
+  [style.top.px]="pos.top" [style.left.px]="pos.left"
+  [style.visibility]="menuVisible() ? 'visible' : 'hidden'"
+  (click)="$event.stopPropagation()">
   <button type="button" (click)="onEdit(med)" class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
@@ -260,7 +263,7 @@
 
   <div class="h-px bg-border"></div>
 
-  <button type="button" (click)="onDelete(med)"
+  <!-- <button type="button" (click)="onDelete(med)"
     class="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive-soft">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
@@ -270,7 +273,7 @@
       <line x1="14" x2="14" y1="11" y2="17"></line>
     </svg>
     Delete
-  </button>
+  </button> -->
 </div>
 }
 }
