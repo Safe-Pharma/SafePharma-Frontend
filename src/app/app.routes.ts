@@ -130,6 +130,22 @@ export const routes: Routes = [
           ),
         data: { title: 'Medicine Details' },
       },
+      {
+        path: 'customers',
+        loadComponent: () =>
+          import('./Features/Customer/Components/customers-list/customers-list').then(
+            (m) => m.CustomersListComponent,
+          ),
+        data: { title: 'Customers' },
+      },
+      {
+        path: 'customers/:id',
+        loadComponent: () =>
+          import('./Features/Customer/Components/customer-details/customer-details').then(
+            (m) => m.CustomerDetailsComponent,
+          ),
+        data: { title: 'Customer Details' },
+      },
 
       /* {
       
