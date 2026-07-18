@@ -1,0 +1,101 @@
+export type SaleStatus = 'Open' | 'Cancelled' | 'Completed';
+export type SalePaymentMethod = 'Cash' | 'Card' | 'Mixed';
+
+export interface MedicineSearchResult {
+  pharmacyMedicineId: string;
+  tradeNameAr: string;
+  tradeNameEn: string;
+  scientificName: string;
+  barcode: string | null;
+  sellingPrice: number;
+  stockQuantity: number;
+}
+
+export interface PaginationMetaData {
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  metadata: PaginationMetaData;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+export interface SaleItem {
+  id: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  customerId: string | null;
+  customerName: string;
+  batchId: string;
+  batchNumber: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  taxAmount: number;
+  lineTotal: number;
+}
+
+export interface Sale {
+  id: string;
+  invoiceNumber: string;
+  customerId: string | null;
+  customerName: string;
+  paymentMethod: SalePaymentMethod;
+  subTotal: number;
+  discount: number;
+  tax: number;
+  grandTotal: number;
+  amountPaidByCash: number;
+  amountPaidByCard: number;
+  amountPaid: number;
+  change: number;
+  status: SaleStatus;
+  items: SaleItem[];
+}
+
+// ---- Request DTOs (match the backend exactly — no batchId, it's FIFO-resolved server-side) ----
+
+export interface CreateSaleItemsDto {
+  pharmacyMedicineId: string;
+  customerId?: string;
+  quantity: number;
+  discount: number;
+  taxAmount: number;
+}
+
+export interface UpdateSaleItemDto {
+  customerId?: string;
+  quantity: number;
+  discount: number;
+  taxAmount: number;
+}
+
+export interface ApplySaleDiscountDto {
+  discountAmount: number;
+}
+
+export interface SetSaleCustomerDto {
+  customerId: string;
+}
+
+/** What the payment modal collects, before it's translated into a PaySaleDto. */
+export type PaymentMethodChoice = 'Cash' | 'Card' | 'Mixed';
+
+// Matches PaySaleDto — only these two fields are read by the backend.
+export interface PaySaleDto {
+  amountPaidByCash: number;
+  amountPaidByCard: number;
+}
+
+export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
