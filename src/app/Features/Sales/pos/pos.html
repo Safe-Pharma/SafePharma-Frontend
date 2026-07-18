@@ -20,7 +20,7 @@
         <line x1="10" y1="3" x2="8" y2="21" />
         <line x1="16" y1="3" x2="14" y2="21" />
       </svg>
-      <span id="invoiceNumber">INV-491344</span>
+      <span id="invoiceNumber">{{ invoiceNumber }}</span>
       <button class="ml-1 text-blue-400 hover:text-blue-700">
         <svg
           class="w-3.5 h-3.5"
@@ -49,13 +49,14 @@
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      <span class="hidden sm:inline">New tab</span>
+      <span (click)="createDraftSale()" class="hidden sm:inline">New tab</span>
     </button>
   </div>
 
   <!-- Search + Customer + User + Invoice strip -->
   <div class="shrink-0 bg-slate-50 px-3 sm:px-6 py-3 border-b border-slate-200">
     <div class="flex flex-col lg:flex-row gap-3">
+      <!-- ================= Product search (with quantity input) ================= -->
       <div class="relative flex-1">
         <svg
           class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
@@ -77,37 +78,101 @@
           placeholder="Search by product name or barcode..."
           class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-24 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
         />
+
+        <div
+          *ngIf="searchResults.length > 0"
+          class="absolute z-10 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-lg max-h-80 overflow-y-auto"
+        >
+          <div
+            *ngFor="let item of searchResults"
+            class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-slate-800">{{ item.tradeNameEn }}</p>
+              <p class="text-xs text-slate-400">
+                {{ item.scientificName }} · Stock:
+                <span
+                  [class.text-red-600]="item.stockQuantity <= 10"
+                  class="font-medium text-blue-600"
+                  >{{ item.stockQuantity }}</span
+                >
+              </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <p class="text-sm font-semibold text-blue-600">${{ item.sellingPrice }}</p>
+              <input
+                type="number"
+                min="1"
+                [ngModel]="getQuantity(item.pharmacyMedicineId)"
+                (ngModelChange)="setQuantity(item.pharmacyMedicineId, $event)"
+                class="w-14 border border-slate-200 rounded-md px-2 py-1 text-sm text-center"
+              />
+              <button
+                (click)="addToCart(item)"
+                class="text-xs font-semibold bg-blue-500 text-white px-3 py-1.5 rounded-md hover:bg-blue-600"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flex flex-wrap gap-3">
-        <button
-          class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-3 text-sm min-w-42.5"
-        >
-          <svg
-            class="w-4 h-4 text-slate-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+        <!-- ================= Customer selector ================= -->
+        <div class="relative">
+          <button
+            (click)="toggleCustomerDropdown()"
+            class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-3 text-sm min-w-42.5"
           >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span class="text-slate-700 font-medium flex-1 text-left">Walk-in customer</span>
-          <svg
-            class="w-4 h-4 text-slate-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            <svg
+              class="w-4 h-4 text-slate-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span class="text-slate-700 font-medium flex-1 text-left">
+              {{ selectedCustomer ? selectedCustomer.name : 'Choose a customer' }}
+            </span>
+            <svg
+              class="w-4 h-4 text-slate-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          <div
+            *ngIf="showCustomerDropdown"
+            class="absolute z-20 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg max-h-72 overflow-y-auto"
           >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
+            <div
+              (click)="selectCustomer(null)"
+              class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100"
+            >
+              Choose a customer
+            </div>
+            <div
+              *ngFor="let c of customers"
+              (click)="selectCustomer(c)"
+              class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+            >
+              <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
+              <p class="text-xs text-slate-400">{{ c.phone }}</p>
+            </div>
+          </div>
+        </div>
 
         <div
           class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2"
@@ -141,7 +206,7 @@
             <line x1="16" y1="3" x2="14" y2="21" />
           </svg>
           <div class="leading-tight">
-            <p class="text-sm font-semibold text-slate-900">INV-491344</p>
+            <p class="text-sm font-semibold text-slate-900">{{ invoiceNumber }}</p>
             <p class="text-[11px] text-slate-400 flex items-center gap-1">
               <svg
                 class="w-3 h-3"
@@ -189,12 +254,14 @@
             </svg>
             Cart
           </div>
-          <span id="cartCount" class="text-sm text-slate-400">0 items</span>
+          <span id="cartCount" class="text-sm text-slate-400"
+            >{{ sale?.items?.length ?? 0 }} items</span
+          >
         </div>
 
         <!-- Empty state -->
         <div
-          id="cartEmptyState"
+          *ngIf="!sale || sale.items.length === 0"
           class="flex-1 flex flex-col items-center justify-center text-center px-6 py-16"
         >
           <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
@@ -218,45 +285,158 @@
           <p class="text-sm text-slate-400">Search by barcode or product name to start a sale.</p>
         </div>
 
-        <!-- Cart items list (hidden while empty; populate from Sale.SaleItems) -->
+        <!-- Cart items list -->
         <div
-          id="cartItemsList"
-          class="hidden flex-1 overflow-y-auto divide-y divide-slate-100"
-        ></div>
+          *ngIf="sale && sale.items.length > 0"
+          class="flex-1 overflow-y-auto divide-y divide-slate-100"
+        >
+          <div *ngFor="let item of sale.items" class="flex items-center gap-3 px-5 py-3.5">
+            <div
+              class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"
+            >
+              <svg
+                class="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+                <path d="m8.5 8.5 7 7" />
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-slate-800 truncate">{{ item.medicineName }}</p>
+              <p class="text-xs text-slate-400">{{ item.batchNumber }} · ${{ item.unitPrice }}</p>
+            </div>
+            <div class="relative shrink-0">
+              <button
+                (click)="toggleItemCustomerPicker(item.id)"
+                class="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-50"
+              >
+                {{ item.customerName || 'Customer' }}
+              </button>
+
+              <div
+                *ngIf="openItemCustomerPickerId === item.id"
+                class="absolute z-30 left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div
+                  (click)="selectCartItemCustomer(item, null)"
+                  class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100"
+                >
+                  Choose a
+                </div>
+                <div
+                  *ngFor="let c of customers"
+                  (click)="selectCartItemCustomer(item, c)"
+                  class="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                >
+                  <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
+                  <p class="text-xs text-slate-400">{{ c.phone }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button
+                (click)="decreaseQuantity(item)"
+                class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <span class="w-6 text-center text-sm font-medium">{{ item.quantity }}</span>
+              <button
+                (click)="increaseQuantity(item)"
+                class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+            </div>
+            <p class="w-16 text-right text-sm font-semibold text-slate-800 shrink-0">
+              ${{ item.lineTotal }}
+            </p>
+            <button (click)="removeItem(item)" class="text-slate-300 hover:text-red-500 shrink-0">
+              <svg
+                class="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 6h18" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </section>
 
       <!-- Order summary -->
       <aside class="hidden lg:flex w-[320px] shrink-0 flex-col gap-4">
         <div class="bg-white border border-slate-200 rounded-xl p-5">
           <p class="font-semibold text-slate-900">Order summary</p>
-          <p class="text-sm text-slate-400 mb-4">Walk-in customer</p>
+          <p class="text-sm text-slate-400 mb-4">
+            {{ selectedCustomer ? selectedCustomer.name : 'Choose a customer' }}
+          </p>
 
           <div class="space-y-2.5 text-sm">
             <div class="flex justify-between">
               <span class="text-slate-500">Subtotal</span>
-              <span id="subtotalValue" class="font-medium text-slate-800">$0.00</span>
+              <span id="subtotalValue" class="font-medium text-slate-800"
+                >${{ sale?.subTotal ?? 0 }}</span
+              >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Discount</span>
-              <span id="discountValue" class="font-medium text-amber-500">- $0.00</span>
+              <span id="discountValue" class="font-medium text-amber-500"
+                >- ${{ sale?.discount ?? 0 }}</span
+              >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Tax (5%)</span>
-              <span id="taxValue" class="font-medium text-slate-800">$0.00</span>
+              <span id="taxValue" class="font-medium text-slate-800">${{ sale?.tax ?? 0 }}</span>
             </div>
           </div>
 
           <div class="mt-4 rounded-xl bg-blue-50 px-4 py-3.5">
             <p class="text-[11px] font-semibold tracking-wide text-blue-600">GRAND TOTAL</p>
-            <p id="grandTotalValue" class="text-2xl font-bold text-blue-700">$0.00</p>
+            <p id="grandTotalValue" class="text-2xl font-bold text-blue-700">
+              ${{ sale?.grandTotal ?? 0 }}
+            </p>
           </div>
 
           <button
             id="payButton"
+            [disabled]="!sale || sale.items.length === 0"
             class="mt-4 w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors"
-            disabled
           >
-            Pay <span id="payButtonAmount">$0.00</span>
+            Pay <span id="payButtonAmount">${{ sale?.grandTotal ?? 0 }}</span>
           </button>
 
           <div class="grid grid-cols-2 gap-2 mt-2">
@@ -443,7 +623,9 @@
   >
     <div class="flex-1">
       <p class="text-[11px] text-slate-400 leading-tight">Grand total</p>
-      <p id="grandTotalValueMobile" class="text-lg font-bold text-blue-700 leading-tight">$0.00</p>
+      <p id="grandTotalValueMobile" class="text-lg font-bold text-blue-700 leading-tight">
+        ${{ sale?.grandTotal ?? 0 }}
+      </p>
     </div>
     <button
       class="flex items-center gap-1.5 text-slate-500 border border-slate-200 rounded-xl px-3 py-2.5 text-sm"
@@ -482,93 +664,10 @@
     </button>
     <button
       id="payButtonMobile"
+      [disabled]="!sale || sale.items.length === 0"
       class="flex-1 bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5"
-      disabled
     >
-      Pay <span id="payButtonAmountMobile">$0.00</span>
+      Pay <span id="payButtonAmountMobile">${{ sale?.grandTotal ?? 0 }}</span>
     </button>
   </div>
 </div>
-
-<!-- ============ Cart line item template ============ -->
-<!-- Clone this markup per Sale.SaleItems entry when wiring the API (or use *ngFor in Angular directly on this block) -->
-<template id="cartItemTemplate">
-  <div class="flex items-center gap-3 px-5 py-3.5" data-cart-item>
-    <div
-      class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"
-    >
-      <svg
-        class="w-5 h-5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
-        <path d="m8.5 8.5 7 7" />
-      </svg>
-    </div>
-    <div class="min-w-0 flex-1">
-      <p class="text-sm font-semibold text-slate-800 truncate" data-field="medicineName">
-        Medicine name
-      </p>
-      <p class="text-xs text-slate-400" data-field="batchInfo">Batch · $0.00</p>
-    </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <button
-        class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
-        data-action="decrease"
-      >
-        <svg
-          class="w-3.5 h-3.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
-      <span class="w-6 text-center text-sm font-medium" data-field="quantity">1</span>
-      <button
-        class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
-        data-action="increase"
-      >
-        <svg
-          class="w-3.5 h-3.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
-    </div>
-    <p class="w-16 text-right text-sm font-semibold text-slate-800 shrink-0" data-field="lineTotal">
-      $0.00
-    </p>
-    <button class="text-slate-300 hover:text-red-500 shrink-0" data-action="remove">
-      <svg
-        class="w-4 h-4"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M3 6h18" />
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      </svg>
-    </button>
-  </div>
-</template>
