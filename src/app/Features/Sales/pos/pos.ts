@@ -8,6 +8,8 @@ import { PaymentModalComponent } from './Components/payment-modal/payment-modal'
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
+import { TaxesService } from '../../Tax/Services/tax';
+import { Tax } from '../../Tax/Models/tax';
 import {
   Customer,
   EMPTY_GUID,
@@ -18,6 +20,12 @@ import {
   SaleItem,
 } from './pos.models';
 
+interface PosTab {
+  tabId: string;
+  sale: Sale;
+  selectedCustomer: Customer | null;
+}
+
 @Component({
   selector: 'app-pos',
   standalone: true,
@@ -27,12 +35,18 @@ import {
 })
 export class Pos implements OnInit {
   private readonly service = inject(PosService);
+  private readonly taxesApi = inject(TaxesService);
   private readonly toast = inject(Toast);
   protected readonly auth = inject(AuthSessionService);
 
-  // ---- sale state ----
-  protected readonly sale = signal<Sale | null>(null);
-  protected readonly loadingSale = signal(false);
+  // ---- tabs ----
+  protected readonly tabs = signal<PosTab[]>([]);
+  protected readonly activeTabId = signal<string>('');
+  protected readonly activeTab = computed(
+    () => this.tabs().find((t) => t.tabId === this.activeTabId()) ?? null,
+  );
+  protected readonly sale = computed(() => this.activeTab()?.sale ?? null);
+  protected readonly selectedCustomer = computed(() => this.activeTab()?.selectedCustomer ?? null);
 
   // ---- product search ----
   protected readonly query = signal('');
@@ -66,12 +80,15 @@ export class Pos implements OnInit {
     initialValue: [] as MedicineSearchResult[],
   });
   protected readonly showNoResults = computed(
-    () => this.query().trim().length >= 2 && !this.searching() && this.searchResults().length === 0 && !this.searchError(),
+    () =>
+      this.query().trim().length >= 2 &&
+      !this.searching() &&
+      this.searchResults().length === 0 &&
+      !this.searchError(),
   );
 
   // ---- customer picker (sale-level) ----
   protected readonly customers = signal<Customer[]>([]);
-  protected readonly selectedCustomer = signal<Customer | null>(null);
   protected readonly showCustomerDropdown = signal(false);
 
   // ---- per-line customer picker ----
@@ -82,35 +99,94 @@ export class Pos implements OnInit {
   protected readonly paymentMethodChoice = signal<PaymentMethodChoice>('Cash');
   protected readonly payingInProgress = signal(false);
 
-  // ---- discount editor (sale-level) ----
+  // ---- sale-level discount editor ----
   protected readonly showDiscountEditor = signal(false);
   protected readonly discountInput = signal(0);
   protected readonly savingDiscount = signal(false);
 
+  // ---- sale-level tax editor ----
+  protected readonly taxes = signal<Tax[]>([]);
+  protected readonly showTaxEditor = signal(false);
+  protected readonly taxInput = signal('');
+  protected readonly savingTax = signal(false);
+
   ngOnInit(): void {
-    this.createDraftSale();
+    this.openNewTab();
     this.loadCustomers();
+    this.taxesApi.getAll().subscribe({
+      next: (list) => this.taxes.set(list.filter((t) => t.status === 'Active')),
+      error: () => {},
+    });
   }
 
-  // ================= draft sale =================
+  // ================= tabs =================
 
-  createDraftSale(): void {
-    this.loadingSale.set(true);
+  openNewTab(): void {
     this.service.createDraftSale().subscribe({
       next: (res) => {
-        this.loadingSale.set(false);
         if (res.success && res.data) {
-          this.sale.set(res.data);
-          this.selectedCustomer.set(null);
+          const tab: PosTab = { tabId: res.data.id, sale: res.data, selectedCustomer: null };
+          this.tabs.update((list) => [...list, tab]);
+          this.activeTabId.set(tab.tabId);
         } else {
           this.toast.show(res.message || 'Could not start a new sale.', 'error');
         }
       },
-      error: (err) => {
-        this.loadingSale.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not start a new sale.'), 'error');
-      },
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not start a new sale.'), 'error'),
     });
+  }
+
+  switchTab(tabId: string): void {
+    this.activeTabId.set(tabId);
+  }
+
+  closeTab(tabId: string, event: Event): void {
+    event.stopPropagation();
+    const tab = this.tabs().find((t) => t.tabId === tabId);
+    if (!tab) return;
+
+    if (tab.sale.status !== 'Open') {
+      this.removeTabLocally(tabId);
+      return;
+    }
+    if (
+      tab.sale.items.length > 0 &&
+      !confirm(`Close ${tab.sale.invoiceNumber}? This will cancel the draft sale.`)
+    ) {
+      return;
+    }
+
+    this.service.cancelSale(tab.tabId).subscribe({
+      next: () => this.removeTabLocally(tabId),
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not close this tab.'), 'error'),
+    });
+  }
+
+  /** Removes a tab from local state only (assumes the backend sale is already
+   *  in its final state — cancelled or completed). Opens a fresh tab if none remain. */
+  private removeTabLocally(tabId: string): void {
+    const remaining = this.tabs().filter((t) => t.tabId !== tabId);
+    this.tabs.set(remaining);
+    if (this.activeTabId() === tabId) {
+      if (remaining.length > 0) {
+        this.activeTabId.set(remaining[remaining.length - 1].tabId);
+      } else {
+        this.openNewTab();
+      }
+    }
+  }
+
+  /** Replace the active tab's sale snapshot with a fresh one from the API. */
+  private patchActiveSale(updated: Sale): void {
+    const id = this.activeTabId();
+    this.tabs.update((list) => list.map((t) => (t.tabId === id ? { ...t, sale: updated } : t)));
+  }
+
+  private patchActiveCustomer(customer: Customer | null): void {
+    const id = this.activeTabId();
+    this.tabs.update((list) =>
+      list.map((t) => (t.tabId === id ? { ...t, selectedCustomer: customer } : t)),
+    );
   }
 
   private loadCustomers(): void {
@@ -131,12 +207,12 @@ export class Pos implements OnInit {
     const currentSale = this.sale();
     if (!currentSale) return;
 
-    this.selectedCustomer.set(customer);
+    this.patchActiveCustomer(customer);
     this.service
       .setSaleCustomer(currentSale.id, { customerId: customer ? customer.id : EMPTY_GUID })
       .subscribe({
         next: (res) => {
-          if (res.success && res.data) this.sale.set(res.data);
+          if (res.success && res.data) this.patchActiveSale(res.data);
         },
         error: (err) => this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error'),
       });
@@ -164,7 +240,7 @@ export class Pos implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.success && res.data) {
-            this.sale.set(res.data);
+            this.patchActiveSale(res.data);
             this.query.set('');
           } else {
             this.toast.show(res.message || 'Could not add item.', 'error');
@@ -188,31 +264,42 @@ export class Pos implements OnInit {
   // ================= cart line actions =================
 
   increaseQuantity(item: SaleItem): void {
-    this.updateItemQuantity(item, item.quantity + 1);
+    this.updateItem(item, { quantity: item.quantity + 1 });
   }
 
   decreaseQuantity(item: SaleItem): void {
     if (item.quantity <= 1) return;
-    this.updateItemQuantity(item, item.quantity - 1);
+    this.updateItem(item, { quantity: item.quantity - 1 });
   }
 
-  private updateItemQuantity(item: SaleItem, newQuantity: number): void {
+  onRowDiscountChange(item: SaleItem, value: number): void {
+    this.updateItem(item, { discount: Math.max(0, value || 0) });
+  }
+
+  onRowTaxChange(item: SaleItem, value: number): void {
+    this.updateItem(item, { taxAmount: Math.max(0, value || 0) });
+  }
+
+  private updateItem(
+    item: SaleItem,
+    changes: Partial<Pick<SaleItem, 'quantity' | 'discount' | 'taxAmount'>>,
+  ): void {
     const currentSale = this.sale();
     if (!currentSale) return;
 
     this.service
       .updateSaleItem(currentSale.id, item.id, {
         customerId: item.customerId ?? undefined,
-        quantity: newQuantity,
-        discount: item.discount,
-        taxAmount: item.taxAmount,
+        quantity: changes.quantity ?? item.quantity,
+        discount: changes.discount ?? item.discount,
+        taxAmount: changes.taxAmount ?? item.taxAmount,
       })
       .subscribe({
         next: (res) => {
-          if (res.success && res.data) this.sale.set(res.data);
-          else this.toast.show(res.message || 'Could not update quantity.', 'error');
+          if (res.success && res.data) this.patchActiveSale(res.data);
+          else this.toast.show(res.message || 'Could not update item.', 'error');
         },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not update quantity.'), 'error'),
+        error: (err) => this.toast.show(getErrorMessage(err, 'Could not update item.'), 'error'),
       });
   }
 
@@ -222,7 +309,7 @@ export class Pos implements OnInit {
 
     this.service.removeSaleItem(currentSale.id, item.id).subscribe({
       next: (res) => {
-        if (res.success && res.data) this.sale.set(res.data);
+        if (res.success && res.data) this.patchActiveSale(res.data);
         else this.toast.show(res.message || 'Could not remove item.', 'error');
       },
       error: (err) => this.toast.show(getErrorMessage(err, 'Could not remove item.'), 'error'),
@@ -234,10 +321,10 @@ export class Pos implements OnInit {
   }
 
   selectCartItemCustomer(item: SaleItem, customer: Customer | null): void {
+    this.openItemCustomerPickerId.set(null);
     const currentSale = this.sale();
     if (!currentSale) return;
 
-    this.openItemCustomerPickerId.set(null);
     this.service
       .updateSaleItem(currentSale.id, item.id, {
         customerId: customer ? customer.id : undefined,
@@ -247,7 +334,7 @@ export class Pos implements OnInit {
       })
       .subscribe({
         next: (res) => {
-          if (res.success && res.data) this.sale.set(res.data);
+          if (res.success && res.data) this.patchActiveSale(res.data);
         },
         error: (err) => this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error'),
       });
@@ -259,6 +346,7 @@ export class Pos implements OnInit {
     const currentSale = this.sale();
     if (!currentSale) return;
     this.discountInput.set(currentSale.discount);
+    this.showTaxEditor.set(false);
     this.showDiscountEditor.set(true);
   }
 
@@ -277,7 +365,7 @@ export class Pos implements OnInit {
         next: (res) => {
           this.savingDiscount.set(false);
           if (res.success && res.data) {
-            this.sale.set(res.data);
+            this.patchActiveSale(res.data);
             this.showDiscountEditor.set(false);
             this.toast.show('Discount applied.', 'success');
           } else {
@@ -291,6 +379,43 @@ export class Pos implements OnInit {
       });
   }
 
+  // ================= sale-level tax =================
+
+  openTaxEditor(): void {
+    if (!this.sale()) return;
+    this.taxInput.set(this.taxes()[0]?.id ?? '');
+    this.showDiscountEditor.set(false);
+    this.showTaxEditor.set(true);
+  }
+
+  closeTaxEditor(): void {
+    this.showTaxEditor.set(false);
+  }
+
+  saveTax(): void {
+    const currentSale = this.sale();
+    const taxId = this.taxInput();
+    if (!currentSale || !taxId) return;
+
+    this.savingTax.set(true);
+    this.service.applyTax(currentSale.id, { taxId }).subscribe({
+      next: (res) => {
+        this.savingTax.set(false);
+        if (res.success && res.data) {
+          this.patchActiveSale(res.data);
+          this.showTaxEditor.set(false);
+          this.toast.show('Tax applied.', 'success');
+        } else {
+          this.toast.show(res.message || 'Could not apply tax.', 'error');
+        }
+      },
+      error: (err) => {
+        this.savingTax.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not apply tax.'), 'error');
+      },
+    });
+  }
+
   // ================= cancel sale =================
 
   cancelSale(): void {
@@ -302,7 +427,7 @@ export class Pos implements OnInit {
       next: (res) => {
         if (res.success) {
           this.toast.show('Sale cancelled.', 'success');
-          this.createDraftSale();
+          this.removeTabLocally(this.activeTabId());
         } else {
           this.toast.show(res.message || 'Could not cancel sale.', 'error');
         }
@@ -336,7 +461,10 @@ export class Pos implements OnInit {
         if (res.success && res.data) {
           this.showPaymentModal.set(false);
           this.toast.show(`Sale ${res.data.invoiceNumber} completed successfully.`, 'success');
-          this.createDraftSale();
+          // Drop this finished tab and open a fresh draft in its place.
+          const finishedTabId = this.activeTabId();
+          this.tabs.update((list) => list.filter((t) => t.tabId !== finishedTabId));
+          this.openNewTab();
         } else {
           this.toast.show(res.message || 'Payment could not be completed.', 'error');
         }

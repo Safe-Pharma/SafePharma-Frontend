@@ -85,6 +85,14 @@ export interface ApplySaleDiscountDto {
   discountAmount: number;
 }
 
+export interface ApplySaleTaxDto {
+  taxId: string;
+}
+
+export interface ApplySaleTaxDto {
+  taxId: string;
+}
+
 export interface SetSaleCustomerDto {
   customerId: string;
 }
