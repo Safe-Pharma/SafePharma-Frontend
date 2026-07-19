@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { catchError, concatMap, debounceTime, distinctUntilChanged, from, map, of, switchMap } from 'rxjs';
 import { PosService } from './Services/pos-service';
 import { PaymentModalComponent } from './Components/payment-modal/payment-modal';
 import { Toast } from '../../../Shared/Toasts/toast';
@@ -25,6 +33,8 @@ interface PosTab {
   sale: Sale;
   selectedCustomer: Customer | null;
 }
+
+type DiscountMode = 'amount' | 'percent';
 
 @Component({
   selector: 'app-pos',
@@ -50,6 +60,7 @@ export class Pos implements OnInit {
 
   // ---- product search ----
   protected readonly query = signal('');
+  protected readonly searchOpen = signal(false);
   protected readonly searching = signal(false);
   protected readonly searchError = signal<string | null>(null);
   private readonly query$ = toObservable(this.query).pipe(debounceTime(300), distinctUntilChanged());
@@ -99,16 +110,21 @@ export class Pos implements OnInit {
   protected readonly paymentMethodChoice = signal<PaymentMethodChoice>('Cash');
   protected readonly payingInProgress = signal(false);
 
-  // ---- sale-level discount editor ----
+  // ---- sale-level discount editor (amount or percent) ----
   protected readonly showDiscountEditor = signal(false);
+  protected readonly discountMode = signal<DiscountMode>('amount');
   protected readonly discountInput = signal(0);
   protected readonly savingDiscount = signal(false);
 
-  // ---- sale-level tax editor ----
+  // ---- sale-level tax editor (pick a configured tax) ----
   protected readonly taxes = signal<Tax[]>([]);
   protected readonly showTaxEditor = signal(false);
   protected readonly taxInput = signal('');
   protected readonly savingTax = signal(false);
+
+  // ---- per-row discount mode + tax selection (UI-only state, backend just stores dollars) ----
+  protected readonly rowDiscountMode = signal<Record<string, DiscountMode>>({});
+  protected readonly rowTaxSelection = signal<Record<string, string>>({});
 
   ngOnInit(): void {
     this.openNewTab();
@@ -117,6 +133,23 @@ export class Pos implements OnInit {
       next: (list) => this.taxes.set(list.filter((t) => t.status === 'Active')),
       error: () => {},
     });
+  }
+
+  // ================= click-outside-to-close =================
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showCustomerDropdown.set(false);
+    this.openItemCustomerPickerId.set(null);
+    this.showDiscountEditor.set(false);
+    this.showTaxEditor.set(false);
+    this.searchOpen.set(false);
+  }
+
+  /** Stops a click inside an open panel/dropdown from bubbling to the
+   *  document listener above, which would otherwise close it immediately. */
+  stop(event: Event): void {
+    event.stopPropagation();
   }
 
   // ================= tabs =================
@@ -222,6 +255,11 @@ export class Pos implements OnInit {
 
   onQueryInput(value: string): void {
     this.query.set(value);
+    this.searchOpen.set(true);
+  }
+
+  onSearchFocus(): void {
+    if (this.query().trim().length >= 2) this.searchOpen.set(true);
   }
 
   addToCart(item: MedicineSearchResult): void {
@@ -242,6 +280,7 @@ export class Pos implements OnInit {
           if (res.success && res.data) {
             this.patchActiveSale(res.data);
             this.query.set('');
+            this.searchOpen.set(false);
           } else {
             this.toast.show(res.message || 'Could not add item.', 'error');
           }
@@ -270,14 +309,6 @@ export class Pos implements OnInit {
   decreaseQuantity(item: SaleItem): void {
     if (item.quantity <= 1) return;
     this.updateItem(item, { quantity: item.quantity - 1 });
-  }
-
-  onRowDiscountChange(item: SaleItem, value: number): void {
-    this.updateItem(item, { discount: Math.max(0, value || 0) });
-  }
-
-  onRowTaxChange(item: SaleItem, value: number): void {
-    this.updateItem(item, { taxAmount: Math.max(0, value || 0) });
   }
 
   private updateItem(
@@ -340,14 +371,75 @@ export class Pos implements OnInit {
       });
   }
 
+  // ================= per-row discount (amount or percent, always sent as $) =================
+
+  getRowDiscountMode(itemId: string): DiscountMode {
+    return this.rowDiscountMode()[itemId] ?? 'amount';
+  }
+
+  setRowDiscountMode(item: SaleItem, mode: DiscountMode): void {
+    this.rowDiscountMode.update((m) => ({ ...m, [item.id]: mode }));
+  }
+
+  /** What to show in the row's discount input for its current mode. */
+  getRowDiscountDisplay(item: SaleItem): number {
+    const base = item.unitPrice * item.quantity;
+    if (this.getRowDiscountMode(item.id) === 'percent') {
+      return base > 0 ? Math.round((item.discount / base) * 10000) / 100 : 0;
+    }
+    return item.discount;
+  }
+
+  onRowDiscountInput(item: SaleItem, rawValue: number): void {
+    const base = item.unitPrice * item.quantity;
+    const mode = this.getRowDiscountMode(item.id);
+    const value = Math.max(0, rawValue || 0);
+    const dollarValue =
+      mode === 'percent' ? Math.round(base * value) / 100 : value;
+    this.updateItem(item, { discount: Math.min(dollarValue, base) });
+  }
+
+  // ================= per-row tax (select a configured tax) =================
+
+  getRowTaxSelection(itemId: string): string {
+    return this.rowTaxSelection()[itemId] ?? '';
+  }
+
+  onRowTaxSelect(item: SaleItem, taxId: string): void {
+    this.rowTaxSelection.update((m) => ({ ...m, [item.id]: taxId }));
+    const tax = this.taxes().find((t) => t.id === taxId);
+    const base = item.unitPrice * item.quantity;
+    const amount = tax ? Math.round(base * tax.rate) / 100 : 0;
+    this.updateItem(item, { taxAmount: amount });
+  }
+
   // ================= sale-level discount =================
 
   openDiscountEditor(): void {
     const currentSale = this.sale();
     if (!currentSale) return;
+    this.discountMode.set('amount');
     this.discountInput.set(currentSale.discount);
     this.showTaxEditor.set(false);
     this.showDiscountEditor.set(true);
+  }
+
+  setDiscountMode(mode: DiscountMode): void {
+    const currentSale = this.sale();
+    if (!currentSale) return;
+    // convert the currently displayed number so switching modes doesn't silently change the value
+    const currentDollar =
+      this.discountMode() === 'percent'
+        ? Math.round(currentSale.subTotal * this.discountInput()) / 100
+        : this.discountInput();
+    this.discountMode.set(mode);
+    this.discountInput.set(
+      mode === 'percent'
+        ? currentSale.subTotal > 0
+          ? Math.round((currentDollar / currentSale.subTotal) * 10000) / 100
+          : 0
+        : currentDollar,
+    );
   }
 
   closeDiscountEditor(): void {
@@ -358,25 +450,29 @@ export class Pos implements OnInit {
     const currentSale = this.sale();
     if (!currentSale) return;
 
+    const raw = this.discountInput() || 0;
+    const dollarAmount =
+      this.discountMode() === 'percent'
+        ? Math.round(currentSale.subTotal * raw) / 100
+        : raw;
+
     this.savingDiscount.set(true);
-    this.service
-      .applyDiscount(currentSale.id, { discountAmount: this.discountInput() || 0 })
-      .subscribe({
-        next: (res) => {
-          this.savingDiscount.set(false);
-          if (res.success && res.data) {
-            this.patchActiveSale(res.data);
-            this.showDiscountEditor.set(false);
-            this.toast.show('Discount applied.', 'success');
-          } else {
-            this.toast.show(res.message || 'Could not apply discount.', 'error');
-          }
-        },
-        error: (err) => {
-          this.savingDiscount.set(false);
-          this.toast.show(getErrorMessage(err, 'Could not apply discount.'), 'error');
-        },
-      });
+    this.service.applyDiscount(currentSale.id, { discountAmount: dollarAmount }).subscribe({
+      next: (res) => {
+        this.savingDiscount.set(false);
+        if (res.success && res.data) {
+          this.patchActiveSale(res.data);
+          this.showDiscountEditor.set(false);
+          this.toast.show('Discount applied.', 'success');
+        } else {
+          this.toast.show(res.message || 'Could not apply discount.', 'error');
+        }
+      },
+      error: (err) => {
+        this.savingDiscount.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not apply discount.'), 'error');
+      },
+    });
   }
 
   // ================= sale-level tax =================
@@ -416,7 +512,7 @@ export class Pos implements OnInit {
     });
   }
 
-  // ================= cancel sale =================
+  // ================= cancel / clear =================
 
   cancelSale(): void {
     const currentSale = this.sale();
@@ -434,6 +530,23 @@ export class Pos implements OnInit {
       },
       error: (err) => this.toast.show(getErrorMessage(err, 'Could not cancel sale.'), 'error'),
     });
+  }
+
+  clearCart(): void {
+    const currentSale = this.sale();
+    if (!currentSale || currentSale.items.length === 0) return;
+    if (!confirm('Remove all items from this cart?')) return;
+
+    const itemIds = currentSale.items.map((i) => i.id);
+    from(itemIds)
+      .pipe(concatMap((itemId) => this.service.removeSaleItem(currentSale.id, itemId)))
+      .subscribe({
+        next: (res) => {
+          if (res.success && res.data) this.patchActiveSale(res.data);
+        },
+        error: (err) => this.toast.show(getErrorMessage(err, 'Could not clear the cart.'), 'error'),
+        complete: () => this.toast.show('Cart cleared.', 'success'),
+      });
   }
 
   // ================= payment =================

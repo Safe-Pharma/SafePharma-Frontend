@@ -20,7 +20,7 @@ import {
 export class PosService {
   private readonly medicineSearchApi = `${environment.apiUrl}/MedicineSearch`;
   private readonly saleApi = `${environment.apiUrl}/Sale`;
-  private readonly customersApi = `${environment.apiUrl}/Customer`;
+  private readonly customersApi = `${environment.apiUrl}/Customers`;
 
   constructor(private http: HttpClient) {}
 
