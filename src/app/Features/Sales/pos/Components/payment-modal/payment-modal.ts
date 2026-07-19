@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { PaymentMethodChoice, PaySaleDto } from '../../pos.models';
+import { PaymentMethodChoice, PaySaleDto } from '../../Model/pos.models';
 
 @Component({
   selector: 'app-payment-modal',

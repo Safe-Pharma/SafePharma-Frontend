@@ -26,7 +26,7 @@ import {
   PaySaleDto,
   Sale,
   SaleItem,
-} from './pos.models';
+} from './Model/pos.models';
 
 interface PosTab {
   tabId: string;
