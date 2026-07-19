@@ -5,6 +5,7 @@ import { environment } from '../../../../../environments/environment';
 import { GeneralResult } from '../../../../Core/Models/general-result.model';
 import {
   ApplySaleDiscountDto,
+  ApplySaleTaxDto,
   Customer,
   CreateSaleItemsDto,
   MedicineSearchResult,
@@ -19,7 +20,7 @@ import {
 export class PosService {
   private readonly medicineSearchApi = `${environment.apiUrl}/MedicineSearch`;
   private readonly saleApi = `${environment.apiUrl}/Sale`;
-  private readonly customersApi = `${environment.apiUrl}/Customers`;
+  private readonly customersApi = `${environment.apiUrl}/Customer`;
 
   constructor(private http: HttpClient) {}
 
@@ -60,6 +61,10 @@ export class PosService {
 
   applyDiscount(saleId: string, dto: ApplySaleDiscountDto): Observable<GeneralResult<Sale>> {
     return this.http.patch<GeneralResult<Sale>>(`${this.saleApi}/${saleId}/discount`, dto);
+  }
+
+  applyTax(saleId: string, dto: ApplySaleTaxDto): Observable<GeneralResult<Sale>> {
+    return this.http.patch<GeneralResult<Sale>>(`${this.saleApi}/${saleId}/tax`, dto);
   }
 
   pay(saleId: string, dto: PaySaleDto): Observable<GeneralResult<Sale>> {
