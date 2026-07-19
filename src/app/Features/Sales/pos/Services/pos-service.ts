@@ -79,9 +79,9 @@ export class PosService {
     return this.http.patch<GeneralResult<Sale>>(`${this.saleApi}/${saleId}/customer`, dto);
   }
 
-  getCustomers(search?: string): Observable<GeneralResult<Customer[]>> {
-    let params = new HttpParams();
-    if (search) params = params.set('search', search);
-    return this.http.get<GeneralResult<Customer[]>>(this.customersApi, { params });
-  }
+  getAllCustomers(search?: string): Observable<Customer[]> {
+      let params = new HttpParams();
+      if (search) params = params.set('search', search);
+      return this.http.get<Customer[]>(this.customersApi , { params });
+    }
 }

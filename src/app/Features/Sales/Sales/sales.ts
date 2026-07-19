@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Sale, SaleStats } from '../pos/Model/pos.models';
+import { Sale, SaleStats, SaleStatus } from '../pos/Model/pos.models';
 import { SalesService } from './Services/sales';
 
 
@@ -67,16 +67,30 @@ export class Sales implements OnInit {
     this.router.navigateByUrl('/app/pos');
   }
 
-  statusClass(status: string): string {
+  statusColor(status: SaleStatus): string {
     switch (status) {
-      case 'Completed':
-        return 'bg-green-100 text-green-700';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-700';
-      case 'Open':
+        case SaleStatus.Open:
         return 'bg-blue-100 text-blue-700';
+      case SaleStatus.Completed:
+        return 'bg-green-100 text-green-700';
+      case SaleStatus.Cancelled:
+        return 'bg-red-100 text-red-700';
       default:
         return 'bg-gray-100 text-gray-700';
+    }
+  }
+  statusName(status: SaleStatus): string {
+     console.log(status);
+    switch (status) {
+       case SaleStatus.Open:
+        return 'Open';
+      case SaleStatus.Completed:
+        return 'Completed';
+      case SaleStatus.Cancelled:
+        return 'Cancelled';
+     
+      default:
+        return 'Unknown';
     }
   }
 }

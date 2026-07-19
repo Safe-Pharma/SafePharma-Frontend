@@ -1,6 +1,10 @@
-export type SaleStatus = 'Open' | 'Cancelled' | 'Completed';
 export type SalePaymentMethod = 'Cash' | 'Card' | 'Mixed';
 
+export enum SaleStatus {
+  Open = 0,
+  Completed = 1,
+  Cancelled = 2,
+}
 export interface MedicineSearchResult {
   pharmacyMedicineId: string;
   tradeNameAr: string;
