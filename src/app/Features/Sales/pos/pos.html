@@ -5,7 +5,7 @@
     <button
       (click)="switchTab(tab.tabId)"
       [class.bg-blue-50]="tab.tabId === activeTabId()"
-      [class.text-blue-700]="tab.tabId === activeTabId()"
+      [class.text-black]="tab.tabId === activeTabId()"
       [class.text-slate-400]="tab.tabId !== activeTabId()"
       class="flex items-center gap-1.5 h-8 px-3 rounded-t-lg border border-b-0 border-slate-200 text-sm font-medium shrink-0 cursor-pointer"
     >
@@ -126,7 +126,7 @@
         </div>
 
         <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2">
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-success text-white text-xs font-semibold flex items-center justify-center shrink-0">
             {{ auth.user()?.initials }}
           </div>
           <div class="leading-tight">
@@ -248,11 +248,11 @@
                 <span>Discount</span>
                 <div class="flex rounded-md border border-slate-200 overflow-hidden">
                   <button type="button" (click)="setRowDiscountMode(item, 'amount')"
-                    [class.bg-blue-500]="getRowDiscountMode(item.id) === 'amount'"
+                    [class.bg-primary]="getRowDiscountMode(item.id) === 'amount'"
                     [class.text-white]="getRowDiscountMode(item.id) === 'amount'"
                     class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer">$</button>
                   <button type="button" (click)="setRowDiscountMode(item, 'percent')"
-                    [class.bg-blue-500]="getRowDiscountMode(item.id) === 'percent'"
+                    [class.bg-primary]="getRowDiscountMode(item.id) === 'percent'"
                     [class.text-white]="getRowDiscountMode(item.id) === 'percent'"
                     class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer">%</button>
                 </div>
@@ -309,14 +309,14 @@
           </div>
 
           <div class="mt-4 rounded-xl bg-blue-50 px-4 py-3.5">
-            <p class="text-[11px] font-semibold tracking-wide text-blue-600">GRAND TOTAL</p>
-            <p class="text-2xl font-bold text-blue-700">${{ (sale()?.grandTotal ?? 0).toFixed(2) }}</p>
+            <p class="text-[11px] font-semibold tracking-wide text-primary">GRAND TOTAL</p>
+            <p class="text-2xl font-bold text-primary">${{ (sale()?.grandTotal ?? 0).toFixed(2) }}</p>
           </div>
 
           <button
             [disabled]="!sale() || sale()!.items.length === 0"
             (click)="openPaymentModal('Cash')"
-            class="mt-4 w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors cursor-pointer"
+            class="mt-4 w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors cursor-pointer"
           >
             Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
           </button>
@@ -463,12 +463,12 @@
   <div class="lg:hidden shrink-0 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3">
     <div class="flex-1">
       <p class="text-[11px] text-slate-400 leading-tight">Grand total</p>
-      <p class="text-lg font-bold text-blue-700 leading-tight">${{ (sale()?.grandTotal ?? 0).toFixed(2) }}</p>
+      <p class="text-lg font-bold text-primary leading-tight">${{ (sale()?.grandTotal ?? 0).toFixed(2) }}</p>
     </div>
     <button
       [disabled]="!sale() || sale()!.items.length === 0"
       (click)="openPaymentModal('Cash')"
-      class="flex-1 bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
+      class="flex-1 bg-primary disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
     >
       Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
     </button>
