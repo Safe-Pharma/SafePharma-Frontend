@@ -26,6 +26,7 @@ import {
   PaySaleDto,
   Sale,
   SaleItem,
+  SaleStatus,
 } from './Model/pos.models';
 
 interface PosTab {
@@ -63,11 +64,11 @@ export class Pos implements OnInit {
   protected readonly searchOpen = signal(false);
   protected readonly searching = signal(false);
   protected readonly searchError = signal<string | null>(null);
-  private readonly query$ = toObservable(this.query).pipe(debounceTime(300), distinctUntilChanged());
+  private readonly query$ = toObservable(this.query).pipe(debounceTime(150), distinctUntilChanged());
   private readonly results$ = this.query$.pipe(
     switchMap((q) => {
       const trimmed = q.trim();
-      if (trimmed.length < 2) {
+      if (trimmed.length < 1) {
         this.searchError.set(null);
         this.searching.set(false);
         return of<MedicineSearchResult[]>([]);
@@ -92,7 +93,7 @@ export class Pos implements OnInit {
   });
   protected readonly showNoResults = computed(
     () =>
-      this.query().trim().length >= 2 &&
+      this.query().trim().length >= 1 &&
       !this.searching() &&
       this.searchResults().length === 0 &&
       !this.searchError(),
@@ -178,7 +179,7 @@ export class Pos implements OnInit {
     const tab = this.tabs().find((t) => t.tabId === tabId);
     if (!tab) return;
 
-    if (tab.sale.status !== 'Open') {
+    if (tab.sale.status !== SaleStatus.Open) {
       this.removeTabLocally(tabId);
       return;
     }
@@ -223,8 +224,8 @@ export class Pos implements OnInit {
   }
 
   private loadCustomers(): void {
-    this.service.getCustomers().subscribe({
-      next: (res) => this.customers.set(res.data ?? []),
+    this.service.getAllCustomers().subscribe({
+      next: (res) => this.customers.set(res ?? []),
       error: (err) => this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error'),
     });
   }
@@ -259,7 +260,7 @@ export class Pos implements OnInit {
   }
 
   onSearchFocus(): void {
-    if (this.query().trim().length >= 2) this.searchOpen.set(true);
+    if (this.query().trim().length >= 1) this.searchOpen.set(true);
   }
 
   addToCart(item: MedicineSearchResult): void {
