@@ -40,7 +40,7 @@
   <div class="shrink-0 bg-slate-50 px-3 sm:px-6 py-3 border-b border-slate-200">
     <div class="flex flex-col lg:flex-row gap-3">
       <!-- ================= Product search ================= -->
-      <div class="relative flex-1">
+      <div class="relative flex-1" (click)="stop($event)">
         <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8" />
@@ -49,13 +49,14 @@
         <input
           [ngModel]="query()"
           (ngModelChange)="onQueryInput($event)"
+          (focus)="onSearchFocus()"
           (keydown.enter)="onSearchEnter()"
           type="text"
           placeholder="Search by product name, barcode or SKU…"
           class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
         />
 
-        @if (query().trim().length >= 2) {
+        @if (searchOpen() && query().trim().length >= 2) {
         <div class="absolute z-10 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-lg max-h-80 overflow-y-auto">
           @if (searching()) {
           <div class="px-4 py-3 text-sm text-slate-400">Searching…</div>
@@ -89,7 +90,7 @@
 
       <div class="flex flex-wrap gap-3">
         <!-- ================= Customer selector ================= -->
-        <div class="relative">
+        <div class="relative" (click)="stop($event)">
           <button
             (click)="toggleCustomerDropdown()"
             class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-3 text-sm min-w-42.5 cursor-pointer"
@@ -185,7 +186,7 @@
                 <p class="text-xs text-slate-400">{{ item.batchNumber }} · ${{ item.unitPrice }}</p>
               </div>
 
-              <div class="relative shrink-0">
+              <div class="relative shrink-0" (click)="stop($event)">
                 <button
                   (click)="toggleItemCustomerPicker(item.id)"
                   class="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
@@ -241,24 +242,41 @@
             </div>
 
             <!-- per-row discount / tax -->
-            <div class="mt-2 flex items-center gap-4 ps-14 text-xs text-slate-500">
-              <label class="flex items-center gap-1.5">
-                Discount
+            <div class="mt-2 flex flex-wrap items-center gap-4 ps-14 text-xs text-slate-500">
+              <!-- Discount: amount or percent -->
+              <div class="flex items-center gap-1.5">
+                <span>Discount</span>
+                <div class="flex rounded-md border border-slate-200 overflow-hidden">
+                  <button type="button" (click)="setRowDiscountMode(item, 'amount')"
+                    [class.bg-blue-500]="getRowDiscountMode(item.id) === 'amount'"
+                    [class.text-white]="getRowDiscountMode(item.id) === 'amount'"
+                    class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer">$</button>
+                  <button type="button" (click)="setRowDiscountMode(item, 'percent')"
+                    [class.bg-blue-500]="getRowDiscountMode(item.id) === 'percent'"
+                    [class.text-white]="getRowDiscountMode(item.id) === 'percent'"
+                    class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer">%</button>
+                </div>
                 <input
                   type="number" min="0" step="0.01"
-                  [ngModel]="item.discount"
-                  (ngModelChange)="onRowDiscountChange(item, $event)"
+                  [ngModel]="getRowDiscountDisplay(item)"
+                  (ngModelChange)="onRowDiscountInput(item, $event)"
                   class="w-20 rounded-md border border-slate-200 px-2 py-1 text-xs text-right outline-none focus:border-blue-500"
                 />
-              </label>
+              </div>
+
+              <!-- Tax: pick a configured tax -->
               <label class="flex items-center gap-1.5">
                 Tax
-                <input
-                  type="number" min="0" step="0.01"
-                  [ngModel]="item.taxAmount"
-                  (ngModelChange)="onRowTaxChange(item, $event)"
-                  class="w-20 rounded-md border border-slate-200 px-2 py-1 text-xs text-right outline-none focus:border-blue-500"
-                />
+                <select
+                  [ngModel]="getRowTaxSelection(item.id)"
+                  (ngModelChange)="onRowTaxSelect(item, $event)"
+                  class="rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-blue-500"
+                >
+                  <option value="">No tax</option>
+                  @for (t of taxes(); track t.id) {
+                  <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+                  }
+                </select>
               </label>
             </div>
           </div>
@@ -329,8 +347,20 @@
 
           <!-- Discount editor -->
           @if (showDiscountEditor()) {
-          <div class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg">
-            <p class="text-sm font-semibold mb-2">Sale discount ($)</p>
+          <div class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg" (click)="stop($event)">
+            <div class="mb-2 flex items-center justify-between">
+              <p class="text-sm font-semibold">Sale discount</p>
+              <div class="flex rounded-md border border-input overflow-hidden">
+                <button type="button" (click)="setDiscountMode('amount')"
+                  [class.bg-primary]="discountMode() === 'amount'"
+                  [class.text-primary-foreground]="discountMode() === 'amount'"
+                  class="px-2 py-1 text-xs font-medium cursor-pointer">$</button>
+                <button type="button" (click)="setDiscountMode('percent')"
+                  [class.bg-primary]="discountMode() === 'percent'"
+                  [class.text-primary-foreground]="discountMode() === 'percent'"
+                  class="px-2 py-1 text-xs font-medium cursor-pointer">%</button>
+              </div>
+            </div>
             <input
               type="number" min="0" step="0.01"
               [ngModel]="discountInput()"
@@ -348,7 +378,7 @@
 
           <!-- Tax editor -->
           @if (showTaxEditor()) {
-          <div class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg">
+          <div class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg" (click)="stop($event)">
             <p class="text-sm font-semibold mb-2">Sale tax</p>
             @if (taxes().length === 0) {
             <p class="text-xs text-muted-foreground">No active taxes configured for this pharmacy.</p>
@@ -378,7 +408,7 @@
     <!-- Right icon rail -->
     <div class="hidden lg:flex w-20 shrink-0 flex-col items-center gap-1 py-6 border-l border-slate-200 bg-white">
       <button
-        (click)="openDiscountEditor()"
+        (click)="stop($event); openDiscountEditor()"
         [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
@@ -391,13 +421,12 @@
         Discount
       </button>
       <button
-        (click)="openTaxEditor()"
+        (click)="stop($event); openTaxEditor()"
         [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
         <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 3h18v18H3z" opacity="0" />
           <path d="M20.59 13.41 11 22H3v-8L12.59.41a2 2 0 0 1 2.82 0l5.18 5.18a2 2 0 0 1 0 2.82Z" />
         </svg>
         Tax
@@ -414,6 +443,18 @@
           <line x1="9" y1="9" x2="15" y2="15" />
         </svg>
         Cancel
+      </button>
+      <button
+        (click)="clearCart()"
+        [disabled]="!sale() || sale()!.items.length === 0"
+        class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
+      >
+        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 3-6.7" />
+          <path d="M3 5v5h5" />
+        </svg>
+        Clear
       </button>
     </div>
   </div>
