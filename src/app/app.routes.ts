@@ -151,6 +151,11 @@ export const routes: Routes = [
         loadComponent: () => import('./Features/Sales/pos/pos').then((m) => m.Pos),
         data: { title: 'Pos' },
       },
+      {
+        path: 'sales',
+        loadComponent: () => import('./Features/Sales/Sales/sales').then((m) => m.Sales),
+        data: { title: 'Sales' },
+      },
 
       /* {
 

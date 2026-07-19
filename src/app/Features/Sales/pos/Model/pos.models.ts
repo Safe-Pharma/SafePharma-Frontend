@@ -62,6 +62,7 @@ export interface Sale {
   change: number;
   status: SaleStatus;
   items: SaleItem[];
+  createdAt: string;
 }
 
 // ---- Request DTOs (match the backend exactly — no batchId, it's FIFO-resolved server-side) ----
@@ -107,3 +108,10 @@ export interface PaySaleDto {
 }
 
 export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+
+export interface SaleStats {
+  todayTotal: number;
+  completedCount: number;
+  averageBasket: number;
+  cancelledCount: number;
+}

@@ -14,7 +14,7 @@ import {
   Sale,
   SetSaleCustomerDto,
   UpdateSaleItemDto,
-} from '../pos.models';
+} from '../Model/pos.models';
 
 @Injectable({ providedIn: 'root' })
 export class PosService {
