@@ -1,0 +1,94 @@
+/* Inventory Component Styles */
+
+:host {
+  display: block;
+}
+
+/* Smooth row transitions */
+table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+/* Expand/collapse icon rotation */
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+/* Card hover effects */
+.hover\:shadow-md:hover {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Nested table styling */
+table table {
+  border-collapse: collapse;
+}
+
+/* Custom scrollbar for horizontal table scroll */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Input focus states */
+input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Badge styling */
+.inline-flex.items-center {
+  white-space: nowrap;
+}
+
+/* Responsive table wrapper */
+@media (max-width: 1024px) {
+  table {
+    font-size: 0.813rem;
+  }
+
+  table th,
+  table td {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Stack stats cards vertically on mobile */
+  .grid-cols-1 {
+    gap: 1rem;
+  }
+}
+
+/* Expand button hover */
+button:hover svg {
+  transform: scale(1.1);
+}
+
+/* Days left color indicators */
+.text-red-600 {
+  font-weight: 600;
+}
+
+.text-orange-600 {
+  font-weight: 600;
+}

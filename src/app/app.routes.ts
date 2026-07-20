@@ -6,6 +6,7 @@ import { AuthLayout } from './Features/Layout/Auth Layout/Components/Auth-layout
 import { Login } from './Features/Authentication/login/login';
 import { ProfilePage } from './Features/Profile/profile-page';
 import { ChangePassword } from './Features/Authentication/change-password/change-password';
+import { InventoryPage } from './Features/inventory-page/inventory-page';
 
 export const routes: Routes = [
   {
@@ -166,6 +167,10 @@ export const routes: Routes = [
       {
         path: 'audit',
         component: AuditPage,
+      },
+      {
+        path: 'inventory',
+        component: InventoryPage,
       },
       //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
