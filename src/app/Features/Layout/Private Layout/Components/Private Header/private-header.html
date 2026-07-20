@@ -1,9 +1,21 @@
-<header class="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card/60 px-4 backdrop-blur md:px-6">
+<header
+  class="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card/60 px-4 backdrop-blur md:px-6"
+>
   <div class="hidden min-w-0 items-center gap-2 md:flex">
     <div class="grid h-8 w-8 place-items-center rounded-md bg-primary-soft text-primary">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"
-        aria-hidden="true">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
+        aria-hidden="true"
+      >
         <path d="M10 12h4"></path>
         <path d="M10 8h4"></path>
         <path d="M14 21v-3a2 2 0 0 0-4 0v3"></path>
@@ -16,13 +28,22 @@
     </div>
   </div>
 
-  <nav aria-label="Breadcrumb" class="hidden items-center gap-1.5 text-sm text-muted-foreground lg:flex">
+  <nav
+    aria-label="Breadcrumb"
+    class="hidden items-center gap-1.5 text-sm text-muted-foreground lg:flex"
+  >
     <span class="mx-2 h-4 w-px bg-border"></span>
 
     <span>Pharmacy</span>
 
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-3.5 w-3.5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
       <path d="m9 18 6-6-6-6"></path>
     </svg>
 
@@ -32,33 +53,53 @@
   </nav>
 
   <div class="ms-auto flex items-center gap-1.5 md:gap-2">
-    <button type="button"
+    <button
+      type="button"
       class="inline-flex items-center justify-center whitespace-nowrap cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground rounded-md h-9 gap-1.5 px-2 text-xs font-semibold"
-      aria-label="Toggle language">
+      aria-label="Toggle language"
+    >
       {{ lang }}
     </button>
 
-    <button type="button"
+    <button
+      type="button"
       class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative h-9 w-9"
-      aria-label="Notifications">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"
-        aria-hidden="true">
+      aria-label="Notifications"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
+        aria-hidden="true"
+      >
         <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
         <path
-          d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326">
-        </path>
+          d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+        ></path>
       </svg>
       @if (hasUnreadNotifications) {
-      <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive"></span>
+        <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive"></span>
       }
     </button>
 
     <div class="relative">
-      <button type="button" class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent" aria-haspopup="menu"
-        [attr.aria-expanded]="userMenuOpen()" (click)="toggleUserMenu()">
+      <button
+        type="button"
+        class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen()"
+        (click)="toggleUserMenu()"
+      >
         <span
-          class="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-success text-xs font-semibold text-primary-foreground">
+          class="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-success text-xs font-semibold text-primary-foreground"
+        >
           {{ user()?.initials ?? 'U' }}
         </span>
         <span class="hidden text-start leading-tight md:block">
@@ -68,21 +109,26 @@
       </button>
 
       @if (userMenuOpen()) {
-      <div class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-        <div class="border-b border-border px-4 py-3">
-          <p class="text-sm font-semibold text-foreground">{{ user()?.fullName ?? 'User' }}</p>
-          <p class="text-xs text-muted-foreground">{{ user()?.role ?? 'User' }}</p>
-        </div>
+        <div
+          class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+        >
+          <div class="border-b border-border px-4 py-3">
+            <p class="text-sm font-semibold text-foreground">{{ user()?.fullName ?? 'User' }}</p>
+            <p class="text-xs text-muted-foreground">{{ user()?.role ?? 'User' }}</p>
+          </div>
 
-        <div class="p-2">
-          @for (item of menuItems; track item.route) {
-          <a [routerLink]="item.route" (click)="closeUserMenu()"
-            class="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent">
-            {{ item.label }}
-          </a>
-          }
+          <div class="p-2">
+            @for (item of menuItems; track item.route) {
+              <a
+                [routerLink]="item.route"
+                (click)="closeUserMenu()"
+                class="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+              >
+                {{ item.label }}
+              </a>
+            }
+          </div>
         </div>
-      </div>
       }
     </div>
   </div>

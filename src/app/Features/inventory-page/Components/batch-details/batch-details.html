@@ -1,0 +1,106 @@
+<div
+  class="grid grid-cols-5 gap-4 px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider bg-white border-b border-gray-200"
+>
+  <div>Batch #</div>
+  <div>Quantity</div>
+  <div>Expiry</div>
+  <div>Days Left</div>
+  <div>Actions</div>
+</div>
+
+<div
+  *ngFor="let batch of batches"
+  class="grid grid-cols-5 gap-4 px-6 py-3 text-sm border-b border-gray-200 hover:bg-gray-100 transition-colors"
+>
+  <div class="font-medium text-gray-900">{{ batch.batchNumber }}</div>
+  <div class="text-gray-700">{{ batch.quantityRemaining }}</div>
+  <div class="text-gray-700">{{ formatDate(batch.expiryDate) }}</div>
+  <div class="font-semibold" [ngClass]="getDaysLeftColor(batch.daysLeft)">
+    {{ batch.daysLeft }}d
+  </div>
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      class="text-blue-600 hover:text-blue-800 font-medium"
+      (click)="openEditQuantityDialog(batch)"
+    >
+      Adjust Stock
+    </button>
+    <button
+      *ngIf="shouldShowDelete(batch)"
+      type="button"
+      class="text-red-600 hover:text-red-800 font-medium"
+      (click)="openDeleteDialog(batch)"
+    >
+      Delete Expired
+    </button>
+  </div>
+</div>
+
+<div
+  *ngIf="isEditModalOpen"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+>
+  <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <h3 class="text-lg font-semibold text-gray-900">Adjust Stock</h3>
+    <p class="mt-2 text-sm text-gray-600">
+      Current quantity: <span class="font-semibold">{{ selectedBatch?.quantityRemaining }}</span>
+    </p>
+
+    <label class="mt-4 block text-sm font-medium text-gray-700">New quantity</label>
+    <input
+      type="number"
+      class="mt-2 w-full rounded border border-gray-300 px-3 py-2"
+      [(ngModel)]="newQuantity"
+      min="0"
+    />
+
+    <div class="mt-6 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded bg-gray-200 px-4 py-2 text-sm"
+        (click)="closeEditModal()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="rounded bg-blue-600 px-4 py-2 text-sm text-white"
+        (click)="saveQuantity()"
+      >
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="isDeleteModalOpen"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+>
+  <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <h3 class="text-lg font-semibold text-gray-900">Delete expired batch</h3>
+    <p class="mt-2 text-sm text-gray-600">
+      Are you sure you want to remove
+      <span class="font-semibold">{{ selectedBatch?.batchNumber }}</span
+      >?
+    </p>
+
+    <div class="mt-6 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded bg-gray-200 px-4 py-2 text-sm"
+        (click)="closeDeleteModal()"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="rounded bg-red-600 px-4 py-2 text-sm text-white"
+        (click)="deleteBatch()"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
