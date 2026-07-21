@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
   Customer,
@@ -9,12 +10,25 @@ import {
   RecordCustomerPaymentDto,
   CustomerMedicineHistory,
   CreateCustomerMedicineHistoryDto,
+  AddMedicineHistoryResponse,
+  CatalogItem,
+  GeneralResult,
+  CustomerAllergy,
+  AssignAllergyDto,
+  CustomerChronicCondition,
+  AssignChronicConditionDto,
+  CustomerOrganFunction,
+  AssignOrganFunctionDto,
+  CustomerRelative,
+  CreateCustomerRelativeDto,
 } from '../Models/customer.model';
 
 @Injectable({ providedIn: 'root' })
 export class CustomersApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/customers`;
+  // Separate controller (api/CustomerRelative), not nested under api/customers.
+  private readonly relativeUrl = `${environment.apiUrl}/CustomerRelative`;
 
   // --- Customer (global — shared across all pharmacies) ---
 
@@ -62,11 +76,11 @@ export class CustomersApiService {
     return this.http.get<CustomerMedicineHistory[]>(`${this.baseUrl}/${customerId}/medicine-history`, { params });
   }
 
-  addMedicineHistory(
+addMedicineHistory(
     customerId: string,
     dto: CreateCustomerMedicineHistoryDto,
-  ): Observable<CustomerMedicineHistory> {
-    return this.http.post<CustomerMedicineHistory>(`${this.baseUrl}/${customerId}/medicine-history`, dto);
+  ): Observable<AddMedicineHistoryResponse> {
+    return this.http.post<AddMedicineHistoryResponse>(`${this.baseUrl}/${customerId}/medicine-history`, dto);
   }
 
   toggleMedicineActive(customerId: string, historyId: string): Observable<CustomerMedicineHistory> {
@@ -79,5 +93,90 @@ export class CustomersApiService {
   // Owner only — backend enforces this too; UI hides the action for non-owners.
   deleteMedicineHistory(customerId: string, historyId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${customerId}/medicine-history/${historyId}`);
+  }
+
+  // --- Allergies ---
+
+  getAllergies(customerId: string): Observable<CustomerAllergy[]> {
+    return this.http.get<CustomerAllergy[]>(`${this.baseUrl}/${customerId}/allergies`);
+  }
+
+  assignAllergy(customerId: string, dto: AssignAllergyDto): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${customerId}/allergies`, dto);
+  }
+
+  // Any pharmacist can remove — unlike Customer/medicine-history deletes, these
+  // aren't Owner-restricted on the backend.
+  removeAllergy(customerId: string, allergyId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${customerId}/allergies/${allergyId}`);
+  }
+
+  // --- Chronic conditions ---
+
+  getChronicConditions(customerId: string): Observable<CustomerChronicCondition[]> {
+    return this.http.get<CustomerChronicCondition[]>(`${this.baseUrl}/${customerId}/chronic-conditions`);
+  }
+
+  assignChronicCondition(customerId: string, dto: AssignChronicConditionDto): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${customerId}/chronic-conditions`, dto);
+  }
+
+  removeChronicCondition(customerId: string, chronicConditionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${customerId}/chronic-conditions/${chronicConditionId}`);
+  }
+
+  // --- Organ functions (one record per organ per customer — assigning again updates it) ---
+
+  getOrganFunctions(customerId: string): Observable<CustomerOrganFunction[]> {
+    return this.http.get<CustomerOrganFunction[]>(`${this.baseUrl}/${customerId}/organ-functions`);
+  }
+
+  assignOrganFunction(customerId: string, dto: AssignOrganFunctionDto): Observable<CustomerOrganFunction> {
+    return this.http.post<CustomerOrganFunction>(`${this.baseUrl}/${customerId}/organ-functions`, dto);
+  }
+
+  removeOrganFunction(customerId: string, organFunctionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${customerId}/organ-functions/${organFunctionId}`);
+  }
+
+  // --- Reference catalogs (for dropdowns — separate controllers, wrapped in GeneralResult) ---
+
+  getAllergyCatalog(): Observable<CatalogItem[]> {
+    return this.http
+      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/allergy`)
+      .pipe(map((r) => r.data));
+  }
+
+  getChronicConditionCatalog(): Observable<CatalogItem[]> {
+    return this.http
+      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/chroniccondition`)
+      .pipe(map((r) => r.data));
+  }
+
+  getOrganCatalog(): Observable<CatalogItem[]> {
+    return this.http
+      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/organ`)
+      .pipe(map((r) => r.data));
+  }
+
+  getOrganImpairmentLevelCatalog(): Observable<CatalogItem[]> {
+    return this.http
+      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/organimpairmentlevel`)
+      .pipe(map((r) => r.data));
+  }
+  // --- Relatives (separate controller: api/CustomerRelative) ---
+
+  getRelatives(customerId: string): Observable<CustomerRelative[]> {
+    return this.http
+      .get<GeneralResult<CustomerRelative[]>>(`${this.relativeUrl}/${customerId}`)
+      .pipe(map((r) => r.data));
+  }
+
+  addRelative(dto: CreateCustomerRelativeDto): Observable<GeneralResult<null>> {
+    return this.http.post<GeneralResult<null>>(this.relativeUrl, dto);
+  }
+
+  removeRelative(relativeLinkId: string): Observable<GeneralResult<null>> {
+    return this.http.delete<GeneralResult<null>>(`${this.relativeUrl}/${relativeLinkId}`);
   }
 }

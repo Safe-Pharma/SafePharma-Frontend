@@ -44,6 +44,7 @@
       <div>
         <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Paid at your pharmacy</div>
         <div class="mt-1 text-xl font-semibold tracking-tight">{{ c.totalPaid | currency }}</div>
+        <div class="mt-0.5 text-[11px] text-muted-foreground">From completed sales — not entered manually.</div>
       </div>
       @if (c.dateOfBirth) {
       <div>
@@ -52,20 +53,6 @@
       </div>
       }
     </div>
-
-    <!-- Record payment -->
-    <form [formGroup]="paymentForm" (ngSubmit)="onRecordPayment()"
-      class="mt-4 flex flex-wrap items-end gap-3 border-t border-border pt-4">
-      <div class="grid gap-1.5">
-        <label class="text-xs font-medium text-muted-foreground" for="payment-amount">Record a payment (this pharmacy)</label>
-        <input id="payment-amount" type="number" step="0.01" formControlName="amount"
-          class="flex h-9 w-40 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-      </div>
-      <button type="submit" [disabled]="recordingPayment()"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
-        {{ recordingPayment() ? 'Saving…' : 'Record payment' }}
-      </button>
-    </form>
   </div>
 
   <!-- Medicine history -->
@@ -91,16 +78,9 @@
 
     @if (showAddHistoryForm()) {
     <form [formGroup]="historyForm" (ngSubmit)="onAddHistory()" class="grid gap-3 border-b border-border p-4">
-      <!--
-        NOTE: this only covers the free-text path (medicine not in the global catalog),
-        entered as a scientific name directly. Picking from the global catalog needs a
-        search-and-select control wired to MedicinesApiService.searchGlobal() — not built
-        here yet since it needs its own picker component.
-      -->
       <div class="grid gap-1.5">
-        <label class="text-xs font-medium" for="hist-name">Scientific name (not in global catalog)</label>
-        <input id="hist-name" formControlName="scientificName" placeholder="e.g. Amlodipine 5mg"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        <label class="text-xs font-medium">Medicine</label>
+        <app-medicine-picker (selectionChange)="onMedicineSelectionChange($event)" />
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="grid gap-1.5">
@@ -118,6 +98,9 @@
         <input id="hist-notes" formControlName="notes"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
       </div>
+      @if (historyErrorMsg(); as msg) {
+      <div class="rounded-md bg-destructive-soft p-2.5 text-xs text-destructive">{{ msg }}</div>
+      }
       <div class="flex justify-end gap-2">
         <button type="button" (click)="onCloseAddHistoryForm()"
           class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs">
@@ -178,6 +161,135 @@
         </tbody>
       </table>
     </div>
+    }
+  </div>
+
+  <!-- Allergies -->
+  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+    <div class="border-b border-border p-4">
+      <h2 class="text-sm font-semibold">Allergies</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">Shared across every pharmacy this customer has visited.</p>
+    </div>
+    <div class="p-4">
+      <app-tag-picker [items]="allergyItems()" [selectedIds]="selectedAllergyIds()" placeholder="Search allergies…"
+        emptyLabel="No matching allergies." (selectionChange)="onAllergySelectionChange($event)" />
+    </div>
+  </div>
+
+  <!-- Chronic conditions -->
+  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+    <div class="border-b border-border p-4">
+      <h2 class="text-sm font-semibold">Chronic conditions</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">Shared across every pharmacy this customer has visited.</p>
+    </div>
+    <div class="p-4">
+      <app-tag-picker [items]="chronicConditionItems()" [selectedIds]="selectedChronicConditionIds()"
+        placeholder="Search conditions…" emptyLabel="No matching conditions."
+        (selectionChange)="onChronicConditionSelectionChange($event)" />
+    </div>
+  </div>
+
+  <!-- Organ functions -->
+  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+    <div class="border-b border-border p-4">
+      <h2 class="text-sm font-semibold">Organ function</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">
+        One entry per organ — recording a new level for an organ already listed updates it.
+      </p>
+    </div>
+
+    <form [formGroup]="organFunctionForm" (ngSubmit)="onAssignOrganFunction()" class="flex flex-wrap items-end gap-3 border-b border-border p-4">
+      <div class="grid min-w-40 gap-1.5">
+        <label class="text-xs font-medium" for="organ-select">Organ</label>
+        <select id="organ-select" formControlName="organId"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <option value="" disabled>Select an organ…</option>
+          @for (item of organCatalog(); track item.id) {
+          <option [value]="item.id">{{ item.nameEn }}</option>
+          }
+        </select>
+      </div>
+      <div class="grid min-w-40 gap-1.5">
+        <label class="text-xs font-medium" for="level-select">Impairment level</label>
+        <select id="level-select" formControlName="organImpairmentLevelId"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <option value="" disabled>Select a level…</option>
+          @for (item of organImpairmentLevelCatalog(); track item.id) {
+          <option [value]="item.id">{{ item.nameEn }}</option>
+          }
+        </select>
+      </div>
+      <button type="submit"
+        [disabled]="assigningOrganFunction() || !organFunctionForm.value.organId || !organFunctionForm.value.organImpairmentLevelId"
+        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
+        {{ assigningOrganFunction() ? 'Saving…' : 'Save' }}
+      </button>
+    </form>
+
+    @if (organFunctions().length === 0) {
+    <div class="p-6 text-center text-sm text-muted-foreground">No organ function recorded.</div>
+    } @else {
+    <ul class="divide-y divide-border">
+      @for (entry of organFunctions(); track entry.id) {
+      <li class="flex items-center justify-between px-4 py-3 text-sm">
+        <span>
+          {{ entry.organNameEn }}
+          <span class="ms-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {{ entry.impairmentLevelNameEn }}
+          </span>
+        </span>
+        <button type="button" (click)="onRemoveOrganFunction(entry)"
+          class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2">
+          Remove
+        </button>
+      </li>
+      }
+    </ul>
+    }
+  </div>
+
+  <!-- Relatives -->
+  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+    <div class="border-b border-border p-4">
+      <h2 class="text-sm font-semibold">Relatives</h2>
+      <p class="mt-0.5 text-xs text-muted-foreground">
+        A relative is another customer on the platform. Not registered yet? Add them as a new customer first.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-end gap-3 border-b border-border p-4">
+      <div class="min-w-64 flex-1">
+        <app-customer-picker [excludeIds]="relativeExcludeIds()" (selectionChange)="onRelativeSelectionChange($event)" />
+      </div>
+      <button type="button" (click)="onAddRelative()" [disabled]="addingRelative()"
+        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
+        {{ addingRelative() ? 'Adding…' : 'Add relative' }}
+      </button>
+    </div>
+
+    @if (relativesErrorMsg(); as msg) {
+    <div class="border-b border-border p-3">
+      <div class="rounded-md bg-destructive-soft p-2.5 text-xs text-destructive">{{ msg }}</div>
+    </div>
+    }
+
+    @if (relatives().length === 0) {
+    <div class="p-6 text-center text-sm text-muted-foreground">No relatives linked yet.</div>
+    } @else {
+    <ul class="divide-y divide-border">
+      @for (entry of relatives(); track entry.id) {
+      <li class="flex items-center justify-between px-4 py-3 text-sm">
+        <div>
+          <span class="font-medium">{{ entry.relativeName }}</span>
+          <span class="ms-2 text-xs text-muted-foreground">{{ entry.relativePhone }}</span>
+        </div>
+        <button type="button" (click)="onRemoveRelative(entry)"
+          class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2">
+          Remove
+        </button>
+      </li>
+      }
+    </ul>
     }
   </div>
   }

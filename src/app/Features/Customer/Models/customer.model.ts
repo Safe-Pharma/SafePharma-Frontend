@@ -54,15 +54,91 @@ export interface CustomerMedicineHistory {
   notes: string;
 }
 
+// Response shape of POST .../medicine-history — wasUpdated is true when this medicine
+// already existed for the customer and the existing record was reactivated/updated
+// instead of a new one being created (see backend AddMedicineHistory dedup logic).
+export interface AddMedicineHistoryResponse {
+  history: CustomerMedicineHistory;
+  wasUpdated: boolean;
+}
+
 // Matches CreateCustomerMedicineHistoryDto
-// Exactly one of medicineId / scientificName is meant to drive the record:
-// - medicineId set    -> picked from the global catalog
-// - medicineId absent  -> scientificName is required (free-text, not in the catalog)
 export interface CreateCustomerMedicineHistoryDto {
   medicineId?: string | null;
+  tradeName?: string | null;
   scientificName?: string | null;
   purchaseDate?: string | null;
   quantity: number;
   isActive: boolean;
   notes?: string | null;
+}
+
+// Shared shape for the Allergy / ChronicCondition / Organ / OrganImpairmentLevel
+export interface CatalogItem {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+}
+
+// Those catalog endpoints wrap their response in GeneralResult<T> (Success/Message/Data),
+export interface GeneralResult<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+// Matches CustomerAllergyDto
+export interface CustomerAllergy {
+  allergyId: string;
+  nameEn: string;
+  nameAr: string;
+}
+
+// Matches AssignAllergyDto
+export interface AssignAllergyDto {
+  allergyId: string;
+}
+
+// Matches CustomerChronicConditionDto
+export interface CustomerChronicCondition {
+  chronicConditionId: string;
+  nameEn: string;
+  nameAr: string;
+}
+
+// Matches AssignChronicConditionDto
+export interface AssignChronicConditionDto {
+  chronicConditionId: string;
+}
+
+// Matches CustomerOrganFunctionDto
+export interface CustomerOrganFunction {
+  id: string;
+  organId: string;
+  organNameEn: string;
+  organNameAr: string;
+  organImpairmentLevelId: string;
+  impairmentLevelNameEn: string;
+  impairmentLevelNameAr: string;
+  recordedAt: string;
+}
+
+// Matches CustomerRelativeReadDto 
+export interface CustomerRelative {
+  id: string;
+  relativeId: string;
+  relativeName: string;
+  relativePhone: string;
+}
+
+// Matches CustomerRelativeCreateDto
+export interface CreateCustomerRelativeDto {
+  customerId: string;
+  relativeId: string;
+}
+
+// Matches AssignOrganFunctionDto
+export interface AssignOrganFunctionDto {
+  organId: string;
+  organImpairmentLevelId: string;
 }

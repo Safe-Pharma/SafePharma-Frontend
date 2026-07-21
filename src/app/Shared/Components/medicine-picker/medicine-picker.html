@@ -1,0 +1,55 @@
+<div class="grid gap-1.5">
+  @if (selected(); as sel) {
+  <div class="flex items-center justify-between rounded-md border border-input px-3 py-2 text-sm">
+    <span>
+      {{ sel.label }}
+      <span class="ms-1.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-medium text-primary">Catalog</span>
+    </span>
+    <button type="button" (click)="onClearSelection()"
+      class="cursor-pointer text-xs text-muted-foreground hover:text-foreground">Change</button>
+  </div>
+  } @else if (manualMode()) {
+  <div class="grid gap-2">
+    <div class="flex gap-2">
+      <input type="text" placeholder="Medicine name…" (input)="onManualTradeNameInput($any($event.target).value)"
+        class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+      <input type="text" placeholder="Scientific name…" (input)="onManualScientificNameInput($any($event.target).value)"
+        class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+    </div>
+    @if (manualValidationError(); as err) {
+    <p class="text-xs text-destructive">{{ err }}</p>
+    }
+    <button type="button" (click)="onSearchInstead()"
+      class="w-fit cursor-pointer text-xs text-muted-foreground hover:text-foreground">Search instead</button>
+  </div>
+  } @else {
+  <div class="relative">
+    <input type="text" [value]="query()" placeholder="Search medicine…" (input)="onQueryInput($any($event.target).value)"
+      (focus)="onFocus()" (blur)="onBlur()"
+      class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+
+    @if (showDropdown()) {
+    <div class="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-border bg-card py-1 shadow-card">
+      @if (searching()) {
+      <div class="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
+      } @else {
+        @if (showNoResults()) {
+        <div class="px-3 py-2 text-xs text-muted-foreground">No matches in the catalog.</div>
+        }
+        @for (item of results(); track item.id) {
+        <button type="button" (mousedown)="onSelectResult(item)"
+          class="block w-full px-3 py-2 text-left text-xs hover:bg-accent">
+          <span class="font-medium">{{ item.tradeNameEn }}</span>
+          <span class="text-muted-foreground"> — {{ item.scientificName }}</span>
+        </button>
+        }
+      }
+      <button type="button" (mousedown)="onEnableManual()"
+        class="block w-full border-t border-border px-3 py-2 text-left text-xs text-primary hover:bg-accent">
+        Can't find it? Add manually
+      </button>
+    </div>
+    }
+  </div>
+  }
+</div>
