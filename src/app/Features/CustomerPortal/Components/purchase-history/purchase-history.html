@@ -1,0 +1,135 @@
+<div class="mx-auto max-w-6xl space-y-5">
+  <div>
+    <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('purchases.title') }}</h2>
+    <p class="text-sm text-muted-foreground">All your receipts, from every pharmacy you've visited.</p>
+  </div>
+
+  <!-- Sticky filter bar -->
+  <div class="sticky top-0 z-10 -mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card/95 p-4 backdrop-blur sm:flex-row sm:flex-wrap sm:items-end">
+    <div class="flex-1 min-w-[180px]">
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Search receipt #</label>
+      <input
+        type="text"
+        placeholder="e.g. INV-1042"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        (input)="onSearchInput($any($event.target).value)"
+        name="search"
+      />
+    </div>
+
+    <div class="min-w-[160px]">
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Pharmacy</label>
+      <select
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        [ngModel]="pharmacyFilter()"
+        (ngModelChange)="pharmacyFilter.set($event); page.set(1)"
+        name="pharmacy"
+      >
+        <option value="">All pharmacies</option>
+        @for (p of pharmacies(); track p) {
+          <option [value]="p">{{ p }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="min-w-[140px]">
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">From</label>
+      <input
+        type="date"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        [ngModel]="dateFrom()"
+        (ngModelChange)="dateFrom.set($event); page.set(1)"
+        name="dateFrom"
+      />
+    </div>
+
+    <div class="min-w-[140px]">
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">To</label>
+      <input
+        type="date"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        [ngModel]="dateTo()"
+        (ngModelChange)="dateTo.set($event); page.set(1)"
+        name="dateTo"
+      />
+    </div>
+
+    <button
+      type="button"
+      class="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-foreground hover:bg-muted"
+      (click)="resetFilters()"
+    >
+      Clear
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="space-y-2 rounded-xl border border-border bg-card p-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <portal-skeleton [height]="44" />
+      }
+    </div>
+  } @else if (filtered().length === 0) {
+    <portal-empty-state title="No receipts found" description="Try adjusting your filters, or check back after your next purchase." />
+  } @else {
+    <div class="overflow-hidden rounded-xl border border-border bg-card">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-muted/50">
+            <tr class="text-xs text-muted-foreground">
+              <th class="px-4 py-3 text-start font-medium">Receipt #</th>
+              <th class="px-4 py-3 text-start font-medium">Date</th>
+              <th class="px-4 py-3 text-start font-medium">Pharmacy</th>
+              <th class="px-4 py-3 text-end font-medium">Items</th>
+              <th class="px-4 py-3 text-end font-medium">Total</th>
+              <th class="px-4 py-3 text-start font-medium">Status</th>
+              <th class="px-4 py-3 text-end font-medium">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of paged(); track r.id) {
+              <tr class="border-t border-border hover:bg-muted/40">
+                <td class="px-4 py-3 font-medium text-foreground">{{ r.invoiceNumber }}</td>
+                <td class="px-4 py-3 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
+                <td class="px-4 py-3 text-muted-foreground">{{ r.pharmacyName || '—' }}</td>
+                <td class="px-4 py-3 text-end text-muted-foreground">{{ r.items.length }}</td>
+                <td class="px-4 py-3 text-end font-medium text-foreground">{{ r.grandTotal | number: '1.2-2' }}</td>
+                <td class="px-4 py-3">
+                  <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
+                </td>
+                <td class="px-4 py-3 text-end">
+                  <a [routerLink]="['/portal/purchases', r.id]" class="text-xs font-medium text-primary hover:underline">
+                    View
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
+        <span>Page {{ page() }} of {{ totalPages() }} · {{ filtered().length }} receipts</span>
+        <div class="flex gap-1.5">
+          <button
+            type="button"
+            class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="page() === 1"
+            (click)="setPage(page() - 1)"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="page() === totalPages()"
+            (click)="setPage(page() + 1)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

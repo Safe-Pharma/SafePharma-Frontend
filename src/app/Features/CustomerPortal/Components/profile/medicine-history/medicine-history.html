@@ -1,0 +1,56 @@
+<div class="rounded-xl border border-border bg-card p-5">
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-xs text-muted-foreground">A read-only record of medicines you've purchased, kept for safety checks.</p>
+    <div class="relative w-full sm:w-64">
+      <input
+        type="text"
+        placeholder="Search medicine…"
+        class="w-full rounded-lg border border-border py-2 ps-3 pe-3 text-sm outline-none ring-ring focus:ring-2"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        name="medSearch"
+      />
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="space-y-3">
+      @for (i of [1, 2, 3]; track i) {
+        <portal-skeleton [height]="48" />
+      }
+    </div>
+  } @else if (filtered().length === 0) {
+    <portal-empty-state title="No medicine history found" description="Records added by your pharmacist will appear here." />
+  } @else {
+    <ol class="relative space-y-5 ps-5">
+      <div class="absolute inset-y-0 start-1.5 w-px bg-border"></div>
+      @for (h of filtered(); track h.id) {
+        <li class="relative">
+          <span
+            class="absolute -start-5 top-1 h-3 w-3 rounded-full border-2 border-card"
+            [class.bg-success]="h.isActive"
+            [class.bg-muted-foreground]="!h.isActive"
+          ></span>
+          <div class="rounded-lg border border-border p-3.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="text-sm font-semibold text-foreground">{{ h.medicineName }}</div>
+                @if (h.scientificName) {
+                  <div class="text-xs text-muted-foreground">{{ h.scientificName }}</div>
+                }
+              </div>
+              <portal-status-badge [tone]="h.isActive ? 'success' : 'muted'" [label]="h.isActive ? 'Active' : 'Stopped'" />
+            </div>
+            <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span>{{ h.purchaseDate | date: 'mediumDate' }}</span>
+              <span>Qty {{ h.quantity }}</span>
+              @if (h.notes) {
+                <span class="italic">{{ h.notes }}</span>
+              }
+            </div>
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</div>

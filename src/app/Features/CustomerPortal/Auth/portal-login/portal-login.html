@@ -1,0 +1,51 @@
+<div class="flex min-h-screen items-center justify-center bg-background px-4">
+  <div class="w-full max-w-sm">
+    <div class="mb-8 flex flex-col items-center gap-3 text-center">
+      <div class="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-primary to-success text-primary-foreground shadow-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
+          <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
+          <path d="m8.5 8.5 7 7"></path>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-semibold text-foreground">Patient Portal</h1>
+        <p class="text-sm text-muted-foreground">Sign in with your mobile number to view your medical record</p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <form (ngSubmit)="submit()">
+        <label for="phone" class="mb-1.5 block text-sm font-medium text-foreground">Mobile phone number</label>
+        <input
+          id="phone"
+          type="tel"
+          inputmode="tel"
+          placeholder="+20 100 000 0000"
+          class="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+          [class.border-border]="!touched() || phoneValid()"
+          [class.border-destructive]="touched() && !phoneValid()"
+          [ngModel]="phone()"
+          (ngModelChange)="phone.set($event)"
+          name="phone"
+          autocomplete="tel"
+        />
+        @if (touched() && !phoneValid()) {
+          <p class="mt-1.5 text-xs text-destructive">Enter a valid mobile number.</p>
+        } @else {
+          <p class="mt-1.5 text-xs text-muted-foreground">We'll send a 6-digit code to this number on WhatsApp.</p>
+        }
+
+        <button
+          type="submit"
+          class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"></span>
+          }
+          Send code via WhatsApp
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
