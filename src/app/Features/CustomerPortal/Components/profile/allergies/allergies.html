@@ -1,0 +1,59 @@
+<div class="rounded-xl border border-border bg-card p-5">
+  <div class="mb-4 flex items-center justify-between">
+    <p class="text-xs text-muted-foreground">Medicines and substances you're allergic to. Pharmacists check this before dispensing.</p>
+    <div class="relative">
+      <button
+        type="button"
+        class="rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        (click)="pickerOpen.set(!pickerOpen())"
+      >
+        + Add allergy
+      </button>
+
+      @if (pickerOpen()) {
+        <div class="absolute end-0 z-10 mt-2 max-h-64 w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-lg">
+          @if (availableToAdd().length === 0) {
+            <p class="p-3 text-xs text-muted-foreground">All catalog allergies are already added.</p>
+          } @else {
+            @for (item of availableToAdd(); track item.id) {
+              <button
+                type="button"
+                class="block w-full rounded-md px-3 py-2 text-start text-sm text-foreground hover:bg-muted"
+                (click)="add(item)"
+              >
+                {{ i18n.localizedName(item) }}
+              </button>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex flex-wrap gap-2">
+      @for (i of [1, 2, 3]; track i) {
+        <portal-skeleton [height]="32" width="120px" />
+      }
+    </div>
+  } @else if (assigned().length === 0) {
+    <portal-empty-state title="No allergies recorded" description="Add any known allergies so pharmacists can flag unsafe medicines." />
+  } @else {
+    <div class="flex flex-wrap gap-2">
+      @for (a of assigned(); track a.allergyId) {
+        <span class="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive-soft px-3 py-1.5 text-sm font-medium text-destructive">
+          {{ i18n.localizedName(a.nameEn ? { nameEn: a.nameEn, nameAr: a.nameAr } : null) || a.nameEn }}
+          <button type="button" class="hover:opacity-70" (click)="confirmRemove(a.allergyId)" aria-label="Remove">✕</button>
+        </span>
+      }
+    </div>
+  }
+</div>
+
+<portal-confirm-dialog
+  [open]="pendingRemoveId() !== null"
+  title="Remove this allergy?"
+  message="You can always add it back later if needed."
+  (confirm)="removeConfirmed()"
+  (cancel)="cancelRemove()"
+/>

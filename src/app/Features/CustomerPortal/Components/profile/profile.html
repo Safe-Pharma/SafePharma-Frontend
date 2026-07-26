@@ -1,0 +1,42 @@
+<div class="mx-auto max-w-5xl space-y-5">
+  <div>
+    <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('profile.title') }}</h2>
+    <p class="text-sm text-muted-foreground">Keep your medical information up to date so pharmacists can serve you safely.</p>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors"
+        [class.bg-primary]="activeTab() === tab.id"
+        [class.text-primary-foreground]="activeTab() === tab.id"
+        [class.text-muted-foreground]="activeTab() !== tab.id"
+        (click)="setTab(tab.id)"
+      >
+        {{ i18n.t(tab.labelKey) }}
+      </button>
+    }
+  </div>
+
+  <div>
+    @switch (activeTab()) {
+      @case ('personal') {
+        <app-personal-info-section [customerId]="customerId" />
+      }
+      @case ('medical') {
+        <app-medicine-history-section [customerId]="customerId" />
+      }
+      @case ('allergies') {
+        <app-allergies-section [customerId]="customerId" />
+      }
+      @case ('chronic') {
+        <app-chronic-conditions-section [customerId]="customerId" />
+      }
+      @case ('organs') {
+        <app-organ-functions-section [customerId]="customerId" />
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,53 @@
+<div class="flex min-h-screen items-center justify-center bg-background px-4">
+  <div class="w-full max-w-sm">
+    <div class="mb-8 text-center">
+      <h1 class="text-lg font-semibold text-foreground">Enter verification code</h1>
+      <p class="mt-1 text-sm text-muted-foreground">
+        We sent a 6-digit code via WhatsApp to <span class="font-medium text-foreground">{{ phone() }}</span>
+      </p>
+    </div>
+
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <form (ngSubmit)="verify()">
+        <label for="otp" class="mb-1.5 block text-sm font-medium text-foreground">6-digit code</label>
+        <input
+          id="otp"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••••"
+          class="w-full rounded-lg border px-3.5 py-2.5 text-center text-lg font-semibold tracking-[0.5em] outline-none ring-ring focus:ring-2"
+          [class.border-border]="!touched() || otpValid()"
+          [class.border-destructive]="touched() && !otpValid()"
+          [ngModel]="otp()"
+          (ngModelChange)="onOtpInput($event)"
+          name="otp"
+        />
+        @if (touched() && !otpValid()) {
+          <p class="mt-1.5 text-xs text-destructive">Enter the 6-digit code.</p>
+        }
+
+        <button
+          type="submit"
+          class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"></span>
+          }
+          Verify
+        </button>
+
+        <button
+          type="button"
+          class="mt-3 w-full text-center text-sm font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+          [disabled]="resending()"
+          (click)="resend()"
+        >
+          {{ resending() ? 'Sending…' : "Didn't get a code? Resend" }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+<app-toast />

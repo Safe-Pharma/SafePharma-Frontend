@@ -1,0 +1,30 @@
+<div class="mx-auto max-w-4xl space-y-5">
+  <div>
+    <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('relatives.title') }}</h2>
+    <p class="text-sm text-muted-foreground">People linked to your account. This list is view-only — contact your pharmacy to make changes.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="grid gap-3 sm:grid-cols-2">
+      @for (i of [1, 2]; track i) {
+        <portal-skeleton [height]="72" />
+      }
+    </div>
+  } @else if (relatives().length === 0) {
+    <portal-empty-state title="No relatives linked" description="Relatives added by your pharmacist will appear here." />
+  } @else {
+    <div class="grid gap-3 sm:grid-cols-2">
+      @for (r of relatives(); track r.id) {
+        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+            {{ initials(r.relativeName) }}
+          </span>
+          <div class="min-w-0">
+            <div class="truncate text-sm font-semibold text-foreground">{{ r.relativeName }}</div>
+            <div class="text-xs text-muted-foreground" dir="ltr">{{ r.relativePhone }}</div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

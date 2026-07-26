@@ -1,0 +1,131 @@
+<div class="mx-auto max-w-6xl space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold tracking-tight text-foreground">
+      {{ i18n.t('dashboard.title') }}, {{ profile()?.name || '…' }}
+    </h2>
+    <p class="text-sm text-muted-foreground">Here's a snapshot of your medical record and recent activity.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="rounded-xl border border-border bg-card p-4">
+          <portal-skeleton [height]="40" />
+        </div>
+      }
+    </div>
+  } @else if (error()) {
+    <portal-empty-state title="Couldn't load your dashboard" description="Please check your connection and try again.">
+      <button type="button" class="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" (click)="load()">
+        Retry
+      </button>
+    </portal-empty-state>
+  } @else {
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <portal-stat-card
+        [label]="i18n.t('dashboard.totalPurchases')"
+        [value]="totalReceiptsValue() | number: '1.2-2'"
+        [icon]="icons.purchases"
+        tone="primary"
+      />
+      <portal-stat-card
+        [label]="i18n.t('dashboard.totalReceipts')"
+        [value]="receipts().length"
+        [icon]="icons.receipts"
+        tone="success"
+      />
+      <portal-stat-card
+        [label]="i18n.t('dashboard.activeChronic')"
+        [value]="chronicConditions().length"
+        [icon]="icons.chronic"
+        tone="warning"
+      />
+      <portal-stat-card
+        [label]="i18n.t('dashboard.allergiesCount')"
+        [value]="allergies().length"
+        [icon]="icons.allergies"
+        tone="destructive"
+      />
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <!-- Recent purchases -->
+      <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2">
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-foreground">{{ i18n.t('dashboard.recentPurchases') }}</h3>
+          <a routerLink="/portal/purchases" class="text-xs font-medium text-primary hover:underline">View all</a>
+        </div>
+
+        @if (recentReceipts().length === 0) {
+          <portal-empty-state title="No purchases yet" description="Your receipts from any pharmacy will show up here." />
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border text-xs text-muted-foreground">
+                  <th class="py-2 text-start font-medium">Receipt</th>
+                  <th class="py-2 text-start font-medium">Pharmacy</th>
+                  <th class="py-2 text-start font-medium">Date</th>
+                  <th class="py-2 text-end font-medium">Total</th>
+                  <th class="py-2 text-end font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of recentReceipts(); track r.id) {
+                  <tr class="border-b border-border/60 last:border-0">
+                    <td class="py-2.5 font-medium text-foreground">
+                      <a [routerLink]="['/portal/purchases', r.id]" class="hover:underline">{{ r.invoiceNumber }}</a>
+                    </td>
+                    <td class="py-2.5 text-muted-foreground">{{ r.pharmacyName || '—' }}</td>
+                    <td class="py-2.5 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
+                    <td class="py-2.5 text-end font-medium text-foreground">{{ r.grandTotal | number: '1.2-2' }}</td>
+                    <td class="py-2.5 text-end">
+                      <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Quick actions -->
+      <div class="rounded-xl border border-border bg-card p-5">
+        <h3 class="mb-3 text-sm font-semibold text-foreground">{{ i18n.t('dashboard.quickActions') }}</h3>
+        <div class="space-y-2">
+          <a routerLink="/portal/profile" class="flex items-center justify-between rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
+            Edit Profile
+            <span>→</span>
+          </a>
+          <a routerLink="/portal/purchases" class="flex items-center justify-between rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
+            View Receipts
+            <span>→</span>
+          </a>
+          <a routerLink="/portal/profile" [queryParams]="{ tab: 'medical' }" class="flex items-center justify-between rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
+            Update Medical Information
+            <span>→</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent medicines -->
+    <div class="rounded-xl border border-border bg-card p-5">
+      <h3 class="mb-3 text-sm font-semibold text-foreground">{{ i18n.t('dashboard.recentMedicines') }}</h3>
+      @if (recentMedicines().length === 0) {
+        <portal-empty-state title="No medicines recorded yet" />
+      } @else {
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          @for (m of recentMedicines(); track $index) {
+            <div class="rounded-lg border border-border p-3">
+              <div class="text-sm font-medium text-foreground">{{ m.medicineName }}</div>
+              <div class="text-xs text-muted-foreground">{{ m.purchasedAt | date: 'mediumDate' }} · Qty {{ m.quantity }}</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

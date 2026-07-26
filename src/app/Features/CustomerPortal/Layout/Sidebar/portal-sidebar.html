@@ -1,0 +1,63 @@
+<!-- Mobile overlay -->
+@if (mobileOpen) {
+  <div class="fixed inset-0 z-40 bg-foreground/40 md:hidden" (click)="closeMobile.emit()"></div>
+}
+
+<aside
+  class="fixed inset-y-0 z-50 flex w-72 shrink-0 flex-col border-e border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-200 md:static md:z-0 md:translate-x-0"
+  [class.translate-x-0]="mobileOpen"
+  [class.-translate-x-full]="!mobileOpen && i18n.dir() === 'ltr'"
+  [class.translate-x-full]="!mobileOpen && i18n.dir() === 'rtl'"
+>
+  <div class="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
+    <div class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-success text-primary-foreground shadow-card">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5">
+        <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path>
+        <path d="m8.5 8.5 7 7"></path>
+      </svg>
+    </div>
+    <div class="leading-tight">
+      <div class="text-sm font-semibold tracking-tight text-foreground">SafePharma</div>
+      <div class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {{ i18n.lang() === 'ar' ? 'بوابة المريض' : 'Patient Portal' }}
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 space-y-1 overflow-y-auto p-3">
+    @for (item of navItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive
+        #rla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        (click)="closeMobile.emit()"
+        class="group flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        [class.bg-sidebar-primary/10]="rla.isActive"
+        [class.text-sidebar-primary]="rla.isActive"
+        [class.text-sidebar-foreground/80]="!rla.isActive"
+      >
+        <span class="h-4.5 w-4.5 shrink-0" [innerHTML]="item.icon | safeHtml"></span>
+        <span class="truncate">{{ i18n.t(item.label) }}</span>
+        @if (rla.isActive) {
+          <span class="ms-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary"></span>
+        }
+      </a>
+    }
+  </nav>
+
+  <div class="border-t border-sidebar-border p-3">
+    <button
+      type="button"
+      class="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-destructive-soft hover:text-destructive"
+      (click)="logout.emit()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0">
+        <path d="m16 17 5-5-5-5"></path>
+        <path d="M21 12H9"></path>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+      </svg>
+      <span>{{ i18n.t('nav.logout') }}</span>
+    </button>
+  </div>
+</aside>
