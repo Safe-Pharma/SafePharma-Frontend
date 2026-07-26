@@ -1,18 +1,26 @@
-<div class="mx-auto max-w-5xl space-y-5">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn } from '../shared/portal-animations';
+  @Component({ ..., animations: [fadeSlideIn] })
+-->
+<div class="mx-auto max-w-5xl space-y-5" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('profile.title') }}</h2>
-    <p class="text-sm text-muted-foreground">Keep your medical information up to date so pharmacists can serve you safely.</p>
+    <p class="text-sm text-muted-foreground">{{ i18n.t('profile.subtitle') }}</p>
   </div>
 
   <!-- Tab bar -->
-  <div class="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
+  <div class="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1" role="tablist">
     @for (tab of tabs; track tab.id) {
       <button
         type="button"
-        class="shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors"
+        role="tab"
+        [attr.aria-selected]="activeTab() === tab.id"
+        class="shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         [class.bg-primary]="activeTab() === tab.id"
         [class.text-primary-foreground]="activeTab() === tab.id"
         [class.text-muted-foreground]="activeTab() !== tab.id"
+        [class.hover:bg-muted]="activeTab() !== tab.id"
         (click)="setTab(tab.id)"
       >
         {{ i18n.t(tab.labelKey) }}
@@ -20,7 +28,7 @@
     }
   </div>
 
-  <div>
+  <div [@fadeSlideIn]="activeTab()">
     @switch (activeTab()) {
       @case ('personal') {
         <app-personal-info-section [customerId]="customerId" />

@@ -6,19 +6,23 @@ import { Toast } from '../../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../../Shared/utils/get-error-message';
 import { CustomerMedicineHistory } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
-import { PortalEmptyState } from '../../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
 import { PortalStatusBadge } from '../../../Shared/status-badge';
+import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
+import { PortalI18nService } from '../../../Services/portal-i18n.service'; 
 
 @Component({
   selector: 'app-medicine-history-section',
   standalone: true,
-  imports: [FormsModule, DatePipe, PortalSkeleton, PortalEmptyState, PortalStatusBadge],
+  imports: [FormsModule, DatePipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
   templateUrl: './medicine-history.html',
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class MedicineHistorySection implements OnChanges {
   private readonly api = inject(PortalApiService);
   private readonly toast = inject(Toast);
-
+  protected readonly i18n = inject(PortalI18nService); // add this
   @Input({ required: true }) customerId = '';
 
   readonly loading = signal(true);

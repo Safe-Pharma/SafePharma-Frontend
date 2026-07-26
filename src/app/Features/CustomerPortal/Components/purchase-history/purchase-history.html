@@ -1,31 +1,38 @@
-<div class="mx-auto max-w-6xl space-y-5">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn, staggerList } from '../shared/portal-animations';
+  @Component({ ..., animations: [fadeSlideIn, staggerList] })
+-->
+<div class="mx-auto max-w-6xl space-y-5" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('purchases.title') }}</h2>
-    <p class="text-sm text-muted-foreground">All your receipts, from every pharmacy you've visited.</p>
+    <p class="text-sm text-muted-foreground">{{ i18n.t('purchases.subtitle') }}</p>
   </div>
 
   <!-- Sticky filter bar -->
-  <div class="sticky top-0 z-10 -mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card/95 p-4 backdrop-blur sm:flex-row sm:flex-wrap sm:items-end">
-    <div class="flex-1 min-w-[180px]">
-      <label class="mb-1 block text-xs font-medium text-muted-foreground">Search receipt #</label>
+  <div class="sticky top-0 z-10 -mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card/95 p-4 backdrop-blur transition-shadow duration-200 sm:flex-row sm:flex-wrap sm:items-end">
+    <div class="min-w-[180px] flex-1">
+      <label for="receiptSearch" class="mb-1 block text-xs font-medium text-muted-foreground">{{ i18n.t('purchases.searchLabel') }}</label>
       <input
+        id="receiptSearch"
         type="text"
-        placeholder="e.g. INV-1042"
-        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        [placeholder]="i18n.t('purchases.searchPlaceholder')"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
         (input)="onSearchInput($any($event.target).value)"
         name="search"
       />
     </div>
 
     <div class="min-w-[160px]">
-      <label class="mb-1 block text-xs font-medium text-muted-foreground">Pharmacy</label>
+      <label for="pharmacyFilter" class="mb-1 block text-xs font-medium text-muted-foreground">{{ i18n.t('purchases.pharmacyLabel') }}</label>
       <select
-        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        id="pharmacyFilter"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
         [ngModel]="pharmacyFilter()"
         (ngModelChange)="pharmacyFilter.set($event); page.set(1)"
         name="pharmacy"
       >
-        <option value="">All pharmacies</option>
+        <option value="">{{ i18n.t('purchases.allPharmacies') }}</option>
         @for (p of pharmacies(); track p) {
           <option [value]="p">{{ p }}</option>
         }
@@ -33,10 +40,11 @@
     </div>
 
     <div class="min-w-[140px]">
-      <label class="mb-1 block text-xs font-medium text-muted-foreground">From</label>
+      <label for="dateFrom" class="mb-1 block text-xs font-medium text-muted-foreground">{{ i18n.t('purchases.dateFromLabel') }}</label>
       <input
+        id="dateFrom"
         type="date"
-        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
         [ngModel]="dateFrom()"
         (ngModelChange)="dateFrom.set($event); page.set(1)"
         name="dateFrom"
@@ -44,10 +52,11 @@
     </div>
 
     <div class="min-w-[140px]">
-      <label class="mb-1 block text-xs font-medium text-muted-foreground">To</label>
+      <label for="dateTo" class="mb-1 block text-xs font-medium text-muted-foreground">{{ i18n.t('purchases.dateToLabel') }}</label>
       <input
+        id="dateTo"
         type="date"
-        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring focus:ring-2"
+        class="w-full rounded-lg border border-border px-3.5 py-2 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
         [ngModel]="dateTo()"
         (ngModelChange)="dateTo.set($event); page.set(1)"
         name="dateTo"
@@ -56,39 +65,49 @@
 
     <button
       type="button"
-      class="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-foreground hover:bg-muted"
+      class="rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       (click)="resetFilters()"
     >
-      Clear
+      {{ i18n.t('purchases.clearFilters') }}
     </button>
   </div>
 
   @if (loading()) {
-    <div class="space-y-2 rounded-xl border border-border bg-card p-4">
+    <div class="space-y-2 rounded-xl border border-border bg-card p-4" aria-busy="true" aria-live="polite">
+      <p class="sr-only">{{ i18n.t('purchases.loading') }}</p>
       @for (i of [1, 2, 3, 4]; track i) {
         <portal-skeleton [height]="44" />
       }
     </div>
   } @else if (filtered().length === 0) {
-    <portal-empty-state title="No receipts found" description="Try adjusting your filters, or check back after your next purchase." />
+    <div @fadeSlideIn>
+      <portal-empty-state [title]="i18n.t('purchases.noResultsTitle')" [description]="i18n.t('purchases.noResultsDesc')">
+        <span slot="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+      </portal-empty-state>
+    </div>
   } @else {
-    <div class="overflow-hidden rounded-xl border border-border bg-card">
+    <div class="overflow-hidden rounded-xl border border-border bg-card" @fadeSlideIn>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-muted/50">
             <tr class="text-xs text-muted-foreground">
-              <th class="px-4 py-3 text-start font-medium">Receipt #</th>
-              <th class="px-4 py-3 text-start font-medium">Date</th>
-              <th class="px-4 py-3 text-start font-medium">Pharmacy</th>
-              <th class="px-4 py-3 text-end font-medium">Items</th>
-              <th class="px-4 py-3 text-end font-medium">Total</th>
-              <th class="px-4 py-3 text-start font-medium">Status</th>
-              <th class="px-4 py-3 text-end font-medium">Action</th>
+              <th scope="col" class="px-4 py-3 text-start font-medium">{{ i18n.t('purchases.receiptNumber') }}</th>
+              <th scope="col" class="px-4 py-3 text-start font-medium">{{ i18n.t('purchases.date') }}</th>
+              <th scope="col" class="px-4 py-3 text-start font-medium">{{ i18n.t('purchases.pharmacy') }}</th>
+              <th scope="col" class="px-4 py-3 text-end font-medium">{{ i18n.t('purchases.items') }}</th>
+              <th scope="col" class="px-4 py-3 text-end font-medium">{{ i18n.t('purchases.total') }}</th>
+              <th scope="col" class="px-4 py-3 text-start font-medium">{{ i18n.t('purchases.status') }}</th>
+              <th scope="col" class="px-4 py-3 text-end font-medium">{{ i18n.t('purchases.action') }}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody [@staggerList]="paged().length">
             @for (r of paged(); track r.id) {
-              <tr class="border-t border-border hover:bg-muted/40">
+              <tr class="border-t border-border transition-colors duration-150 hover:bg-muted/40">
                 <td class="px-4 py-3 font-medium text-foreground">{{ r.invoiceNumber }}</td>
                 <td class="px-4 py-3 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
                 <td class="px-4 py-3 text-muted-foreground">{{ r.pharmacyName || '—' }}</td>
@@ -98,8 +117,11 @@
                   <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
                 </td>
                 <td class="px-4 py-3 text-end">
-                  <a [routerLink]="['/portal/purchases', r.id]" class="text-xs font-medium text-primary hover:underline">
-                    View
+                  <a
+                    [routerLink]="['/portal/purchases', r.id]"
+                    class="rounded text-xs font-medium text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    {{ i18n.t('purchases.view') }}
                   </a>
                 </td>
               </tr>
@@ -110,23 +132,23 @@
 
       <!-- Pagination -->
       <div class="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
-        <span>Page {{ page() }} of {{ totalPages() }} · {{ filtered().length }} receipts</span>
+        <span>{{ i18n.t('purchases.showingSummary', { page: page(), totalPages: totalPages(), total: filtered().length }) }}</span>
         <div class="flex gap-1.5">
           <button
             type="button"
-            class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground transition-colors duration-150 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             [disabled]="page() === 1"
             (click)="setPage(page() - 1)"
           >
-            Prev
+            {{ i18n.t('purchases.prev') }}
           </button>
           <button
             type="button"
-            class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-md border border-border px-2.5 py-1 font-medium text-foreground transition-colors duration-150 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             [disabled]="page() === totalPages()"
             (click)="setPage(page() + 1)"
           >
-            Next
+            {{ i18n.t('purchases.next') }}
           </button>
         </div>
       </div>

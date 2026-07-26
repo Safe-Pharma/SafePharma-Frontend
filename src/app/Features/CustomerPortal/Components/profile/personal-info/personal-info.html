@@ -1,6 +1,11 @@
-<div class="rounded-xl border border-border bg-card p-5">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn } from '../shared/portal-animations';
+  @Component({ ..., animations: [fadeSlideIn] })
+-->
+<div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
   @if (loading()) {
-    <div class="space-y-4">
+    <div class="space-y-4" aria-busy="true" aria-live="polite">
       <portal-skeleton [height]="38" />
       <portal-skeleton [height]="38" />
       <portal-skeleton [height]="38" />
@@ -9,10 +14,11 @@
     <form (ngSubmit)="save()">
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="mb-1.5 block text-sm font-medium text-foreground">Full name</label>
+          <label for="fullName" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('personalInfo.fullName') }}</label>
           <input
+            id="fullName"
             type="text"
-            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
             [(ngModel)]="form.name"
             (ngModelChange)="markDirty()"
             name="name"
@@ -21,11 +27,14 @@
         </div>
 
         <div>
-          <label class="mb-1.5 block text-sm font-medium text-foreground">
-            Phone number
-            <span class="ms-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Read only</span>
+          <label for="phone" class="mb-1.5 block text-sm font-medium text-foreground">
+            {{ i18n.t('personalInfo.phone') }}
+            <span class="ms-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {{ i18n.t('personalInfo.readOnly') }}
+            </span>
           </label>
           <input
+            id="phone"
             type="text"
             class="w-full cursor-not-allowed rounded-lg border border-border bg-muted px-3.5 py-2.5 text-sm text-muted-foreground"
             [value]="profile()?.phone"
@@ -34,10 +43,11 @@
         </div>
 
         <div>
-          <label class="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+          <label for="email" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('personalInfo.email') }}</label>
           <input
+            id="email"
             type="email"
-            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
             [(ngModel)]="form.email"
             (ngModelChange)="markDirty()"
             name="email"
@@ -45,10 +55,11 @@
         </div>
 
         <div>
-          <label class="mb-1.5 block text-sm font-medium text-foreground">Date of birth</label>
+          <label for="dob" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('personalInfo.dob') }}</label>
           <input
+            id="dob"
             type="date"
-            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
             [(ngModel)]="form.dateOfBirth"
             (ngModelChange)="markDirty()"
             name="dateOfBirth"
@@ -56,10 +67,11 @@
         </div>
 
         <div class="sm:col-span-2">
-          <label class="mb-1.5 block text-sm font-medium text-foreground">Address</label>
+          <label for="address" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('personalInfo.address') }}</label>
           <input
+            id="address"
             type="text"
-            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
             [(ngModel)]="form.address"
             (ngModelChange)="markDirty()"
             name="address"
@@ -67,10 +79,11 @@
         </div>
 
         <div class="sm:col-span-2">
-          <label class="mb-1.5 block text-sm font-medium text-foreground">Notes</label>
+          <label for="notes" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('personalInfo.notes') }}</label>
           <textarea
+            id="notes"
             rows="3"
-            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+            class="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
             [(ngModel)]="form.notes"
             (ngModelChange)="markDirty()"
             name="notes"
@@ -80,16 +93,26 @@
 
       <div class="mt-5 flex items-center justify-between">
         @if (dirty()) {
-          <p class="text-xs text-warning">You have unsaved changes.</p>
+          <p class="text-xs text-warning" @successPulse>{{ i18n.t('personalInfo.unsavedChanges') }}</p>
         } @else {
           <span></span>
         }
         <button
           type="submit"
-          class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform duration-200 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           [disabled]="saving() || !dirty()"
         >
-          {{ saving() ? 'Saving…' : 'Save changes' }}
+          @if (saving()) {
+            <span class="inline-flex items-center gap-2">
+              <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              {{ i18n.t('personalInfo.saving') }}
+            </span>
+          } @else {
+            {{ i18n.t('personalInfo.saveChanges') }}
+          }
         </button>
       </div>
     </form>

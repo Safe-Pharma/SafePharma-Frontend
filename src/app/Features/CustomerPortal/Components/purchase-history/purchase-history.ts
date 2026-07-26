@@ -9,7 +9,10 @@ import { Toast } from '../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { PortalReceiptListItem } from '../../Models/portal-sales.model';
 import { PortalSkeleton } from '../../Shared/skeleton';
-import { PortalEmptyState } from '../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../Shared/empty-state';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../Shared/portal-animations';
+import {PortalSectionHeaderComponent  } from '../../Shared/portal-section-header.component';
+
 import { PortalStatusBadge } from '../../Shared/status-badge';
 import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
 
@@ -18,8 +21,9 @@ const PAGE_SIZE = 10;
 @Component({
   selector: 'app-purchase-history',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyState, PortalStatusBadge],
+  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
   templateUrl: './purchase-history.html',
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class PurchaseHistoryPage implements OnInit {
   private readonly api = inject(PortalApiService);

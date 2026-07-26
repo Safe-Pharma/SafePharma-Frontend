@@ -7,15 +7,19 @@ import { Toast } from '../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { PortalReceiptDetail, PortalReceiptListItem } from '../../Models/portal-sales.model';
 import { PortalSkeleton } from '../../Shared/skeleton';
-import { PortalEmptyState } from '../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
 import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../Shared/portal-animations';
+import {PortalSectionHeaderComponent  } from '../../Shared/portal-section-header.component';
+import { PortalI18nService } from '../../Services/portal-i18n.service';
 
 @Component({
   selector: 'app-receipt-details',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyState, PortalStatusBadge],
+  imports: [DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
   templateUrl: './receipt-details.html',
+    animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class ReceiptDetailsPage implements OnInit {
   private readonly api = inject(PortalApiService);
@@ -23,6 +27,7 @@ export class ReceiptDetailsPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(Toast);
   readonly location = inject(Location);
+    readonly i18n = inject(PortalI18nService);
 
   readonly loading = signal(true);
   readonly notFound = signal(false);

@@ -6,13 +6,16 @@ import { Toast } from '../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { CustomerRelative } from '../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../Shared/skeleton';
-import { PortalEmptyState } from '../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../Shared/empty-state';
+import { fadeSlideIn, staggerList, listItem } from '../../Shared/portal-animations';
+import { PortalSectionHeaderComponent } from '../../Shared/portal-section-header.component';
 
 @Component({
   selector: 'app-relatives',
   standalone: true,
-  imports: [PortalSkeleton, PortalEmptyState],
+  imports: [PortalSkeleton, PortalEmptyStateComponent, PortalSectionHeaderComponent],
   templateUrl: './relatives.html',
+  animations: [fadeSlideIn, staggerList, listItem],
 })
 export class RelativesPage implements OnInit {
   private readonly api = inject(PortalApiService);
@@ -45,5 +48,13 @@ export class RelativesPage implements OnInit {
     if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  // Stub: no pharmacy-locator feature exists yet. Swap this for real navigation
+  // once that feature ships, e.g. this.router.navigate(['/portal/pharmacies']).
+  // Toast.show() only supports 'success' | 'error' (no 'info' variant), so this
+  // just omits the type and takes whatever the default styling is.
+  findPharmacy(): void {
+    this.toast.show(this.i18n.t('relatives.findPharmacyComingSoon'));
   }
 }

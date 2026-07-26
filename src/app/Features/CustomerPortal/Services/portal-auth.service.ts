@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { SessionScopeService } from '../../../Core/Services/session-scope.service';
 import {
   OtpEnvelope,
   PortalSessionInfo,
@@ -19,6 +20,7 @@ const PORTAL_TOKEN_KEY = 'portal_token';
 @Injectable({ providedIn: 'root' })
 export class PortalAuthService {
   private readonly http = inject(HttpClient);
+  private readonly sessionScope = inject(SessionScopeService);
   private readonly baseUrl = `${environment.apiUrl}/Otp`;
 
   private readonly sessionState = signal<PortalSessionInfo | null>(null);
@@ -47,6 +49,9 @@ export class PortalAuthService {
   }
 
   setToken(token: string): void {
+    // A portal login means this browser is now "patient" — any lingering staff session
+    // must not stay valid alongside it.
+    this.sessionScope.activatePortalSession();
     localStorage.setItem(PORTAL_TOKEN_KEY, token);
     this.syncFromStorage();
   }
@@ -113,9 +118,11 @@ export class PortalAuthService {
         'nameid',
       ]);
       const phone = this.firstString(payload, ['Phone', 'phone', 'phone_number']) ?? '';
-      // No name claim exists at all today — fall back to the phone number so the UI shows
-      // something meaningful until updateDisplayName() runs with the real profile name.
-      const name = this.firstString(payload, ['name', 'fullName']) ?? phone ?? 'Patient';
+      // The backend now issues a "Name" claim (capital N) alongside Phone/role. Object
+      // key lookups are case-sensitive in JS, so this must match exactly — this was
+      // previously missing and silently fell back to showing the phone number instead.
+      const name =
+        this.firstString(payload, ['Name', 'name', 'fullName']) ?? phone ?? 'Patient';
 
       if (!customerId) return null;
 

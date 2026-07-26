@@ -9,11 +9,13 @@ import { Toast } from '../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { PortalStatCard } from '../../Shared/stat-card';
 import { PortalSkeleton } from '../../Shared/skeleton';
-import { PortalEmptyState } from '../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
 import { Customer, CustomerAllergy, CustomerChronicCondition } from '../../../Customer/Models/customer.model';
 import { PortalReceiptListItem } from '../../Models/portal-sales.model';
 import { receiptStatusTone, receiptStatusLabel } from '../../Shared/receipt-status';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../Shared/portal-animations';
+
 
 const ICONS = {
   purchases: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`,
@@ -25,8 +27,10 @@ const ICONS = {
 @Component({
   selector: 'app-portal-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, PortalStatCard, PortalSkeleton, PortalEmptyState, PortalStatusBadge],
+  imports: [RouterLink, DatePipe, DecimalPipe, PortalStatCard, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge],
   templateUrl: './dashboard.html',
+    animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
+
 })
 export class PortalDashboard implements OnInit {
   private readonly api = inject(PortalApiService);

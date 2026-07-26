@@ -8,13 +8,16 @@ import { Toast } from '../../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../../Shared/utils/get-error-message';
 import { CatalogItem, CustomerOrganFunction } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
-import { PortalEmptyState } from '../../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
+import { dialogOverlay, dialogPanel, fadeSlideIn, listItem, staggerList, successPulse } from '../../../Shared/portal-animations';
+import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
 
 @Component({
   selector: 'app-organ-functions-section',
   standalone: true,
-  imports: [DatePipe, FormsModule, PortalSkeleton, PortalEmptyState],
+  imports: [DatePipe, FormsModule, PortalSkeleton, PortalEmptyStateComponent, PortalSectionHeaderComponent],
   templateUrl: './organ-functions.html',
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class OrganFunctionsSection implements OnChanges {
   private readonly api = inject(PortalApiService);

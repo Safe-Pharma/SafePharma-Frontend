@@ -1,4 +1,5 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { SessionScopeService } from './session-scope.service';
 
 export interface AuthUserInfo {
   fullName: string;
@@ -11,6 +12,7 @@ export interface AuthUserInfo {
 
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
+  private readonly sessionScope = inject(SessionScopeService);
   private readonly userState = signal<AuthUserInfo | null>(null);
 
   readonly user = computed(() => this.userState());
@@ -21,6 +23,9 @@ export class AuthSessionService {
   }
 
   setToken(token: string): void {
+    // A staff login means this browser is now "staff" — any lingering patient session
+    // must not stay valid alongside it.
+    this.sessionScope.activateStaffSession();
     localStorage.setItem('token', token);
     this.syncFromStorage();
   }

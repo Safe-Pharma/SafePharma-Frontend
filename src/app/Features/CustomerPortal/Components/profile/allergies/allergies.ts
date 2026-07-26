@@ -6,14 +6,22 @@ import { Toast } from '../../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../../Shared/utils/get-error-message';
 import { CatalogItem, CustomerAllergy } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
-import { PortalEmptyState } from '../../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
 import { PortalConfirmDialog } from '../../../Shared/confirm-dialog';
+import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
 
 @Component({
   selector: 'app-allergies-section',
   standalone: true,
-  imports: [PortalSkeleton, PortalEmptyState, PortalConfirmDialog],
+  imports: [
+    PortalSkeleton,
+    PortalEmptyStateComponent,
+    PortalConfirmDialog,
+    PortalSectionHeaderComponent, // was missing — this is why <portal-section-header> broke
+  ],
   templateUrl: './allergies.html',
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class AllergiesSection implements OnChanges {
   private readonly api = inject(PortalApiService);
@@ -59,7 +67,7 @@ export class AllergiesSection implements OnChanges {
   add(item: CatalogItem): void {
     if (this.saving()) return;
     this.saving.set(true);
-    this.api.assignAllergy( { allergyId: item.id }).subscribe({
+    this.api.assignAllergy({ allergyId: item.id }).subscribe({
       next: () => {
         this.assigned.update((list) => [
           ...list,
@@ -87,7 +95,7 @@ export class AllergiesSection implements OnChanges {
   removeConfirmed(): void {
     const id = this.pendingRemoveId();
     if (!id) return;
-    this.api.removeAllergy( id).subscribe({
+    this.api.removeAllergy(id).subscribe({
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.allergyId !== id));
         this.pendingRemoveId.set(null);

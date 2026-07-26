@@ -6,14 +6,17 @@ import { Toast } from '../../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../../Shared/utils/get-error-message';
 import { CatalogItem, CustomerChronicCondition } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
-import { PortalEmptyState } from '../../../Shared/empty-state';
+import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
 import { PortalConfirmDialog } from '../../../Shared/confirm-dialog';
+import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
 
 @Component({
   selector: 'app-chronic-conditions-section',
   standalone: true,
-  imports: [PortalSkeleton, PortalEmptyState, PortalConfirmDialog],
+  imports: [PortalSkeleton, PortalEmptyStateComponent, PortalConfirmDialog, PortalSectionHeaderComponent],
   templateUrl: './chronic-conditions.html',
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class ChronicConditionsSection implements OnChanges {
   private readonly api = inject(PortalApiService);
