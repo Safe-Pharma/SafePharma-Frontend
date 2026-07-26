@@ -44,7 +44,7 @@ export class OrganFunctionsSection implements OnChanges {
     forkJoin({
       organs: this.api.getOrganCatalog(),
       impairmentLevels: this.api.getOrganImpairmentLevelCatalog(),
-      organFunctions: this.api.getOrganFunctions(this.customerId),
+      organFunctions: this.api.getOrganFunctions(),
     }).subscribe({
       next: ({ organs, impairmentLevels, organFunctions }) => {
         this.organs.set(organs);
@@ -93,7 +93,7 @@ export class OrganFunctionsSection implements OnChanges {
     this.saving.set(true);
 
     this.api
-      .assignOrganFunction(this.customerId, {
+      .assignOrganFunction( {
         organId: this.selectedOrganId(),
         organImpairmentLevelId: this.selectedLevelId(),
       })

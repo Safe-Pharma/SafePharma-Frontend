@@ -39,11 +39,11 @@ export class PersonalInfoSection implements OnChanges {
 
   load(): void {
     this.loading.set(true);
-    this.api.getProfile(this.customerId).subscribe({
+    this.api.getProfile().subscribe({
       next: (profile) => {
-        this.profile.set(profile);
+        this.profile?.set(profile);
         this.form = {
-          name: profile.name ?? '',
+          name: profile?.name ?? '',
           email: profile.email ?? '',
           address: profile.address ?? '',
           dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.slice(0, 10) : '',
@@ -51,6 +51,7 @@ export class PersonalInfoSection implements OnChanges {
         };
         this.dirty.set(false);
         this.loading.set(false);
+        console.log('Loaded profile:', profile);
       },
       error: (err) => {
         this.loading.set(false);
@@ -69,13 +70,13 @@ export class PersonalInfoSection implements OnChanges {
 
     this.saving.set(true);
     this.api
-      .updateProfile(this.customerId, {
+      .updateProfile({
         name: this.form.name.trim(),
         email: this.form.email.trim() || null,
         address: this.form.address.trim() || null,
         dateOfBirth: this.form.dateOfBirth || null,
         notes: this.form.notes.trim() || null,
-        status: current.status,
+        
       })
       .subscribe({
         next: (updated) => {

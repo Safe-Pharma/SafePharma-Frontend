@@ -50,7 +50,7 @@ export class PurchaseHistoryPage implements OnInit {
     if (!customerId) return;
 
     this.loading.set(true);
-    this.api.getPurchaseHistory(customerId).subscribe({
+    this.api.getPurchaseHistory().subscribe({
       next: (receipts) => {
         this.receipts.set([...receipts].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
         this.loading.set(false);

@@ -3,10 +3,11 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  OtpEnvelope,
   PortalSessionInfo,
   SendOtpRequest,
+  VerifyOtpData,
   VerifyOtpRequest,
-  VerifyOtpResponse,
 } from '../Models/portal-auth.model';
 
 // Deliberately separate from Core/Services/auth-session.service.ts and uses its own
@@ -29,16 +30,20 @@ export class PortalAuthService {
     this.syncFromStorage();
   }
 
-  sendOtp(phone: string): Observable<void> {
+  sendOtp(phone: string): Observable<OtpEnvelope<null>> {
     const body: SendOtpRequest = { phone };
-    return this.http.post<void>(`${this.baseUrl}/request`, body);
+    return this.http.post<OtpEnvelope<null>>(`${this.baseUrl}/request`, body);
   }
 
-  verifyOtp(phone: string, code: string): Observable<VerifyOtpResponse> {
+  verifyOtp(phone: string, code: string): Observable<OtpEnvelope<VerifyOtpData>> {
     const body: VerifyOtpRequest = { phone, code };
-    return this.http
-      .post<VerifyOtpResponse>(`${this.baseUrl}/verify`, body)
-      .pipe(tap((res) => this.setToken(res.token)));
+    return this.http.post<OtpEnvelope<VerifyOtpData>>(`${this.baseUrl}/verify`, body).pipe(
+      tap((res) => {
+        if (res.success && res.data?.accessToken) {
+          this.setToken(res.data.accessToken);
+        }
+      }),
+    );
   }
 
   setToken(token: string): void {
@@ -57,6 +62,19 @@ export class PortalAuthService {
 
   ensureSession(): boolean {
     return this.syncFromStorage() !== null;
+  }
+
+  // The JWT has no `name` claim — only nameidentifier/Phone/role. Call this once the real
+  // Customer profile has loaded so the sidebar/topbar can show an actual name instead of
+  // just the phone number.
+  updateDisplayName(name: string): void {
+    const current = this.sessionState();
+    if (!current || !name.trim()) return;
+    this.sessionState.set({
+      ...current,
+      name: name.trim(),
+      initials: this.buildInitials(name.trim()),
+    });
   }
 
   private syncFromStorage(): PortalSessionInfo | null {
@@ -85,9 +103,19 @@ export class PortalAuthService {
 
       const payload = JSON.parse(this.base64UrlDecode(payloadPart)) as Record<string, unknown>;
 
-      const customerId = this.firstString(payload, ['customerId', 'sub', 'nameid']);
-      const name = this.firstString(payload, ['name', 'fullName']) ?? 'Patient';
-      const phone = this.firstString(payload, ['phone', 'phone_number']) ?? '';
+      // This backend issues standard ClaimsIdentity-style JWTs, so the customer id rides on
+      // the long XML-Soap "nameidentifier" URI rather than a short "sub"/"customerId" key.
+      // Keep the short forms as fallbacks in case a future token shape is simpler.
+      const customerId = this.firstString(payload, [
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+        'customerId',
+        'sub',
+        'nameid',
+      ]);
+      const phone = this.firstString(payload, ['Phone', 'phone', 'phone_number']) ?? '';
+      // No name claim exists at all today — fall back to the phone number so the UI shows
+      // something meaningful until updateDisplayName() runs with the real profile name.
+      const name = this.firstString(payload, ['name', 'fullName']) ?? phone ?? 'Patient';
 
       if (!customerId) return null;
 

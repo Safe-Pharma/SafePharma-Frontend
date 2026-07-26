@@ -37,7 +37,7 @@ export class ChronicConditionsSection implements OnChanges {
     this.loading.set(true);
     forkJoin({
       catalog: this.api.getChronicConditionCatalog(),
-      assigned: this.api.getChronicConditions(this.customerId),
+      assigned: this.api.getChronicConditions(),
     }).subscribe({
       next: ({ catalog, assigned }) => {
         this.catalog.set(catalog);
@@ -59,7 +59,7 @@ export class ChronicConditionsSection implements OnChanges {
   add(item: CatalogItem): void {
     if (this.saving()) return;
     this.saving.set(true);
-    this.api.assignChronicCondition(this.customerId, { chronicConditionId: item.id }).subscribe({
+    this.api.assignChronicCondition( { chronicConditionId: item.id }).subscribe({
       next: () => {
         this.assigned.update((list) => [
           ...list,
@@ -87,7 +87,7 @@ export class ChronicConditionsSection implements OnChanges {
   removeConfirmed(): void {
     const id = this.pendingRemoveId();
     if (!id) return;
-    this.api.removeChronicCondition(this.customerId, id).subscribe({
+    this.api.removeChronicCondition( id).subscribe({
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.chronicConditionId !== id));
         this.pendingRemoveId.set(null);

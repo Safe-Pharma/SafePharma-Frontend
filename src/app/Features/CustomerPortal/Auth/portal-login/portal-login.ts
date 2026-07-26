@@ -3,12 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PortalAuthService } from '../../Services/portal-auth.service';
 import { Toast } from '../../../../Shared/Toasts/toast';
+import { ToastComponent } from '../../../../Shared/Toasts/toast/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ToastComponent],
   templateUrl: './portal-login.html',
 })
 export class PortalLogin {
@@ -28,9 +29,13 @@ export class PortalLogin {
 
     this.loading.set(true);
     this.portalAuth.sendOtp(this.phone().trim()).subscribe({
-      next: () => {
+      next: (res) => {
         this.loading.set(false);
-        this.toast.show('We sent a WhatsApp code to your phone.', 'success');
+        if (!res.success) {
+          this.toast.show(res.message || 'Could not send the code. Please try again.', 'error');
+          return;
+        }
+        this.toast.show(res.message || 'We sent a WhatsApp code to your phone.', 'success');
         this.router.navigate(['/portal/otp'], { queryParams: { phone: this.phone().trim() } });
       },
       error: (err) => {

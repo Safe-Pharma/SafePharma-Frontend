@@ -28,7 +28,7 @@ export class RelativesPage implements OnInit {
     if (!customerId) return;
 
     this.loading.set(true);
-    this.api.getRelatives(customerId).subscribe({
+    this.api.getRelatives().subscribe({
       next: (relatives) => {
         this.relatives.set(relatives);
         this.loading.set(false);

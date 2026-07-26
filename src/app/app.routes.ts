@@ -227,14 +227,14 @@ export const routes: Routes = [
           ),
         data: { title: 'Receipt Details' },
       },
-      // {
-      //   path: 'relatives',
-      //   loadComponent: () =>
-      //     import('./Features/CustomerPortal/Components/relatives/relatives').then(
-      //       (m) => m.RelativesPage,
-      //     ),
-      //   data: { title: 'Relatives' },
-      // },
+      {
+        path: 'relatives',
+        loadComponent: () =>
+          import('./Features/CustomerPortal/Components/relatives/relatives').then(
+            (m) => m.RelativesPage,
+          ),
+        data: { title: 'Relatives' },
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

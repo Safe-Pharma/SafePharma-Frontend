@@ -5,8 +5,10 @@ import { PortalI18nService } from '../../Services/portal-i18n.service';
 import { PersonalInfoSection } from './personal-info/personal-info';
 import { MedicineHistorySection } from './medicine-history/medicine-history';
 import { AllergiesSection } from './allergies/allergies';
-import { ChronicConditionsSection } from './chronic-conditions/chronic-conditions.ts';
+import { ChronicConditionsSection } from './chronic-conditions/chronic-conditions';
 import { OrganFunctionsSection } from './organ-functions/organ-functions';
+import { PortalSkeleton } from '../../Shared/skeleton';
+
 
 type ProfileTab = 'personal' | 'medical' | 'allergies' | 'chronic' | 'organs';
 
@@ -19,6 +21,7 @@ type ProfileTab = 'personal' | 'medical' | 'allergies' | 'chronic' | 'organs';
     AllergiesSection,
     ChronicConditionsSection,
     OrganFunctionsSection,
+    PortalSkeleton,
   ],
   templateUrl: './profile.html',
 })

@@ -64,10 +64,10 @@ export class PortalDashboard implements OnInit {
     this.error.set(false);
 
     forkJoin({
-      profile: this.api.getProfile(customerId),
-      chronicConditions: this.api.getChronicConditions(customerId),
-      allergies: this.api.getAllergies(customerId),
-      receipts: this.api.getPurchaseHistory(customerId),
+      profile: this.api.getProfile(),
+      chronicConditions: this.api.getChronicConditions(),
+      allergies: this.api.getAllergies(),
+      receipts: this.api.getPurchaseHistory(),
     }).subscribe({
       next: ({ profile, chronicConditions, allergies, receipts }) => {
         this.profile.set(profile);
@@ -75,6 +75,7 @@ export class PortalDashboard implements OnInit {
         this.allergies.set(allergies);
         this.receipts.set([...receipts].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
         this.loading.set(false);
+        if (profile.name) this.portalAuth.updateDisplayName(profile.name);
       },
       error: (err) => {
         this.loading.set(false);

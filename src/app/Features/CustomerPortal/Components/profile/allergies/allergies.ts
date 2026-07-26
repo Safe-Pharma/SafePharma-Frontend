@@ -37,7 +37,7 @@ export class AllergiesSection implements OnChanges {
     this.loading.set(true);
     forkJoin({
       catalog: this.api.getAllergyCatalog(),
-      assigned: this.api.getAllergies(this.customerId),
+      assigned: this.api.getAllergies(),
     }).subscribe({
       next: ({ catalog, assigned }) => {
         this.catalog.set(catalog);
@@ -59,7 +59,7 @@ export class AllergiesSection implements OnChanges {
   add(item: CatalogItem): void {
     if (this.saving()) return;
     this.saving.set(true);
-    this.api.assignAllergy(this.customerId, { allergyId: item.id }).subscribe({
+    this.api.assignAllergy( { allergyId: item.id }).subscribe({
       next: () => {
         this.assigned.update((list) => [
           ...list,
@@ -87,7 +87,7 @@ export class AllergiesSection implements OnChanges {
   removeConfirmed(): void {
     const id = this.pendingRemoveId();
     if (!id) return;
-    this.api.removeAllergy(this.customerId, id).subscribe({
+    this.api.removeAllergy( id).subscribe({
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.allergyId !== id));
         this.pendingRemoveId.set(null);

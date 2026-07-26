@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+
 import {
   AssignAllergyDto,
   AssignChronicConditionDto,
@@ -16,124 +17,181 @@ import {
   CustomerRelative,
   GeneralResult,
 } from '../../Customer/Models/customer.model';
+
 import { PortalProfileUpdateDto } from '../Models/portal-profile.model';
 import { PortalReceiptListItem } from '../Models/portal-sales.model';
 
-// Deliberately calls the SAME endpoints CustomersApiService uses (Features/Customer) rather
-// than a duplicate patient-only API — a patient's medical record is the same record a
-// pharmacist sees, just scoped to "myself" instead of an arbitrary :id, and authorized by
-// a patient JWT instead of a staff JWT. Keeping one source of truth avoids the two surfaces
-// drifting apart. Only the sales/relatives calls hit endpoints unique to the portal.
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class PortalApiService {
   private readonly http = inject(HttpClient);
-  private readonly customersUrl = `${environment.apiUrl}/customers`;
-  private readonly relativeUrl = `${environment.apiUrl}/CustomerRelative`;
-  private readonly salesUrl = `${environment.apiUrl}/customer`; // NOTE: singular, per portal spec
 
-  // --- Personal profile ---
+  private readonly customerPortalUrl = `${environment.apiUrl}/CustomerPortal`;
 
-  getProfile(customerId: string): Observable<Customer> {
-    return this.http.get<Customer>(`${this.customersUrl}/${customerId}`);
+  // ============================================================
+  // Profile
+  // ============================================================
+
+  getProfile(): Observable<Customer> {
+    return this.http
+      .get<GeneralResult<Customer>>(`${this.customerPortalUrl}/getMe`)
+      .pipe(map((r) => r.data));
   }
 
-  updateProfile(customerId: string, dto: PortalProfileUpdateDto): Observable<Customer> {
-    return this.http.put<Customer>(`${this.customersUrl}/${customerId}`, dto);
-  }
-
-  // --- Medicine history (read-only for the patient) ---
-
-  getMedicineHistory(customerId: string): Observable<CustomerMedicineHistory[]> {
-    return this.http.get<CustomerMedicineHistory[]>(
-      `${this.customersUrl}/${customerId}/medicine-history`,
+  updateProfile(dto: PortalProfileUpdateDto): Observable<Customer> {
+    return this.http.put<Customer>(
+      `${this.customerPortalUrl}/editMe`,
+      dto,
     );
   }
 
-  // --- Allergies ---
+  // ============================================================
+  // Medicine History
+  // ============================================================
+
+  getMedicineHistory(): Observable<CustomerMedicineHistory[]> {
+    return this.http.get<CustomerMedicineHistory[]>(
+      `${this.customerPortalUrl}/medicine-history`,
+    );
+  }
+
+  // ============================================================
+  // Allergies
+  // ============================================================
 
   getAllergyCatalog(): Observable<CatalogItem[]> {
     return this.http
-      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/allergy`)
+      .get<GeneralResult<CatalogItem[]>>(
+        `${environment.apiUrl}/allergy`,
+      )
       .pipe(map((r) => r.data));
   }
 
-  getAllergies(customerId: string): Observable<CustomerAllergy[]> {
-    return this.http.get<CustomerAllergy[]>(`${this.customersUrl}/${customerId}/allergies`);
+  getAllergies(): Observable<CustomerAllergy[]> {
+    return this.http.get<CustomerAllergy[]>(
+      `${this.customerPortalUrl}/GetMyAllergies`,
+    );
   }
 
-  assignAllergy(customerId: string, dto: AssignAllergyDto): Observable<void> {
-    return this.http.post<void>(`${this.customersUrl}/${customerId}/allergies`, dto);
+  assignAllergy(dto: AssignAllergyDto): Observable<void> {
+    return this.http.post<void>(
+      `${this.customerPortalUrl}/AddMyAllergies`,
+      dto,
+    );
   }
 
-  removeAllergy(customerId: string, allergyId: string): Observable<void> {
-    return this.http.delete<void>(`${this.customersUrl}/${customerId}/allergies/${allergyId}`);
+  removeAllergy(allergyId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.customerPortalUrl}/allergies/${allergyId}`,
+    );
   }
 
-  // --- Chronic conditions ---
+  // ============================================================
+  // Chronic Conditions
+  // ============================================================
 
   getChronicConditionCatalog(): Observable<CatalogItem[]> {
     return this.http
-      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/chroniccondition`)
+      .get<GeneralResult<CatalogItem[]>>(
+        `${environment.apiUrl}/chroniccondition`,
+      )
       .pipe(map((r) => r.data));
   }
 
-  getChronicConditions(customerId: string): Observable<CustomerChronicCondition[]> {
+  getChronicConditions(): Observable<CustomerChronicCondition[]> {
     return this.http.get<CustomerChronicCondition[]>(
-      `${this.customersUrl}/${customerId}/chronic-conditions`,
+      `${this.customerPortalUrl}/chronic-conditions`,
     );
   }
 
-  assignChronicCondition(customerId: string, dto: AssignChronicConditionDto): Observable<void> {
-    return this.http.post<void>(`${this.customersUrl}/${customerId}/chronic-conditions`, dto);
+  assignChronicCondition(
+    dto: AssignChronicConditionDto,
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.customerPortalUrl}/chronic-conditions`,
+      dto,
+    );
   }
 
-  removeChronicCondition(customerId: string, chronicConditionId: string): Observable<void> {
+  removeChronicCondition(
+    chronicConditionId: string,
+  ): Observable<void> {
     return this.http.delete<void>(
-      `${this.customersUrl}/${customerId}/chronic-conditions/${chronicConditionId}`,
+      `${this.customerPortalUrl}/chronic-conditions/${chronicConditionId}`,
     );
   }
 
-  // --- Organ functions ---
+  // ============================================================
+  // Organ Functions
+  // ============================================================
 
   getOrganCatalog(): Observable<CatalogItem[]> {
     return this.http
-      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/organ`)
+      .get<GeneralResult<CatalogItem[]>>(
+        `${environment.apiUrl}/organ`,
+      )
       .pipe(map((r) => r.data));
   }
 
   getOrganImpairmentLevelCatalog(): Observable<CatalogItem[]> {
     return this.http
-      .get<GeneralResult<CatalogItem[]>>(`${environment.apiUrl}/organimpairmentlevel`)
+      .get<GeneralResult<CatalogItem[]>>(
+        `${environment.apiUrl}/organimpairmentlevel`,
+      )
       .pipe(map((r) => r.data));
   }
 
-  getOrganFunctions(customerId: string): Observable<CustomerOrganFunction[]> {
+  getOrganFunctions(): Observable<CustomerOrganFunction[]> {
     return this.http.get<CustomerOrganFunction[]>(
-      `${this.customersUrl}/${customerId}/organ-functions`,
+      `${this.customerPortalUrl}/organ-functions`,
     );
   }
 
   assignOrganFunction(
-    customerId: string,
     dto: AssignOrganFunctionDto,
   ): Observable<CustomerOrganFunction> {
     return this.http.post<CustomerOrganFunction>(
-      `${this.customersUrl}/${customerId}/organ-functions`,
+      `${this.customerPortalUrl}/organ-functions`,
       dto,
     );
   }
 
-  // --- Purchase history (aggregated across all pharmacies the customer bought from) ---
-
-  getPurchaseHistory(customerId: string): Observable<PortalReceiptListItem[]> {
-    return this.http.get<PortalReceiptListItem[]>(`${this.salesUrl}/${customerId}/sales`);
+  removeOrganFunction(organFunctionId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.customerPortalUrl}/organ-functions/${organFunctionId}`,
+    );
   }
 
-  // --- Relatives (read-only for the patient) ---
+  // ============================================================
+  // Purchase History
+  // ============================================================
 
-  getRelatives(customerId: string): Observable<CustomerRelative[]> {
+  getPurchaseHistory(): Observable<PortalReceiptListItem[]> {
     return this.http
-      .get<GeneralResult<CustomerRelative[]>>(`${this.relativeUrl}/${customerId}`)
+      .get<GeneralResult<PortalReceiptListItem[]>>(
+        `${this.customerPortalUrl}/sales`,
+      )
+      .pipe(map((r) => r.data));
+  }
+
+  getPurchaseDetails(saleId: string): Observable<any> {
+    return this.http
+      .get<GeneralResult<any>>(
+        `${this.customerPortalUrl}/sales/${saleId}`,
+      )
+      .pipe(map((r) => r.data));
+  }
+
+  // ============================================================
+  // Relatives
+  // ============================================================
+
+  getRelatives(): Observable<CustomerRelative[]> {
+    return this.http
+      .get<GeneralResult<CustomerRelative[]>>(
+        `${this.customerPortalUrl}/MyRelatives`,
+      )
       .pipe(map((r) => r.data));
   }
 }

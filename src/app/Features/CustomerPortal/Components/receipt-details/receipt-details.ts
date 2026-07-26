@@ -42,7 +42,7 @@ export class ReceiptDetailsPage implements OnInit {
     // The portal spec doesn't define a dedicated GET /sales/{id}, so the detail is looked
     // up from the same aggregated list the Purchase History page fetches.
     this.loading.set(true);
-    this.api.getPurchaseHistory(customerId).subscribe({
+    this.api.getPurchaseHistory().subscribe({
       next: (receipts) => {
         const found = receipts.find((r) => r.id === id) ?? null;
         this.receipt.set(found);

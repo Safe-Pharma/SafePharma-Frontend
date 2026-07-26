@@ -34,13 +34,17 @@ export class PortalLayout {
   }
 
   private readDeepestTitle(route: ActivatedRoute): string {
-    let current = route;
-    let title = 'Portal';
-    while (current.firstChild) {
-      current = current.firstChild;
-      const data = current.snapshot.data as { title?: string };
-      if (data?.title) title = data.title;
+    try {
+      let current: ActivatedRoute | undefined = route;
+      let title = 'Portal';
+      while (current?.firstChild) {
+        current = current.firstChild;
+        const data = current?.snapshot?.data as { title?: string } | undefined;
+        if (data?.title) title = data.title;
+      }
+      return title;
+    } catch {
+      return 'Portal';
     }
-    return title;
   }
 }

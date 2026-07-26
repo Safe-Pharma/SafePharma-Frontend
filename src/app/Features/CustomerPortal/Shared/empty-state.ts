@@ -1,30 +1,24 @@
 import { Component, Input } from '@angular/core';
-import { SafeHtmlPipe } from '../../../Shared/Pipes/safe-html.pipe';
 
 @Component({
-  selector: 'portal-stat-card',
+  selector: 'portal-empty-state',
   standalone: true,
-  imports: [SafeHtmlPipe],
   template: `
-    <div
-      class="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
-    >
-      <div
-        class="grid h-11 w-11 shrink-0 place-items-center rounded-lg"
-        [style.background]="'var(--' + tint + '-soft)'"
-        [style.color]="'var(--' + tint + ')'"
-        [innerHTML]="icon | safeHtml"
-      ></div>
-      <div class="min-w-0">
-        <div class="truncate text-xs font-medium text-muted-foreground">{{ label }}</div>
-        <div class="text-xl font-semibold tracking-tight text-foreground">{{ value }}</div>
+    <div class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border py-12 text-center">
+      <div class="grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+        </svg>
       </div>
+      <div class="text-sm font-medium text-foreground">{{ title }}</div>
+      @if (description) {
+        <div class="max-w-sm text-xs text-muted-foreground">{{ description }}</div>
+      }
+      <ng-content></ng-content>
     </div>
   `,
 })
-export class PortalStatCard {
-  @Input() label = '';
-  @Input() value: string | number | null = '';
-  @Input() icon = '';
-  @Input() tint: 'primary' | 'success' | 'warning' | 'destructive' = 'primary';
+export class PortalEmptyState {
+  @Input() title = 'Nothing here yet';
+  @Input() description = '';
 }
