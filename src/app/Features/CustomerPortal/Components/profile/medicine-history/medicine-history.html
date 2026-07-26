@@ -1,28 +1,53 @@
-<div class="rounded-xl border border-border bg-card p-5">
-  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <p class="text-xs text-muted-foreground">A read-only record of medicines you've purchased, kept for safety checks.</p>
-    <div class="relative w-full sm:w-64">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn, staggerList } from '../shared/portal-animations';
+  import { PortalSectionHeaderComponent } from '../shared/portal-section-header.component';
+  import { PortalEmptyStateComponent } from '../shared/portal-empty-state.component';
+  @Component({ ..., animations: [fadeSlideIn, staggerList] })
+-->
+<div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+  <portal-section-header
+    [title]="i18n.t('medicineHistory.title')"
+    [description]="i18n.t('ai.medicineHistoryExplain')"
+    tone="primary"
+  >
+    <span slot="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+        <path d="M7 11V7a5 5 0 0110 0v4"></path>
+      </svg>
+    </span>
+    <div slot="action" class="relative w-full sm:w-64">
+      <label for="medSearch" class="sr-only">{{ i18n.t('medicineHistory.searchPlaceholder') }}</label>
       <input
+        id="medSearch"
         type="text"
-        placeholder="Search medicine…"
-        class="w-full rounded-lg border border-border py-2 ps-3 pe-3 text-sm outline-none ring-ring focus:ring-2"
+        [placeholder]="i18n.t('medicineHistory.searchPlaceholder')"
+        class="w-full rounded-lg border border-border py-2 ps-3 pe-3 text-sm outline-none ring-ring transition-shadow duration-150 focus:ring-2"
         [ngModel]="search()"
         (ngModelChange)="search.set($event)"
         name="medSearch"
       />
     </div>
-  </div>
+  </portal-section-header>
 
   @if (loading()) {
-    <div class="space-y-3">
+    <div class="space-y-3" aria-busy="true" aria-live="polite">
       @for (i of [1, 2, 3]; track i) {
         <portal-skeleton [height]="48" />
       }
     </div>
   } @else if (filtered().length === 0) {
-    <portal-empty-state title="No medicine history found" description="Records added by your pharmacist will appear here." />
+    <portal-empty-state [title]="i18n.t('medicineHistory.emptyTitle')" [description]="i18n.t('medicineHistory.emptyDesc')">
+      <span slot="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+          <path d="M7 11V7a5 5 0 0110 0v4"></path>
+        </svg>
+      </span>
+    </portal-empty-state>
   } @else {
-    <ol class="relative space-y-5 ps-5">
+    <ol class="relative space-y-5 ps-5" [@staggerList]="filtered().length">
       <div class="absolute inset-y-0 start-1.5 w-px bg-border"></div>
       @for (h of filtered(); track h.id) {
         <li class="relative">
@@ -30,8 +55,9 @@
             class="absolute -start-5 top-1 h-3 w-3 rounded-full border-2 border-card"
             [class.bg-success]="h.isActive"
             [class.bg-muted-foreground]="!h.isActive"
+            aria-hidden="true"
           ></span>
-          <div class="rounded-lg border border-border p-3.5">
+          <div class="rounded-lg border border-border p-3.5 transition-colors duration-150 hover:bg-muted/30">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div class="text-sm font-semibold text-foreground">{{ h.medicineName }}</div>
@@ -39,11 +65,14 @@
                   <div class="text-xs text-muted-foreground">{{ h.scientificName }}</div>
                 }
               </div>
-              <portal-status-badge [tone]="h.isActive ? 'success' : 'muted'" [label]="h.isActive ? 'Active' : 'Stopped'" />
+              <portal-status-badge
+                [tone]="h.isActive ? 'success' : 'muted'"
+                [label]="h.isActive ? i18n.t('medicineHistory.active') : i18n.t('medicineHistory.stopped')"
+              />
             </div>
             <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>{{ h.purchaseDate | date: 'mediumDate' }}</span>
-              <span>Qty {{ h.quantity }}</span>
+              <span>{{ i18n.t('medicineHistory.qty', { qty: h.quantity }) }}</span>
               @if (h.notes) {
                 <span class="italic">{{ h.notes }}</span>
               }

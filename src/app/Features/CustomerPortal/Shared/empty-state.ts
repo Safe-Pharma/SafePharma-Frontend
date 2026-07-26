@@ -1,24 +1,36 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
+/**
+ * Friendly empty state with an icon slot. Anything projected without a
+ * `slot` attribute (e.g. an "Add" button) renders below the description.
+ *
+ * <portal-empty-state [title]="..." [description]="...">
+ *   <span slot="icon" [innerHTML]="icons.allergy"></span>
+ *   <button (click)="openAdd()">{{ i18n.t('allergies.add') }}</button>
+ * </portal-empty-state>
+ */
 @Component({
   selector: 'portal-empty-state',
   standalone: true,
   template: `
-    <div class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border py-12 text-center">
-      <div class="grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
-          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
-        </svg>
-      </div>
-      <div class="text-sm font-medium text-foreground">{{ title }}</div>
-      @if (description) {
-        <div class="max-w-sm text-xs text-muted-foreground">{{ description }}</div>
+    <div class="flex flex-col items-center justify-center gap-2 rounded-lg py-10 text-center" role="status">
+      <span
+        class="grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground [&_svg]:h-6 [&_svg]:w-6"
+        aria-hidden="true"
+      >
+        <ng-content select="[slot=icon]" />
+      </span>
+      <p class="text-sm font-medium text-foreground">{{ title() }}</p>
+      @if (description()) {
+        <p class="max-w-xs text-xs text-muted-foreground">{{ description() }}</p>
       }
-      <ng-content></ng-content>
+      <div class="mt-1">
+        <ng-content />
+      </div>
     </div>
   `,
 })
-export class PortalEmptyState {
-  @Input() title = 'Nothing here yet';
-  @Input() description = '';
+export class PortalEmptyStateComponent {
+  title = input.required<string>();
+  description = input<string>('');
 }

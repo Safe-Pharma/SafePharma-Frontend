@@ -1,24 +1,43 @@
-<div class="rounded-xl border border-border bg-card p-5">
-  <div class="mb-4 flex items-center justify-between">
-    <p class="text-xs text-muted-foreground">Ongoing conditions that affect which medicines are safe for you.</p>
-    <div class="relative">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn, staggerList, listItem, dialogPanel } from '../shared/portal-animations';
+  @Component({ ..., animations: [fadeSlideIn, staggerList, listItem, dialogPanel] })
+-->
+<div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+  <portal-section-header
+    [title]="i18n.t('chronic.title')"
+    [description]="i18n.t('ai.chronicExplain')"
+    tone="warning"
+  >
+    <span slot="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+      </svg>
+    </span>
+    <div slot="action" class="relative">
       <button
         type="button"
-        class="rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        class="rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-transform duration-200 hover:opacity-90 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        [attr.aria-expanded]="pickerOpen()"
         (click)="pickerOpen.set(!pickerOpen())"
       >
-        + Add condition
+        + {{ i18n.t('chronic.add') }}
       </button>
 
       @if (pickerOpen()) {
-        <div class="absolute end-0 z-10 mt-2 max-h-64 w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-lg">
+        <div
+          class="absolute end-0 z-10 mt-2 max-h-64 w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-lg"
+          @dialogPanel
+          role="menu"
+        >
           @if (availableToAdd().length === 0) {
-            <p class="p-3 text-xs text-muted-foreground">All catalog conditions are already added.</p>
+            <p class="p-3 text-xs text-muted-foreground">{{ i18n.t('chronic.allAdded') }}</p>
           } @else {
             @for (item of availableToAdd(); track item.id) {
               <button
                 type="button"
-                class="block w-full rounded-md px-3 py-2 text-start text-sm text-foreground hover:bg-muted"
+                role="menuitem"
+                class="block w-full rounded-md px-3 py-2 text-start text-sm text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 (click)="add(item)"
               >
                 {{ i18n.localizedName(item) }}
@@ -28,27 +47,33 @@
         </div>
       }
     </div>
-  </div>
+  </portal-section-header>
 
   @if (loading()) {
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid gap-3 sm:grid-cols-2" aria-busy="true" aria-live="polite">
       @for (i of [1, 2]; track i) {
         <portal-skeleton [height]="56" />
       }
     </div>
   } @else if (assigned().length === 0) {
-    <portal-empty-state title="No chronic conditions recorded" description="Add any long-term conditions like diabetes or hypertension." />
+    <portal-empty-state [title]="i18n.t('chronic.emptyTitle')" [description]="i18n.t('chronic.emptyDesc')">
+      <span slot="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+      </span>
+    </portal-empty-state>
   } @else {
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid gap-3 sm:grid-cols-2" [@staggerList]="assigned().length">
       @for (c of assigned(); track c.chronicConditionId) {
-        <div class="flex items-center justify-between rounded-lg border border-warning/30 bg-warning-soft p-3.5">
+        <div class="flex items-center justify-between rounded-lg border border-warning/30 bg-warning-soft p-3.5" @listItem>
           <span class="text-sm font-medium text-foreground">{{ i18n.localizedName({ nameEn: c.nameEn, nameAr: c.nameAr }) }}</span>
           <button
             type="button"
-            class="rounded-md px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive-soft"
+            class="rounded-md px-2 py-1 text-xs font-medium text-destructive transition-colors duration-150 hover:bg-destructive-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             (click)="confirmRemove(c.chronicConditionId)"
           >
-            Remove
+            {{ i18n.t('common.remove') }}
           </button>
         </div>
       }
@@ -58,8 +83,8 @@
 
 <portal-confirm-dialog
   [open]="pendingRemoveId() !== null"
-  title="Remove this condition?"
-  message="You can always add it back later if needed."
+  [title]="i18n.t('chronic.removeConfirmTitle')"
+  [message]="i18n.t('chronic.removeConfirmMessage')"
   (confirm)="removeConfirmed()"
   (cancel)="cancelRemove()"
 />

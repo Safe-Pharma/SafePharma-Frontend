@@ -8,6 +8,7 @@ import { ProfilePage } from './Features/Profile/profile-page';
 import { ChangePassword } from './Features/Authentication/change-password/change-password';
 import { InventoryPage } from './Features/inventory-page/inventory-page';
 import { portalAuthGuard } from './Core/Guards/portal-auth.guard';
+import { staffAuthGuard } from './Core/Guards/staff-auth.guard';
 
 export const routes: Routes = [
   {
@@ -70,6 +71,8 @@ export const routes: Routes = [
   {
     path: 'app',
     component: privatelayout,
+    canActivate: [staffAuthGuard],
+    canActivateChild: [staffAuthGuard],
     children: [
       {
         path: 'settings',

@@ -1,24 +1,45 @@
-<div class="rounded-xl border border-border bg-card p-5">
-  <div class="mb-4 flex items-center justify-between">
-    <p class="text-xs text-muted-foreground">Medicines and substances you're allergic to. Pharmacists check this before dispensing.</p>
-    <div class="relative">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel } from '../shared/portal-animations';
+  @Component({ ..., animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel] })
+-->
+<div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+  <portal-section-header
+    [title]="i18n.t('allergies.title')"
+    [description]="i18n.t('ai.allergiesExplain')"
+    tone="destructive"
+  >
+    <span slot="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+        <path d="M12 8v5"></path>
+        <path d="M12 16h.01"></path>
+      </svg>
+    </span>
+    <div slot="action" class="relative">
       <button
         type="button"
-        class="rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        class="rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-transform duration-200 hover:opacity-90 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        [attr.aria-expanded]="pickerOpen()"
         (click)="pickerOpen.set(!pickerOpen())"
       >
-        + Add allergy
+        + {{ i18n.t('allergies.add') }}
       </button>
 
       @if (pickerOpen()) {
-        <div class="absolute end-0 z-10 mt-2 max-h-64 w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-lg">
+        <div
+          class="absolute end-0 z-10 mt-2 max-h-64 w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-lg"
+          @dialogPanel
+          role="menu"
+        >
           @if (availableToAdd().length === 0) {
-            <p class="p-3 text-xs text-muted-foreground">All catalog allergies are already added.</p>
+            <p class="p-3 text-xs text-muted-foreground">{{ i18n.t('allergies.allAdded') }}</p>
           } @else {
             @for (item of availableToAdd(); track item.id) {
               <button
                 type="button"
-                class="block w-full rounded-md px-3 py-2 text-start text-sm text-foreground hover:bg-muted"
+                role="menuitem"
+                class="block w-full rounded-md px-3 py-2 text-start text-sm text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 (click)="add(item)"
               >
                 {{ i18n.localizedName(item) }}
@@ -28,22 +49,40 @@
         </div>
       }
     </div>
-  </div>
+  </portal-section-header>
 
   @if (loading()) {
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2" aria-busy="true" aria-live="polite">
       @for (i of [1, 2, 3]; track i) {
         <portal-skeleton [height]="32" width="120px" />
       }
     </div>
   } @else if (assigned().length === 0) {
-    <portal-empty-state title="No allergies recorded" description="Add any known allergies so pharmacists can flag unsafe medicines." />
+    <portal-empty-state [title]="i18n.t('allergies.emptyTitle')" [description]="i18n.t('allergies.emptyDesc')">
+      <span slot="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+          <path d="M12 8v5"></path>
+          <path d="M12 16h.01"></path>
+        </svg>
+      </span>
+    </portal-empty-state>
   } @else {
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2" [@staggerList]="assigned().length">
       @for (a of assigned(); track a.allergyId) {
-        <span class="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive-soft px-3 py-1.5 text-sm font-medium text-destructive">
+        <span
+          class="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive-soft px-3 py-1.5 text-sm font-medium text-destructive"
+          @listItem
+        >
           {{ i18n.localizedName(a.nameEn ? { nameEn: a.nameEn, nameAr: a.nameAr } : null) || a.nameEn }}
-          <button type="button" class="hover:opacity-70" (click)="confirmRemove(a.allergyId)" aria-label="Remove">✕</button>
+          <button
+            type="button"
+            class="rounded-full transition-opacity duration-150 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            (click)="confirmRemove(a.allergyId)"
+            [attr.aria-label]="i18n.t('allergies.removeAria', { name: a.nameEn })"
+          >
+            ✕
+          </button>
         </span>
       }
     </div>
@@ -52,8 +91,8 @@
 
 <portal-confirm-dialog
   [open]="pendingRemoveId() !== null"
-  title="Remove this allergy?"
-  message="You can always add it back later if needed."
+  [title]="i18n.t('allergies.removeConfirmTitle')"
+  [message]="i18n.t('allergies.removeConfirmMessage')"
   (confirm)="removeConfirmed()"
   (cancel)="cancelRemove()"
 />

@@ -1,21 +1,37 @@
-<div class="mx-auto max-w-4xl space-y-5">
+<!--
+  Component TS checklist:
+  import { fadeSlideIn, staggerList, listItem } from '../shared/portal-animations';
+  @Component({ ..., animations: [fadeSlideIn, staggerList, listItem] })
+-->
+<div class="mx-auto max-w-4xl space-y-5" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('relatives.title') }}</h2>
-    <p class="text-sm text-muted-foreground">People linked to your account. This list is view-only — contact your pharmacy to make changes.</p>
+    <p class="text-sm text-muted-foreground">{{ i18n.t('relatives.subtitle') }}</p>
   </div>
 
   @if (loading()) {
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid gap-3 sm:grid-cols-2" aria-busy="true" aria-live="polite">
       @for (i of [1, 2]; track i) {
         <portal-skeleton [height]="72" />
       }
     </div>
   } @else if (relatives().length === 0) {
-    <portal-empty-state title="No relatives linked" description="Relatives added by your pharmacist will appear here." />
+    <div @fadeSlideIn>
+      <portal-empty-state [title]="i18n.t('relatives.emptyTitle')" [description]="i18n.t('relatives.emptyDesc')">
+        <span slot="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 010 7.75"></path>
+          </svg>
+        </span>
+      </portal-empty-state>
+    </div>
   } @else {
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid gap-3 sm:grid-cols-2" [@staggerList]="relatives().length">
       @for (r of relatives(); track r.id) {
-        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:bg-muted/30" @listItem>
           <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
             {{ initials(r.relativeName) }}
           </span>
@@ -27,4 +43,25 @@
       }
     </div>
   }
+
+  <!-- Pharmacy-only linking notice — relatives can never be added from inside the portal. -->
+  <div class="flex flex-col items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft p-4 sm:flex-row sm:items-center" @fadeSlideIn>
+    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-card text-primary" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+        <path d="M12 8v4l3 3"></path>
+        <circle cx="12" cy="12" r="10"></circle>
+      </svg>
+    </span>
+    <div class="flex-1">
+      <p class="text-sm font-semibold text-foreground">{{ i18n.t('relatives.noticeTitle') }}</p>
+      <p class="mt-0.5 text-xs text-muted-foreground">{{ i18n.t('relatives.noticeMessage') }}</p>
+    </div>
+    <button
+      type="button"
+      class="shrink-0 rounded-lg border border-primary/30 bg-card px-3.5 py-2 text-sm font-medium text-primary transition-colors duration-150 hover:bg-primary-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      (click)="findPharmacy()"
+    >
+      {{ i18n.t('relatives.findPharmacy') }}
+    </button>
+  </div>
 </div>

@@ -5,6 +5,11 @@ import { Toast } from '../../../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../../../Shared/utils/get-error-message';
 import { Customer } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
+import { PortalAuthService } from '../../../Services/portal-auth.service';
+import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
+import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
+import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
+import { PortalI18nService } from '../../../Services/portal-i18n.service';
 
 interface EditableFields {
   name: string;
@@ -17,12 +22,14 @@ interface EditableFields {
 @Component({
   selector: 'app-personal-info-section',
   standalone: true,
-  imports: [FormsModule, PortalSkeleton],
+  imports: [FormsModule, PortalSkeleton , PortalEmptyStateComponent, PortalSectionHeaderComponent],
   templateUrl: './personal-info.html',
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class PersonalInfoSection implements OnChanges {
   private readonly api = inject(PortalApiService);
   private readonly toast = inject(Toast);
+  protected readonly i18n = inject(PortalI18nService);
 
   @Input({ required: true }) customerId = '';
 
