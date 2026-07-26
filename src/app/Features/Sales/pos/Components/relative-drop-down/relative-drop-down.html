@@ -1,0 +1,25 @@
+<!-- Relatives Dropdown -->
+<div class="flex gap-1.5 items-center">
+  <label class=""> Relative </label>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="text-sm text-gray-500 py-2">Loading relatives...</div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="text-sm text-red-600 py-2">
+    {{ error() }}
+  </div>
+
+  <!-- Dropdown -->
+  <select
+    *ngIf="!isLoading() && !error()"
+    [(ngModel)]="selectedRelativeId"
+    (ngModelChange)="onSelectionChange($event)"
+    class="rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-blue-500"
+  >
+    <option value="" >For Me</option>
+    <option *ngFor="let relative of relatives()" [value]="relative.relativeId">
+      {{ relative.relativeName }}
+    </option>
+  </select>
+</div>
