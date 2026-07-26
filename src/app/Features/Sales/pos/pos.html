@@ -1,34 +1,63 @@
 <div class="flex flex-col h-full bg-slate-50">
   <!-- Tab bar -->
-  <div class="h-11 shrink-0 bg-white border-b border-slate-200 flex items-center px-3 sm:px-6 gap-1 overflow-x-auto">
+  <div
+    class="h-11 shrink-0 bg-white border-b border-slate-200 flex items-center px-3 sm:px-6 gap-1 overflow-x-auto"
+  >
     @for (tab of tabs(); track tab.tabId) {
-    <button
-      (click)="switchTab(tab.tabId)"
-      [class.bg-blue-50]="tab.tabId === activeTabId()"
-      [class.text-blue-700]="tab.tabId === activeTabId()"
-      [class.text-slate-400]="tab.tabId !== activeTabId()"
-      class="flex items-center gap-1.5 h-8 px-3 rounded-t-lg border border-b-0 border-slate-200 text-sm font-medium shrink-0 cursor-pointer"
-    >
-      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <line x1="4" y1="9" x2="20" y2="9" />
-        <line x1="4" y1="15" x2="20" y2="15" />
-        <line x1="10" y1="3" x2="8" y2="21" />
-        <line x1="16" y1="3" x2="14" y2="21" />
-      </svg>
-      <span class="whitespace-nowrap">{{ tab.sale.invoiceNumber }}</span>
-      <span (click)="closeTab(tab.tabId, $event)" class="ml-1 text-current opacity-60 hover:opacity-100">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
+      <button
+        (click)="switchTab(tab.tabId)"
+        [class.bg-blue-50]="tab.tabId === activeTabId()"
+        [class.text-blue-700]="tab.tabId === activeTabId()"
+        [class.text-slate-400]="tab.tabId !== activeTabId()"
+        class="flex items-center gap-1.5 h-8 px-3 rounded-t-lg border border-b-0 border-slate-200 text-sm font-medium shrink-0 cursor-pointer"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="4" y1="9" x2="20" y2="9" />
+          <line x1="4" y1="15" x2="20" y2="15" />
+          <line x1="10" y1="3" x2="8" y2="21" />
+          <line x1="16" y1="3" x2="14" y2="21" />
         </svg>
-      </span>
-    </button>
+        <span class="whitespace-nowrap">{{ tab.sale.invoiceNumber }}</span>
+        <span
+          (click)="closeTab(tab.tabId, $event)"
+          class="ml-1 text-current opacity-60 hover:opacity-100"
+        >
+          <svg
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </span>
+      </button>
     }
-    <button (click)="openNewTab()" class="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 px-2 shrink-0 cursor-pointer">
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
+    <button
+      (click)="openNewTab()"
+      class="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 px-2 shrink-0 cursor-pointer"
+    >
+      <svg
+        class="w-4 h-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
@@ -41,8 +70,15 @@
     <div class="flex flex-col lg:flex-row gap-3">
       <!-- ================= Product search ================= -->
       <div class="relative flex-1" (click)="stop($event)">
-        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -57,76 +93,110 @@
         />
 
         @if (searchOpen() && query().trim().length >= 1) {
-        <div class="absolute z-10 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-lg max-h-80 overflow-y-auto">
-          @if (searching()) {
-          <div class="px-4 py-3 text-sm text-slate-400">Searching…</div>
-          } @else if (searchError()) {
-          <div class="px-4 py-3 text-sm text-destructive">{{ searchError() }}</div>
-          } @else if (showNoResults()) {
-          <div class="px-4 py-3 text-sm text-slate-400">No matching product found.</div>
-          } @else {
-            @for (item of searchResults(); track item.pharmacyMedicineId) {
-            <button
-              type="button"
-              (click)="addToCart(item)"
-              class="flex w-full items-center justify-between px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-left cursor-pointer"
-            >
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-slate-800">{{ item.tradeNameEn }}</p>
-                <p class="text-xs text-slate-400">
-                  {{ item.barcode || item.scientificName }} · Stock:
-                  <span [class.text-red-600]="item.stockQuantity <= 10" class="font-medium text-blue-600">
-                    {{ item.stockQuantity }}
-                  </span>
-                </p>
-              </div>
-              <p class="text-sm font-semibold text-blue-600 shrink-0 ms-3">${{ item.sellingPrice }}</p>
-            </button>
+          <div
+            class="absolute z-10 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-lg max-h-80 overflow-y-auto"
+          >
+            @if (searching()) {
+              <div class="px-4 py-3 text-sm text-slate-400">Searching…</div>
+            } @else if (searchError()) {
+              <div class="px-4 py-3 text-sm text-destructive">{{ searchError() }}</div>
+            } @else if (showNoResults()) {
+              <div class="px-4 py-3 text-sm text-slate-400">No matching product found.</div>
+            } @else {
+              @for (item of searchResults(); track item.pharmacyMedicineId) {
+                <button
+                  type="button"
+                  (click)="addToCart(item)"
+                  class="flex w-full items-center justify-between px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-left cursor-pointer"
+                >
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-slate-800">{{ item.tradeNameEn }}</p>
+                    <p class="text-xs text-slate-400">
+                      {{ item.barcode || item.scientificName }} · Stock:
+                      <span
+                        [class.text-red-600]="item.stockQuantity <= 10"
+                        class="font-medium text-blue-600"
+                      >
+                        {{ item.stockQuantity }}
+                      </span>
+                    </p>
+                  </div>
+                  <p class="text-sm font-semibold text-blue-600 shrink-0 ms-3">
+                    ${{ item.sellingPrice }}
+                  </p>
+                </button>
+              }
             }
-          }
-        </div>
+          </div>
         }
       </div>
 
       <div class="flex flex-wrap gap-3">
         <!-- ================= Customer selector ================= -->
         <div class="relative" (click)="stop($event)">
-          <button
-            (click)="toggleCustomerDropdown()"
-            class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-3 text-sm min-w-42.5 cursor-pointer"
-          >
-            <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span class="text-slate-700 font-medium flex-1 text-left">
-              {{ selectedCustomer() ? selectedCustomer()!.name : 'Walk-in customer' }}
-            </span>
-            <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              (click)="toggleCustomerDropdown()"
+              class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-3 text-sm min-w-42.5 cursor-pointer"
+            >
+              <svg
+                class="w-4 h-4 text-slate-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span class="text-slate-700 font-medium flex-1 text-left">
+                {{ selectedCustomer() ? selectedCustomer()!.name : 'Walk-in customer' }}
+              </span>
+              <svg
+                class="w-4 h-4 text-slate-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
 
           @if (showCustomerDropdown()) {
-          <div class="absolute z-20 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg max-h-72 overflow-y-auto">
-            <div (click)="selectCustomer(null)"
-              class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100">
-              Walk-in customer
+            <div
+              class="absolute z-20 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg max-h-72 overflow-y-auto"
+            >
+              <div
+                (click)="selectCustomer(null)"
+                class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100"
+              >
+                Walk-in customer
+              </div>
+              @for (c of customers(); track c.id) {
+                <div
+                  (click)="selectCustomer(c)"
+                  class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                >
+                  <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
+                  <p class="text-xs text-slate-400">{{ c.phone }}</p>
+                </div>
+              }
             </div>
-            @for (c of customers(); track c.id) {
-            <div (click)="selectCustomer(c)" class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0">
-              <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
-              <p class="text-xs text-slate-400">{{ c.phone }}</p>
-            </div>
-            }
-          </div>
           }
         </div>
 
-        <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2">
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+        <div
+          class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2"
+        >
+          <div
+            class="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-semibold flex items-center justify-center shrink-0"
+          >
             {{ auth.user()?.initials }}
           </div>
           <div class="leading-tight">
@@ -145,9 +215,18 @@
       <section class="flex-1 min-w-0 bg-white border border-slate-200 rounded-xl flex flex-col">
         <div class="flex items-center justify-between px-5 h-14 border-b border-slate-100 shrink-0">
           <div class="flex items-center gap-2 font-semibold text-slate-900">
-            <svg class="w-4.5 h-4.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+            <svg
+              class="w-4.5 h-4.5 text-slate-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
+              />
               <path d="m3.3 7 8.7 5 8.7-5" />
               <path d="M12 22V12" />
             </svg>
@@ -157,131 +236,230 @@
         </div>
 
         @if (!sale() || sale()!.items.length === 0) {
-        <div class="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
-          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-            <svg class="w-7 h-7 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-              <path d="m3.3 7 8.7 5 8.7-5" />
-              <path d="M12 22V12" />
-            </svg>
-          </div>
-          <p class="font-semibold text-slate-700 mb-1">Cart is empty</p>
-          <p class="text-sm text-slate-400">Search by barcode or product name to start a sale.</p>
-        </div>
-        } @else {
-        <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
-          @for (item of sale()!.items; track item.id) {
-          <div class="px-5 py-3.5">
-            <div class="flex items-center gap-3">
-              <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
-                  <path d="m8.5 8.5 7 7" />
-                </svg>
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-slate-800 truncate">{{ item.medicineName }}</p>
-                <p class="text-xs text-slate-400">{{ item.batchNumber }} · ${{ item.unitPrice }}</p>
-              </div>
-
-              <div class="relative shrink-0" (click)="stop($event)">
-                <button
-                  (click)="toggleItemCustomerPicker(item.id)"
-                  class="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
-                >
-                  {{ item.customerName || 'Customer' }}
-                </button>
-
-                @if (openItemCustomerPickerId() === item.id) {
-                <div class="absolute z-30 right-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                  <div (click)="selectCartItemCustomer(item, null)"
-                    class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100">
-                    Walk-in customer
-                  </div>
-                  @for (c of customers(); track c.id) {
-                  <div (click)="selectCartItemCustomer(item, c)" class="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0">
-                    <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
-                    <p class="text-xs text-slate-400">{{ c.phone }}</p>
-                  </div>
-                  }
-                </div>
-                }
-              </div>
-
-              <div class="flex items-center gap-2 shrink-0">
-                <button (click)="decreaseQuantity(item)"
-                  class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 cursor-pointer">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
-                <span class="w-6 text-center text-sm font-medium">{{ item.quantity }}</span>
-                <button (click)="increaseQuantity(item)"
-                  class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 cursor-pointer">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
-              </div>
-
-              <p class="w-16 text-right text-sm font-semibold text-slate-800 shrink-0">${{ item.lineTotal }}</p>
-
-              <button (click)="removeItem(item)" class="text-slate-300 hover:text-red-500 shrink-0 cursor-pointer">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6h18" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- per-row discount / tax -->
-            <div class="mt-2 flex flex-wrap items-center gap-4 ps-14 text-xs text-slate-500">
-              <!-- Discount: amount or percent -->
-              <div class="flex items-center gap-1.5">
-                <span>Discount</span>
-                <div class="flex rounded-md border border-slate-200 overflow-hidden">
-                  <button type="button" (click)="setRowDiscountMode(item, 'amount')"
-                    [class.bg-blue-500]="getRowDiscountMode(item.id) === 'amount'"
-                    [class.text-white]="getRowDiscountMode(item.id) === 'amount'"
-                    class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer">$</button>
-                  <button type="button" (click)="setRowDiscountMode(item, 'percent')"
-                    [class.bg-blue-500]="getRowDiscountMode(item.id) === 'percent'"
-                    [class.text-white]="getRowDiscountMode(item.id) === 'percent'"
-                    class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer">%</button>
-                </div>
-                <input
-                  type="number" min="0" step="0.01"
-                  [ngModel]="getRowDiscountDisplay(item)"
-                  (ngModelChange)="onRowDiscountInput(item, $event)"
-                  class="w-20 rounded-md border border-slate-200 px-2 py-1 text-xs text-right outline-none focus:border-blue-500"
+          <div class="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
+            <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+              <svg
+                class="w-7 h-7 text-slate-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"
                 />
-              </div>
-
-              <!-- Tax: pick a configured tax -->
-              <label class="flex items-center gap-1.5">
-                Tax
-                <select
-                  [ngModel]="getRowTaxSelection(item.id)"
-                  (ngModelChange)="onRowTaxSelect(item, $event)"
-                  class="rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-blue-500"
-                >
-                  <option value="">No tax</option>
-                  @for (t of taxes(); track t.id) {
-                  <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
-                  }
-                </select>
-              </label>
+                <path d="m3.3 7 8.7 5 8.7-5" />
+                <path d="M12 22V12" />
+              </svg>
             </div>
+            <p class="font-semibold text-slate-700 mb-1">Cart is empty</p>
+            <p class="text-sm text-slate-400">Search by barcode or product name to start a sale.</p>
           </div>
-          }
-        </div>
+        } @else {
+          <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
+            @for (item of sale()!.items; track item.id) {
+              <div class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+                      <path d="m8.5 8.5 7 7" />
+                    </svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-slate-800 truncate">
+                      {{ item.medicineName }}
+                    </p>
+                    <p class="text-xs text-slate-400">
+                      {{ item.batchNumber }} · ${{ item.unitPrice }}
+                    </p>
+                  </div>
+
+                  <div class="relative shrink-0" (click)="stop($event)">
+                    <button
+                      (click)="toggleItemCustomerPicker(item.id)"
+                      class="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                    >
+                      {{ item.customerName || 'Customer' }}
+                    </button>
+
+                    @if (openItemCustomerPickerId() === item.id) {
+                      <div
+                        class="absolute z-30 right-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+                      >
+                        <div
+                          (click)="selectCartItemCustomer(item, null)"
+                          class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100"
+                        >
+                          Walk-in customer
+                        </div>
+                        @for (c of customers(); track c.id) {
+                          <div
+                            (click)="selectCartItemCustomer(item, c)"
+                            class="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                          >
+                            <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
+                            <p class="text-xs text-slate-400">{{ c.phone }}</p>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button
+                      (click)="decreaseQuantity(item)"
+                      class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </button>
+                    <span class="w-6 text-center text-sm font-medium">{{ item.quantity }}</span>
+                    <button
+                      (click)="increaseQuantity(item)"
+                      class="w-7 h-7 rounded-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <p class="w-16 text-right text-sm font-semibold text-slate-800 shrink-0">
+                    ${{ item.lineTotal }}
+                  </p>
+
+                  <button
+                    (click)="removeItem(item)"
+                    class="text-slate-300 hover:text-red-500 shrink-0 cursor-pointer"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- per-row discount / tax -->
+                <div class="mt-2 flex flex-wrap items-center gap-4 ps-14 text-xs text-slate-500">
+                  <!-- Discount: amount or percent -->
+                  <div class="flex items-center gap-1.5">
+                    <span>Discount</span>
+                    <div class="flex rounded-md border border-slate-200 overflow-hidden">
+                      <button
+                        type="button"
+                        (click)="setRowDiscountMode(item, 'amount')"
+                        [class.bg-blue-500]="getRowDiscountMode(item.id) === 'amount'"
+                        [class.text-white]="getRowDiscountMode(item.id) === 'amount'"
+                        class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer"
+                      >
+                        $
+                      </button>
+                      <button
+                        type="button"
+                        (click)="setRowDiscountMode(item, 'percent')"
+                        [class.bg-blue-500]="getRowDiscountMode(item.id) === 'percent'"
+                        [class.text-white]="getRowDiscountMode(item.id) === 'percent'"
+                        class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer"
+                      >
+                        %
+                      </button>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [ngModel]="getRowDiscountDisplay(item)"
+                      (ngModelChange)="onRowDiscountInput(item, $event)"
+                      class="w-20 rounded-md border border-slate-200 px-2 py-1 text-xs text-right outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <!-- Tax: pick a configured tax -->
+                  <label class="flex items-center gap-1.5">
+                    Tax
+                    <select
+                      [ngModel]="getRowTaxSelection(item.id)"
+                      (ngModelChange)="onRowTaxSelect(item, $event)"
+                      class="rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-blue-500"
+                    >
+                      <option value="">No tax</option>
+                      @for (t of taxes(); track t.id) {
+                        <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+                      }
+                    </select>
+                  </label>
+
+                  <!-- Relative selector -->
+                  <app-relative-drop-down
+                    [customerId]="selectedCustomer()?.id!"
+                    [parentRelatives]="relatives()"
+                    (relativeSelected)="onRelativeSelected($event)"
+                    (relativesLoaded)="onRelativesLoaded($event)"
+                  ></app-relative-drop-down>
+                  <!-- search icon -->
+                  <button
+                    type="button"
+                    (click)="openCustomerSearchModal($event)"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 cursor-pointer"
+                    aria-label="Search customers"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
         }
       </section>
 
@@ -296,11 +474,15 @@
           <div class="space-y-2.5 text-sm">
             <div class="flex justify-between">
               <span class="text-slate-500">Subtotal</span>
-              <span class="font-medium text-slate-800">${{ (sale()?.subTotal ?? 0).toFixed(2) }}</span>
+              <span class="font-medium text-slate-800"
+                >${{ (sale()?.subTotal ?? 0).toFixed(2) }}</span
+              >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Discount</span>
-              <span class="font-medium text-amber-500">- ${{ (sale()?.discount ?? 0).toFixed(2) }}</span>
+              <span class="font-medium text-amber-500"
+                >- ${{ (sale()?.discount ?? 0).toFixed(2) }}</span
+              >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Tax</span>
@@ -310,7 +492,9 @@
 
           <div class="mt-4 rounded-xl bg-blue-50 px-4 py-3.5">
             <p class="text-[11px] font-semibold tracking-wide text-blue-600">GRAND TOTAL</p>
-            <p class="text-2xl font-bold text-blue-700">${{ (sale()?.grandTotal ?? 0).toFixed(2) }}</p>
+            <p class="text-2xl font-bold text-blue-700">
+              ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+            </p>
           </div>
 
           <button
@@ -347,73 +531,120 @@
 
           <!-- Discount editor -->
           @if (showDiscountEditor()) {
-          <div class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg" (click)="stop($event)">
-            <div class="mb-2 flex items-center justify-between">
-              <p class="text-sm font-semibold">Sale discount</p>
-              <div class="flex rounded-md border border-input overflow-hidden">
-                <button type="button" (click)="setDiscountMode('amount')"
-                  [class.bg-primary]="discountMode() === 'amount'"
-                  [class.text-primary-foreground]="discountMode() === 'amount'"
-                  class="px-2 py-1 text-xs font-medium cursor-pointer">$</button>
-                <button type="button" (click)="setDiscountMode('percent')"
-                  [class.bg-primary]="discountMode() === 'percent'"
-                  [class.text-primary-foreground]="discountMode() === 'percent'"
-                  class="px-2 py-1 text-xs font-medium cursor-pointer">%</button>
+            <div
+              class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg"
+              (click)="stop($event)"
+            >
+              <div class="mb-2 flex items-center justify-between">
+                <p class="text-sm font-semibold">Sale discount</p>
+                <div class="flex rounded-md border border-input overflow-hidden">
+                  <button
+                    type="button"
+                    (click)="setDiscountMode('amount')"
+                    [class.bg-primary]="discountMode() === 'amount'"
+                    [class.text-primary-foreground]="discountMode() === 'amount'"
+                    class="px-2 py-1 text-xs font-medium cursor-pointer"
+                  >
+                    $
+                  </button>
+                  <button
+                    type="button"
+                    (click)="setDiscountMode('percent')"
+                    [class.bg-primary]="discountMode() === 'percent'"
+                    [class.text-primary-foreground]="discountMode() === 'percent'"
+                    class="px-2 py-1 text-xs font-medium cursor-pointer"
+                  >
+                    %
+                  </button>
+                </div>
+              </div>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                [ngModel]="discountInput()"
+                (ngModelChange)="discountInput.set($event || 0)"
+                class="w-full rounded-md border border-input px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <div class="mt-3 flex justify-end gap-2">
+                <button
+                  (click)="closeDiscountEditor()"
+                  class="rounded-md border border-input px-3 py-1.5 text-xs font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  [disabled]="savingDiscount()"
+                  (click)="saveDiscount()"
+                  class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50 cursor-pointer"
+                >
+                  {{ savingDiscount() ? 'Saving…' : 'Apply' }}
+                </button>
               </div>
             </div>
-            <input
-              type="number" min="0" step="0.01"
-              [ngModel]="discountInput()"
-              (ngModelChange)="discountInput.set($event || 0)"
-              class="w-full rounded-md border border-input px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-            <div class="mt-3 flex justify-end gap-2">
-              <button (click)="closeDiscountEditor()" class="rounded-md border border-input px-3 py-1.5 text-xs font-medium cursor-pointer">Cancel</button>
-              <button [disabled]="savingDiscount()" (click)="saveDiscount()" class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50 cursor-pointer">
-                {{ savingDiscount() ? 'Saving…' : 'Apply' }}
-              </button>
-            </div>
-          </div>
           }
 
           <!-- Tax editor -->
           @if (showTaxEditor()) {
-          <div class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg" (click)="stop($event)">
-            <p class="text-sm font-semibold mb-2">Sale tax</p>
-            @if (taxes().length === 0) {
-            <p class="text-xs text-muted-foreground">No active taxes configured for this pharmacy.</p>
-            } @else {
-            <select
-              [ngModel]="taxInput()"
-              (ngModelChange)="taxInput.set($event)"
-              class="w-full rounded-md border border-input px-3 py-2 text-sm outline-none focus:border-primary"
+            <div
+              class="absolute inset-x-5 top-24 z-20 rounded-xl border border-border bg-background p-4 shadow-lg"
+              (click)="stop($event)"
             >
-              @for (t of taxes(); track t.id) {
-              <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+              <p class="text-sm font-semibold mb-2">Sale tax</p>
+              @if (taxes().length === 0) {
+                <p class="text-xs text-muted-foreground">
+                  No active taxes configured for this pharmacy.
+                </p>
+              } @else {
+                <select
+                  [ngModel]="taxInput()"
+                  (ngModelChange)="taxInput.set($event)"
+                  class="w-full rounded-md border border-input px-3 py-2 text-sm outline-none focus:border-primary"
+                >
+                  @for (t of taxes(); track t.id) {
+                    <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+                  }
+                </select>
               }
-            </select>
-            }
-            <div class="mt-3 flex justify-end gap-2">
-              <button (click)="closeTaxEditor()" class="rounded-md border border-input px-3 py-1.5 text-xs font-medium cursor-pointer">Cancel</button>
-              <button [disabled]="savingTax() || taxes().length === 0" (click)="saveTax()" class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50 cursor-pointer">
-                {{ savingTax() ? 'Saving…' : 'Apply' }}
-              </button>
+              <div class="mt-3 flex justify-end gap-2">
+                <button
+                  (click)="closeTaxEditor()"
+                  class="rounded-md border border-input px-3 py-1.5 text-xs font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  [disabled]="savingTax() || taxes().length === 0"
+                  (click)="saveTax()"
+                  class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50 cursor-pointer"
+                >
+                  {{ savingTax() ? 'Saving…' : 'Apply' }}
+                </button>
+              </div>
             </div>
-          </div>
           }
         </div>
       </aside>
     </div>
 
     <!-- Right icon rail -->
-    <div class="hidden lg:flex w-20 shrink-0 flex-col items-center gap-1 py-6 border-l border-slate-200 bg-white">
+    <div
+      class="hidden lg:flex w-20 shrink-0 flex-col items-center gap-1 py-6 border-l border-slate-200 bg-white"
+    >
       <button
         (click)="stop($event); openDiscountEditor()"
         [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
-        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="w-4.5 h-4.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <line x1="19" y1="5" x2="5" y2="19" />
           <circle cx="6.5" cy="6.5" r="2.5" />
           <circle cx="17.5" cy="17.5" r="2.5" />
@@ -425,8 +656,15 @@
         [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
-        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="w-4.5 h-4.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <path d="M20.59 13.41 11 22H3v-8L12.59.41a2 2 0 0 1 2.82 0l5.18 5.18a2 2 0 0 1 0 2.82Z" />
         </svg>
         Tax
@@ -436,8 +674,15 @@
         [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-red-600 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
-        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="w-4.5 h-4.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <circle cx="12" cy="12" r="10" />
           <line x1="15" y1="9" x2="9" y2="15" />
           <line x1="9" y1="9" x2="15" y2="15" />
@@ -449,8 +694,15 @@
         [disabled]="!sale() || sale()!.items.length === 0"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
-        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          class="w-4.5 h-4.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <path d="M3 12a9 9 0 1 0 3-6.7" />
           <path d="M3 5v5h5" />
         </svg>
@@ -460,10 +712,14 @@
   </div>
 
   <!-- Mobile summary bar -->
-  <div class="lg:hidden shrink-0 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3">
+  <div
+    class="lg:hidden shrink-0 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3"
+  >
     <div class="flex-1">
       <p class="text-[11px] text-slate-400 leading-tight">Grand total</p>
-      <p class="text-lg font-bold text-blue-700 leading-tight">${{ (sale()?.grandTotal ?? 0).toFixed(2) }}</p>
+      <p class="text-lg font-bold text-blue-700 leading-tight">
+        ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+      </p>
     </div>
     <button
       [disabled]="!sale() || sale()!.items.length === 0"
@@ -476,11 +732,120 @@
 </div>
 
 @if (showPaymentModal() && sale()) {
-<app-payment-modal
-  [grandTotal]="sale()!.grandTotal"
-  [initialMethod]="paymentMethodChoice()"
-  [submitting]="payingInProgress()"
-  (closed)="closePaymentModal()"
-  (confirmed)="confirmPayment($event)"
-/>
+  <app-payment-modal
+    [grandTotal]="sale()!.grandTotal"
+    [initialMethod]="paymentMethodChoice()"
+    [submitting]="payingInProgress()"
+    (closed)="closePaymentModal()"
+    (confirmed)="confirmPayment($event)"
+  />
+}
+@if (showCustomerSearchModal()) {
+  <div
+    class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4"
+    (click)="closeCustomerSearchModal()"
+  >
+    <div class="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl" (click)="stop($event)">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900">Search customer</h3>
+          <p class="mt-1 text-sm text-slate-500">
+            Pick a saved customer as relative or add a new one.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="closeCustomerSearchModal()"
+          class="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+          aria-label="Close customer search"
+        >
+          <svg
+            class="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div
+        class="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+      >
+        <svg
+          class="w-4 h-4 text-slate-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          [ngModel]="customerSearchQuery()"
+          (ngModelChange)="onCustomerSearchInput($event)"
+          type="text"
+          placeholder="Search by name or phone…"
+          class="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+        />
+        <button
+          type="button"
+          (click)="openCreateCustomerModal($event)"
+          class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 cursor-pointer"
+          aria-label="Add new customer"
+        >
+          <svg
+            class="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mt-3 max-h-72 overflow-y-auto rounded-xl border border-slate-100">
+        @if (customerSearchLoading()) {
+          <div class="px-4 py-3 text-sm text-slate-400">Searching…</div>
+        } @else if (customerSearchResults().length === 0) {
+          <div class="px-4 py-3 text-sm text-slate-400">No customers found.</div>
+        } @else {
+          @for (customer of customerSearchResults(); track customer.id) {
+            <button
+              type="button"
+              (click)="selectCustomerFromModal(customer)"
+              class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50"
+            >
+              <div>
+                <p class="text-sm font-semibold text-slate-800">{{ customer.name }}</p>
+                <p class="text-xs text-slate-400">{{ customer.phone }}</p>
+              </div>
+              <span class="text-xs font-medium text-blue-600">Select</span>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}
+
+@if (showCreateCustomerModal()) {
+  <app-add-edit-customer-dialog
+    [customer]="null"
+    (closed)="closeCreateCustomerModal()"
+    (saved)="onCustomerCreated()"
+  />
 }

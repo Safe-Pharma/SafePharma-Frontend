@@ -10,13 +10,24 @@ import {
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, concatMap, debounceTime, distinctUntilChanged, from, map, of, switchMap } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  debounceTime,
+  distinctUntilChanged,
+  from,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
 import { PosService } from './Services/pos-service';
 import { PaymentModalComponent } from './Components/payment-modal/payment-modal';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
 import { TaxesService } from '../../Tax/Services/tax';
+import { AddEditCustomerDialogComponent } from '../../Customer/Components/add-edit-customer-dialog/add-edit-customer-dialog';
+import { CustomersApiService } from '../../Customer/Services/customers-api.service';
 import { Tax } from '../../Tax/Models/tax';
 import {
   Customer,
@@ -28,6 +39,7 @@ import {
   SaleItem,
   SaleStatus,
 } from './Model/pos.models';
+import { RelativeDropDown } from './Components/relative-drop-down/relative-drop-down';
 
 interface PosTab {
   tabId: string;
@@ -40,7 +52,13 @@ type DiscountMode = 'amount' | 'percent';
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [FormsModule, CommonModule, PaymentModalComponent],
+  imports: [
+    FormsModule,
+    CommonModule,
+    PaymentModalComponent,
+    RelativeDropDown,
+    AddEditCustomerDialogComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pos.html',
 })
@@ -49,6 +67,7 @@ export class Pos implements OnInit {
   private readonly taxesApi = inject(TaxesService);
   private readonly toast = inject(Toast);
   protected readonly auth = inject(AuthSessionService);
+  private readonly customerApi = inject(CustomersApiService);
 
   // ---- tabs ----
   protected readonly tabs = signal<PosTab[]>([]);
@@ -64,7 +83,10 @@ export class Pos implements OnInit {
   protected readonly searchOpen = signal(false);
   protected readonly searching = signal(false);
   protected readonly searchError = signal<string | null>(null);
-  private readonly query$ = toObservable(this.query).pipe(debounceTime(150), distinctUntilChanged());
+  private readonly query$ = toObservable(this.query).pipe(
+    debounceTime(150),
+    distinctUntilChanged(),
+  );
   private readonly results$ = this.query$.pipe(
     switchMap((q) => {
       const trimmed = q.trim();
@@ -102,6 +124,13 @@ export class Pos implements OnInit {
   // ---- customer picker (sale-level) ----
   protected readonly customers = signal<Customer[]>([]);
   protected readonly showCustomerDropdown = signal(false);
+  protected readonly showCustomerSearchModal = signal(false);
+  protected readonly showCreateCustomerModal = signal(false);
+  protected readonly customerSearchQuery = signal('');
+  protected readonly customerSearchResults = signal<Customer[]>([]);
+  protected readonly customerSearchLoading = signal(false);
+  protected readonly relatives = signal<Array<{ relativeId: string; relativeName: string }>>([]);
+  protected readonly excludedCustomerIds = signal<string[]>([]);
 
   // ---- per-line customer picker ----
   protected readonly openItemCustomerPickerId = signal<string | null>(null);
@@ -172,6 +201,7 @@ export class Pos implements OnInit {
 
   switchTab(tabId: string): void {
     this.activeTabId.set(tabId);
+    this.syncExcludedCustomerIds(this.selectedCustomer());
   }
 
   closeTab(tabId: string, event: Event): void {
@@ -221,19 +251,187 @@ export class Pos implements OnInit {
     this.tabs.update((list) =>
       list.map((t) => (t.tabId === id ? { ...t, selectedCustomer: customer } : t)),
     );
+    this.updateExcludedCustomerIds(customer);
+  }
+
+  private updateExcludedCustomerIds(customer: Customer | null): void {
+    this.syncExcludedCustomerIds(customer);
+  }
+
+  private syncExcludedCustomerIds(
+    customer: Customer | null,
+    relatives: Array<{ relativeId: string; relativeName?: string }> | null | undefined = [],
+  ): void {
+    const next = new Set<string>();
+
+    if (customer?.id) {
+      next.add(customer.id);
+    }
+
+    const relativeIds = (relatives ?? [])
+      .map((relative) => relative.relativeId)
+      .filter((id): id is string => Boolean(id));
+
+    relativeIds.forEach((id) => next.add(id));
+
+    this.excludedCustomerIds.set(Array.from(next));
+    this.refreshCustomerSearchResults(this.customers());
   }
 
   private loadCustomers(): void {
     this.service.getAllCustomers().subscribe({
-      next: (res) => this.customers.set(res ?? []),
+      next: (res) => {
+        const list = res ?? [];
+        this.customers.set(list);
+        this.refreshCustomerSearchResults(list);
+      },
       error: (err) => this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error'),
     });
+  }
+
+  private refreshCustomerSearchResults(source: Customer[]): void {
+    const term = this.customerSearchQuery().trim().toLowerCase();
+    const baseList = source.filter((customer) => Boolean(customer.id));
+    const filteredByQuery = term
+      ? baseList.filter((customer) => {
+          const name = customer.name?.toLowerCase() ?? '';
+          const phone = customer.phone?.toLowerCase() ?? '';
+          return name.includes(term) || phone.includes(term);
+        })
+      : baseList;
+
+    this.customerSearchResults.set(this.filterCustomerSearchResults(filteredByQuery));
+  }
+
+  private filterCustomerSearchResults(list: Customer[]): Customer[] {
+    const excluded = new Set(this.excludedCustomerIds());
+    return list.filter((customer) => !excluded.has(customer.id));
   }
 
   // ================= customer (sale-level) =================
 
   toggleCustomerDropdown(): void {
-    this.showCustomerDropdown.update((v) => !v);
+    const isOpen = this.showCustomerDropdown();
+    this.showCustomerDropdown.set(!isOpen);
+
+    if (!isOpen) {
+      this.openItemCustomerPickerId.set(null);
+      this.showCreateCustomerModal.set(false);
+    }
+  }
+
+  openCustomerSearchModal(event?: Event): void {
+    event?.stopPropagation();
+    this.customerSearchQuery.set('');
+    this.refreshCustomerSearchResults(this.customers());
+    this.customerSearchLoading.set(false);
+    this.showCustomerSearchModal.set(true);
+  }
+
+  closeCustomerSearchModal(): void {
+    this.showCustomerSearchModal.set(false);
+    this.customerSearchQuery.set('');
+    this.customerSearchLoading.set(false);
+  }
+
+  onCustomerSearchInput(value: string): void {
+    this.customerSearchQuery.set(value);
+    const term = value.trim();
+
+    if (!term) {
+      this.refreshCustomerSearchResults(this.customers());
+      this.customerSearchLoading.set(false);
+      return;
+    }
+
+    this.customerSearchLoading.set(true);
+    this.service.getAllCustomers(term).subscribe({
+      next: (res) => {
+        this.customerSearchResults.set(this.filterCustomerSearchResults(res ?? []));
+        this.customerSearchLoading.set(false);
+      },
+      error: (err) => {
+        this.customerSearchLoading.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not search customers.'), 'error');
+      },
+    });
+  }
+
+  openCreateCustomerModal(event?: Event): void {
+    event?.stopPropagation();
+    this.showCreateCustomerModal.set(true);
+    this.showCustomerSearchModal.set(false);
+  }
+
+  closeCreateCustomerModal(): void {
+    this.showCreateCustomerModal.set(false);
+  }
+
+  onCustomerCreated(): void {
+    this.showCreateCustomerModal.set(false);
+    this.showCustomerSearchModal.set(false);
+    this.loadCustomers();
+  }
+
+  onRelativesLoaded(payload: {
+    customerId: string;
+    relatives: Array<{ relativeId: string; relativeName?: string }> | null | undefined;
+  }): void {
+    if (payload.customerId && this.selectedCustomer()?.id !== payload.customerId) {
+      return;
+    }
+
+    this.relatives.set(
+      (payload.relatives ?? [])
+        .filter((relative) => Boolean(relative.relativeId))
+        .map((relative) => ({
+          relativeId: relative.relativeId,
+          relativeName: relative.relativeName ?? 'Customer',
+        })),
+    );
+    this.syncExcludedCustomerIds(this.selectedCustomer(), this.relatives());
+  }
+
+  selectCustomerFromModal(customer: Customer | null): void {
+    this.closeCustomerSearchModal();
+
+    if (!customer) {
+      return;
+    }
+
+    const currentCustomer = this.selectedCustomer();
+    const shouldAddRelative = Boolean(
+      currentCustomer?.id && customer.id && currentCustomer.id !== customer.id,
+    );
+
+    if (!shouldAddRelative) {
+      return;
+    }
+
+    this.customerApi
+      .addRelative({ customerId: currentCustomer!.id, relativeId: customer.id })
+      .subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.relatives.update((current) => {
+              if (current.some((relative) => relative.relativeId === customer.id)) {
+                return current;
+              }
+              return [
+                ...current,
+                { relativeId: customer.id, relativeName: customer.name ?? 'Customer' },
+              ];
+            });
+            this.syncExcludedCustomerIds(this.selectedCustomer(), this.relatives());
+            this.toast.show(`${customer.name ?? 'Customer'} added as a relative.`, 'success');
+          } else {
+            this.toast.show(res.message || 'Could not add relative.', 'error');
+          }
+        },
+        error: (err) => {
+          this.toast.show(getErrorMessage(err, 'Could not add relative.'), 'error');
+        },
+      });
   }
 
   selectCustomer(customer: Customer | null): void {
@@ -286,7 +484,8 @@ export class Pos implements OnInit {
             this.toast.show(res.message || 'Could not add item.', 'error');
           }
         },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
+        error: (err) =>
+          this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
       });
   }
 
@@ -395,8 +594,7 @@ export class Pos implements OnInit {
     const base = item.unitPrice * item.quantity;
     const mode = this.getRowDiscountMode(item.id);
     const value = Math.max(0, rawValue || 0);
-    const dollarValue =
-      mode === 'percent' ? Math.round(base * value) / 100 : value;
+    const dollarValue = mode === 'percent' ? Math.round(base * value) / 100 : value;
     this.updateItem(item, { discount: Math.min(dollarValue, base) });
   }
 
@@ -453,9 +651,7 @@ export class Pos implements OnInit {
 
     const raw = this.discountInput() || 0;
     const dollarAmount =
-      this.discountMode() === 'percent'
-        ? Math.round(currentSale.subTotal * raw) / 100
-        : raw;
+      this.discountMode() === 'percent' ? Math.round(currentSale.subTotal * raw) / 100 : raw;
 
     this.savingDiscount.set(true);
     this.service.applyDiscount(currentSale.id, { discountAmount: dollarAmount }).subscribe({
@@ -588,5 +784,9 @@ export class Pos implements OnInit {
         this.toast.show(getErrorMessage(err, 'Payment could not be completed.'), 'error');
       },
     });
+  }
+  onRelativeSelected(relative: any) {
+    console.log('Selected relative:', relative);
+    // اعمل اللي انت عايزه بالبيانات دي
   }
 }
