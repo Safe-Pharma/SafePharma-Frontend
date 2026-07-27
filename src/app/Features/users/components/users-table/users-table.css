@@ -1,3 +1,9 @@
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .users-table {
   width: 100%;
   border-collapse: collapse;
@@ -50,6 +56,7 @@
   }
 }
 
+/* ── Action menu ──────────────────────────────────────────── */
 .menu-wrap {
   position: relative;
   display: inline-block;
@@ -72,16 +79,25 @@
 .menu {
   position: absolute;
   right: 0;
-  top: calc(100% + 4px);
-  z-index: 10;
-  min-width: 150px;
+  z-index: 50;
+  min-width: 155px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   padding: 4px;
   display: flex;
   flex-direction: column;
+
+  /* Default: open downward */
+  top: calc(100% + 4px);
+  bottom: auto;
+
+  /* Flip: open upward when near bottom of viewport */
+  &.open-up {
+    top: auto;
+    bottom: calc(100% + 4px);
+  }
 
   button {
     text-align: left;
@@ -92,6 +108,7 @@
     font-size: 13px;
     color: #111827;
     cursor: pointer;
+    white-space: nowrap;
 
     &:hover { background: #f9fafb; }
     &.danger { color: #dc2626; }

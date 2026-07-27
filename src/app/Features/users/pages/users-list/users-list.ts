@@ -42,7 +42,7 @@ export class UsersListComponent {
   }
 
   onView(user: User): void {
-    this.router.navigate(['/users', user.id]);
+    this.router.navigate(['app/users', user.id]);
   }
 
   onEdit(user: User): void {

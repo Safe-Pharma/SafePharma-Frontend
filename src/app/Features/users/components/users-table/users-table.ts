@@ -15,20 +15,32 @@ import { StatusBadgeComponent } from '../status-badge/status-badge';
 })
 export class UsersTableComponent {
   users = input.required<User[]>();
-
+ 
   view         = output<User>();
   edit         = output<User>();
   delete       = output<User>();
   toggleStatus = output<User>();
-
-  /** id of the row whose action menu is currently open, or null */
-  openMenuId = signal<string | null>(null);
-
+ 
+  openMenuId  = signal<string | null>(null);
+  menuOpenUp  = signal(false);
+ 
   toggleMenu(id: string, event: MouseEvent): void {
     event.stopPropagation();
-    this.openMenuId.set(this.openMenuId() === id ? null : id);
+ 
+    if (this.openMenuId() === id) {
+      this.openMenuId.set(null);
+      return;
+    }
+ 
+    // Check if there's enough space below — if not, open upward
+    const trigger = event.currentTarget as HTMLElement;
+    const rect    = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    this.menuOpenUp.set(spaceBelow < 180); // 180px ≈ menu height
+ 
+    this.openMenuId.set(id);
   }
-
+ 
   closeMenu(): void {
     this.openMenuId.set(null);
   }
