@@ -1,5 +1,6 @@
 <div class="backdrop" (click)="close.emit()">
   <div class="panel" (click)="$event.stopPropagation()">
+
     <header class="panel-header">
       <div>
         <h2>{{ title() }}</h2>
@@ -7,15 +8,18 @@
           <p class="subtitle">{{ subtitle() }}</p>
         }
       </div>
-      <button class="close-btn" (click)="close.emit()" aria-label="Close dialog">✕</button>
+      <button class="close-btn" (click)="close.emit()" aria-label="Close">✕</button>
     </header>
 
+    <!-- scrollable body — only this part scrolls -->
     <div class="panel-body">
       <ng-content />
     </div>
 
+    <!-- footer always visible at the bottom, never scrolls away -->
     <footer class="panel-footer">
       <ng-content select="[modalFooter]" />
     </footer>
+
   </div>
 </div>

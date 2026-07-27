@@ -1,4 +1,21 @@
 <form [formGroup]="form" class="user-form">
+
+  <!-- ── Server / backend errors ─────────────────────────────── -->
+  @if (serverErrors().length > 0) {
+    <div class="server-errors">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="#dc2626" stroke-width="1.4"/>
+        <path d="M8 4.5v4M8 10.5v1" stroke="#dc2626" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <ul>
+        @for (err of serverErrors(); track err) {
+          <li>{{ err }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  <!-- ── First name / Last name ──────────────────────────────── -->
   <div class="row">
     <div class="field">
       <label for="firstName">First name</label>
@@ -8,6 +25,9 @@
         formControlName="firstName"
         [class.invalid]="form.controls.firstName.invalid && form.controls.firstName.touched"
       />
+      @if (fieldError('firstName'); as err) {
+        <span class="field-error">{{ err }}</span>
+      }
     </div>
     <div class="field">
       <label for="lastName">Last name</label>
@@ -17,9 +37,13 @@
         formControlName="lastName"
         [class.invalid]="form.controls.lastName.invalid && form.controls.lastName.touched"
       />
+      @if (fieldError('lastName'); as err) {
+        <span class="field-error">{{ err }}</span>
+      }
     </div>
   </div>
 
+  <!-- ── Email / Phone ───────────────────────────────────────── -->
   <div class="row">
     <div class="field">
       <label for="email">Email</label>
@@ -29,6 +53,9 @@
         formControlName="email"
         [class.invalid]="form.controls.email.invalid && form.controls.email.touched"
       />
+      @if (fieldError('email'); as err) {
+        <span class="field-error">{{ err }}</span>
+      }
     </div>
     <div class="field">
       <label for="phone">Phone</label>
@@ -38,9 +65,13 @@
         formControlName="phone"
         [class.invalid]="form.controls.phone.invalid && form.controls.phone.touched"
       />
+      @if (fieldError('phone'); as err) {
+        <span class="field-error">{{ err }}</span>
+      }
     </div>
   </div>
 
+  <!-- ── Password fields (create only) ──────────────────────── -->
   @if (mode() === 'create') {
     <div class="row">
       <div class="field">
@@ -51,6 +82,9 @@
           formControlName="password"
           [class.invalid]="form.controls.password.invalid && form.controls.password.touched"
         />
+        @if (fieldError('password'); as err) {
+          <span class="field-error">{{ err }}</span>
+        }
       </div>
       <div class="field">
         <label for="confirmPassword">Confirm password</label>
@@ -58,19 +92,27 @@
           id="confirmPassword"
           type="password"
           formControlName="confirmPassword"
-          [class.invalid]="form.errors?.['passwordsMismatch'] && form.controls.confirmPassword.touched"
+          [class.invalid]="(form.errors?.['passwordsMismatch'] || form.controls.confirmPassword.invalid) && form.controls.confirmPassword.touched"
         />
+        @if (form.errors?.['passwordsMismatch'] && form.controls.confirmPassword.touched) {
+          <span class="field-error">Passwords do not match.</span>
+        } @else if (fieldError('confirmPassword'); as err) {
+          <span class="field-error">{{ err }}</span>
+        }
       </div>
     </div>
-    @if (form.errors?.['passwordsMismatch'] && form.controls.confirmPassword.touched) {
-      <p class="error-text">Passwords do not match.</p>
-    }
   }
 
+  <!-- ── Role / Branch ───────────────────────────────────────── -->
   <div class="row">
     <div class="field">
       <label for="role">Role</label>
-      <select id="role" formControlName="role" [disabled]="rolesLoading()">
+      <select
+        id="role"
+        formControlName="role"
+        [class.invalid]="form.controls.role.invalid && form.controls.role.touched"
+        [attr.disabled]="rolesLoading() ? true : null"
+      >
         @if (rolesLoading()) {
           <option value="">Loading roles...</option>
         } @else {
@@ -79,6 +121,9 @@
           }
         }
       </select>
+      @if (fieldError('role'); as err) {
+        <span class="field-error">{{ err }}</span>
+      }
     </div>
     <div class="field">
       <label for="branch">Branch</label>
@@ -90,6 +135,7 @@
     </div>
   </div>
 
+  <!-- ── Status ──────────────────────────────────────────────── -->
   <div class="row single">
     <div class="field">
       <label for="status">Status</label>
@@ -100,4 +146,5 @@
       </select>
     </div>
   </div>
+
 </form>

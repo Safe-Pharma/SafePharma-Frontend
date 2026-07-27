@@ -49,7 +49,7 @@ export class UserDetailComponent {
   protected readonly isEditDialogOpen = signal(false);
  
   onBack(): void {
-    this.router.navigate(['/users']);
+    this.router.navigate(['app/users']);
   }
  
   onEdit(): void {

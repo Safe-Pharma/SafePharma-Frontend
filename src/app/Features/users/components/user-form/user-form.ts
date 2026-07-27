@@ -20,7 +20,9 @@ export class UserFormComponent implements OnInit {
   mode         = input<'create' | 'edit'>('create');
   initialValue = input<Partial<UserFormValue> | null>(null);
 
-  // Shared with filter bar — no extra HTTP call
+  /** Pass backend error strings here — displayed as a red list above the form fields. */
+  serverErrors = input<string[]>([]);
+
   readonly roles        = this.rolesState.roles;
   readonly rolesLoading = this.rolesState.loading;
   readonly branches     = ALL_BRANCHES;
@@ -47,7 +49,6 @@ export class UserFormComponent implements OnInit {
       if (value) this.form.patchValue(value);
     });
 
-    // Auto-select first role once roles load (only if not pre-filled)
     effect(() => {
       const roles = this.roles();
       if (roles.length > 0 && !this.form.controls.role.value) {
@@ -73,7 +74,19 @@ export class UserFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.rolesState.load(); // no-op if already fetched by filter bar
+    this.rolesState.load();
+  }
+
+  /** Returns field-level error message or null. */
+  fieldError(field: keyof typeof this.form.controls): string | null {
+    const control = this.form.controls[field];
+    if (!control.invalid || !control.touched) return null;
+
+    if (control.hasError('required'))  return 'This field is required.';
+    if (control.hasError('email'))     return 'Enter a valid email address.';
+    if (control.hasError('minlength')) return `Minimum ${control.getError('minlength').requiredLength} characters.`;
+
+    return 'Invalid value.';
   }
 
   getValue(): UserFormValue | null {

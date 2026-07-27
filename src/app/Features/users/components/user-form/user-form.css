@@ -4,6 +4,34 @@
   gap: 20px;
 }
 
+/* ── Server errors block ──────────────────────────────────── */
+.server-errors {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  svg { flex-shrink: 0; margin-top: 2px; }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  li {
+    font-size: 13px;
+    color: #dc2626;
+  }
+}
+
+/* ── Layout ───────────────────────────────────────────────── */
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -17,15 +45,17 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
+/* ── Labels ───────────────────────────────────────────────── */
 label {
   font-size: 13px;
   font-weight: 600;
   color: #111827;
 }
 
+/* ── Inputs & selects ─────────────────────────────────────── */
 input,
 select {
   height: 40px;
@@ -35,6 +65,7 @@ select {
   font-size: 14px;
   color: #111827;
   background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus {
     outline: none;
@@ -44,6 +75,7 @@ select {
 
   &.invalid {
     border-color: #f87171;
+    &:focus { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12); }
   }
 }
 
@@ -52,11 +84,13 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
+  padding-right: 32px;
   cursor: pointer;
 }
 
-.error-text {
-  margin: -12px 0 0;
+/* ── Field-level error message ────────────────────────────── */
+.field-error {
   font-size: 12px;
   color: #dc2626;
+  margin-top: -2px;
 }

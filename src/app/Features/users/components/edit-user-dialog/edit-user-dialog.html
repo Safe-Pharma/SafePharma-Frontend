@@ -3,11 +3,18 @@
   subtitle="Update {{ user().name }}'s role, branch, and contact details."
   (close)="onCancel()"
 >
-  <app-user-form mode="edit" [initialValue]="initialValue()" />
- 
+  <app-user-form
+    mode="edit"
+    [initialValue]="initialValue()"
+    [serverErrors]="serverErrors()"
+  />
+
   <div modalFooter class="footer-actions">
-    <button class="btn btn-secondary" (click)="onCancel()">Cancel</button>
-    <button class="btn btn-primary" (click)="onSubmit()">Save changes</button>
+    <button class="btn btn-secondary" (click)="onCancel()" [disabled]="isSubmitting()">
+      Cancel
+    </button>
+    <button class="btn btn-primary" (click)="onSubmit()" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Saving...' : 'Save changes' }}
+    </button>
   </div>
 </app-modal-shell>
- 

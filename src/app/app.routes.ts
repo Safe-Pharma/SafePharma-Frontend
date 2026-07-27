@@ -100,6 +100,12 @@ export const routes: Routes = [
           title: 'Users',
         },
       },
+      {
+      path: 'users/:id',
+      loadComponent: () =>
+        import('./Features/users/pages/user-details/user-details')
+          .then((m) => m.UserDetailComponent),
+      },
       { path: 'change-password', component: ChangePassword },
       {
         path: 'suppliers',
