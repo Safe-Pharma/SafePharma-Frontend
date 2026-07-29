@@ -9,13 +9,26 @@ import { getErrorMessage } from '../../../../../Shared/utils/get-error-message';
 import { CatalogItem, CustomerOrganFunction } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
 import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
-import { dialogOverlay, dialogPanel, fadeSlideIn, listItem, staggerList, successPulse } from '../../../Shared/portal-animations';
-import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
+import {
+  dialogOverlay,
+  dialogPanel,
+  fadeSlideIn,
+  listItem,
+  staggerList,
+  successPulse,
+} from '../../../Shared/portal-animations';
+import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
 
 @Component({
   selector: 'app-organ-functions-section',
   standalone: true,
-  imports: [DatePipe, FormsModule, PortalSkeleton, PortalEmptyStateComponent, PortalSectionHeaderComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PortalSkeleton,
+    PortalEmptyStateComponent,
+    PortalSectionHeaderComponent,
+  ],
   templateUrl: './organ-functions.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
@@ -47,7 +60,9 @@ export class OrganFunctionsSection implements OnChanges {
     forkJoin({
       organs: this.api.getOrganCatalog(),
       impairmentLevels: this.api.getOrganImpairmentLevelCatalog(),
-      organFunctions: this.api.getOrganFunctions(),
+      organFunctions: this.customerId
+        ? this.api.getDependentOrganFunctions(this.customerId)
+        : this.api.getOrganFunctions(),
     }).subscribe({
       next: ({ organs, impairmentLevels, organFunctions }) => {
         this.organs.set(organs);
@@ -95,25 +110,30 @@ export class OrganFunctionsSection implements OnChanges {
     if (this.saving() || !this.selectedOrganId() || !this.selectedLevelId()) return;
     this.saving.set(true);
 
-    this.api
-      .assignOrganFunction( {
-        organId: this.selectedOrganId(),
-        organImpairmentLevelId: this.selectedLevelId(),
-      })
-      .subscribe({
-        next: (updated) => {
-          this.organFunctions.update((list) => {
-            const withoutThis = list.filter((o) => o.organId !== updated.organId);
-            return [...withoutThis, updated];
-          });
-          this.saving.set(false);
-          this.editorOpen.set(false);
-          this.toast.show('Organ function updated.', 'success');
-        },
-        error: (err) => {
-          this.saving.set(false);
-          this.toast.show(getErrorMessage(err, 'Could not update organ function.'), 'error');
-        },
-      });
+    const request = this.customerId
+      ? this.api.assignDependentOrganFunction(this.customerId, {
+          organId: this.selectedOrganId(),
+          organImpairmentLevelId: this.selectedLevelId(),
+        })
+      : this.api.assignOrganFunction({
+          organId: this.selectedOrganId(),
+          organImpairmentLevelId: this.selectedLevelId(),
+        });
+
+    request.subscribe({
+      next: (updated) => {
+        this.organFunctions.update((list) => {
+          const withoutThis = list.filter((o) => o.organId !== updated.organId);
+          return [...withoutThis, updated];
+        });
+        this.saving.set(false);
+        this.editorOpen.set(false);
+        this.toast.show('Organ function updated.', 'success');
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not update organ function.'), 'error');
+      },
+    });
   }
 }

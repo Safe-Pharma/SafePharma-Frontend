@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { SafeHtmlPipe } from '../../../../Shared/Pipes/safe-html.pipe';
 import { PortalI18nService } from '../../Services/portal-i18n.service';
 
@@ -18,16 +18,36 @@ const ICONS = {
 })
 export class PortalSidebar {
   readonly i18n = inject(PortalI18nService);
+  readonly route = inject(ActivatedRoute);
+  readonly router = inject(Router);
   readonly icons = ICONS;
 
   @Input() mobileOpen = false;
   @Output() closeMobile = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
-  readonly navItems = [
-    { label: 'nav.dashboard', route: '/portal/dashboard', icon: ICONS.dashboard, exact: true },
-    { label: 'nav.profile', route: '/portal/profile', icon: ICONS.profile },
-    { label: 'nav.purchases', route: '/portal/purchases', icon: ICONS.purchases },
-    { label: 'nav.relatives', route: '/portal/relatives', icon: ICONS.relatives },
-  ];
+  get childId(): string | null {
+    return this.route.snapshot.queryParamMap.get('customerId');
+  }
+
+  get navItems() {
+    const childId = this.childId;
+    const queryParams = childId ? { customerId: childId } : undefined;
+
+    return [
+      { label: 'nav.dashboard', route: '/portal/dashboard', queryParams, icon: ICONS.dashboard, exact: true },
+      { label: 'nav.profile', route: '/portal/profile', queryParams, icon: ICONS.profile },
+      { label: 'nav.purchases', route: '/portal/purchases', queryParams, icon: ICONS.purchases },
+      { label: 'nav.relatives', route: '/portal/relatives', queryParams, icon: ICONS.relatives },
+    ];
+  }
+
+  handleBottomAction(): void {
+    if (this.childId) {
+      this.router.navigate(['/portal/profile']);
+      return;
+    }
+
+    this.logout.emit();
+  }
 }

@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -6,7 +15,14 @@ import { CustomersApiService } from '../../Services/customers-api.service';
 import { Customer, CustomerUpsertDto, CatalogItem } from '../../Models/customer.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { TagPickerComponent } from '../../../../Shared/Components/tag-picker/tag-picker';
-import { MedicinePickerComponent, MedicineSelection } from '../../../../Shared/Components/medicine-picker/medicine-picker';
+import {
+  MedicinePickerComponent,
+  MedicineSelection,
+} from '../../../../Shared/Components/medicine-picker/medicine-picker';
+import {
+  CustomerPickerComponent,
+  CustomerPickResult,
+} from '../../../../Shared/Components/customer-picker/customer-picker';
 import { fullNameValidator, phoneValidator } from '../../../subscribe/Validators/custom-validators';
 
 interface OrganFunctionEntry {
@@ -19,7 +35,12 @@ interface OrganFunctionEntry {
 @Component({
   selector: 'app-add-edit-customer-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, TagPickerComponent, MedicinePickerComponent],
+  imports: [
+    ReactiveFormsModule,
+    TagPickerComponent,
+    MedicinePickerComponent,
+    CustomerPickerComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-edit-customer-dialog.html',
 })
@@ -39,7 +60,7 @@ export class AddEditCustomerDialogComponent {
 
   readonly form = this.fb.group({
     name: this.fb.control('', [Validators.required, Validators.maxLength(255), fullNameValidator]),
-    phone: this.fb.control('', [Validators.required, Validators.maxLength(50), phoneValidator]),
+    phone: this.fb.control('', [Validators.maxLength(50), phoneValidator]),
     email: this.fb.control('', [Validators.email]),
     address: this.fb.control(''),
     dateOfBirth: this.fb.control(''),
@@ -76,10 +97,13 @@ export class AddEditCustomerDialogComponent {
   protected readonly chronicConditionCatalog = signal<CatalogItem[]>([]);
   protected readonly organCatalog = signal<CatalogItem[]>([]);
   protected readonly organImpairmentLevelCatalog = signal<CatalogItem[]>([]);
+  protected readonly selectedParent = signal<CustomerPickResult | null>(null);
 
   private loadCatalogs(): void {
     this.api.getAllergyCatalog().subscribe({ next: (list) => this.allergyCatalog.set(list) });
-    this.api.getChronicConditionCatalog().subscribe({ next: (list) => this.chronicConditionCatalog.set(list) });
+    this.api
+      .getChronicConditionCatalog()
+      .subscribe({ next: (list) => this.chronicConditionCatalog.set(list) });
     this.api.getOrganCatalog().subscribe({ next: (list) => this.organCatalog.set(list) });
     this.api
       .getOrganImpairmentLevelCatalog()
@@ -95,7 +119,7 @@ export class AddEditCustomerDialogComponent {
     isActive: this.fb.control(true),
   });
 
-onMedicineSelectionChange(selection: MedicineSelection | null): void {
+  onMedicineSelectionChange(selection: MedicineSelection | null): void {
     this.medicineSelection.set(selection);
     if (selection) {
       this.errorMsg.set(null);
@@ -137,13 +161,20 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     if (!raw.organId || !raw.organImpairmentLevelId) return;
 
     const organ = this.organCatalog().find((o) => o.id === raw.organId);
-    const level = this.organImpairmentLevelCatalog().find((l) => l.id === raw.organImpairmentLevelId);
+    const level = this.organImpairmentLevelCatalog().find(
+      (l) => l.id === raw.organImpairmentLevelId,
+    );
     if (!organ || !level) return;
 
     // Replace any existing entry for the same organ — same "one record per organ" rule as the backend.
     this.organFunctionEntries.update((entries) => [
       ...entries.filter((e) => e.organId !== organ.id),
-      { organId: organ.id, organName: organ.nameEn, organImpairmentLevelId: level.id, levelName: level.nameEn },
+      {
+        organId: organ.id,
+        organName: organ.nameEn,
+        organImpairmentLevelId: level.id,
+        levelName: level.nameEn,
+      },
     ]);
     this.organFunctionForm.reset({ organId: '', organImpairmentLevelId: '' });
   }
@@ -152,12 +183,22 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     this.organFunctionEntries.update((entries) => entries.filter((e) => e.organId !== organId));
   }
 
+  onParentSelectionChange(selection: CustomerPickResult | null): void {
+    this.selectedParent.set(selection);
+  }
+
   // --- Submit ---
 
   onSubmit(): void {
+    if (this.customer() === null && !this.form.get('phone')?.value) {
+      this.form.get('phone')?.markAsTouched();
+    }
+
     if (this.medicinePicker()?.hasIncompleteManualEntry()) {
       this.medicinePicker()?.markTouched();
-      this.errorMsg.set('Finish entering the medicine name and scientific name, or clear that field.');
+      this.errorMsg.set(
+        'Finish entering the medicine name and scientific name, or clear that field.',
+      );
       return;
     }
 
@@ -169,12 +210,13 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     const raw = this.form.getRawValue();
     const dto: CustomerUpsertDto = {
       name: raw.name,
-      phone: raw.phone,
+      phone: raw.phone || '',
       email: raw.email || null,
       address: raw.address || null,
       dateOfBirth: raw.dateOfBirth || null,
       notes: raw.notes || null,
       status: raw.status,
+      hasParent: Boolean(this.selectedParent()),
     };
 
     this.submitting.set(true);
@@ -216,7 +258,7 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
           .addMedicineHistory(customerId, {
             medicineId: selection.medicineId,
             tradeName: selection.medicineId ? null : selection.label,
-            scientificName: selection.medicineId ? null : selection.scientificName ?? null,
+            scientificName: selection.medicineId ? null : (selection.scientificName ?? null),
             quantity: medicine.quantity,
             isActive: medicine.isActive,
           })
@@ -225,12 +267,29 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     }
 
     for (const allergyId of this.selectedAllergyIds()) {
-      requests.push(this.api.assignAllergy(customerId, { allergyId }).pipe(catchError(() => of(null))));
+      requests.push(
+        this.api.assignAllergy(customerId, { allergyId }).pipe(catchError(() => of(null))),
+      );
     }
 
     for (const chronicConditionId of this.selectedChronicConditionIds()) {
       requests.push(
-        this.api.assignChronicCondition(customerId, { chronicConditionId }).pipe(catchError(() => of(null))),
+        this.api
+          .assignChronicCondition(customerId, { chronicConditionId })
+          .pipe(catchError(() => of(null))),
+      );
+    }
+
+    const selectedParent = this.selectedParent();
+    if (selectedParent) {
+      requests.push(
+        this.api
+          .addRelative({
+            customerId: selectedParent.customerId,
+            relativeId: customerId,
+            hasAccessToRelative: true,
+          })
+          .pipe(catchError(() => of(null))),
       );
     }
 

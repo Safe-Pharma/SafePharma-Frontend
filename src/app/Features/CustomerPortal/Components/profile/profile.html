@@ -31,19 +31,19 @@
   <div [@fadeSlideIn]="activeTab()">
     @switch (activeTab()) {
       @case ('personal') {
-        <app-personal-info-section [customerId]="customerId" />
+        <app-personal-info-section [customerId]="customerId()" />
       }
       @case ('medical') {
-        <app-medicine-history-section [customerId]="customerId" />
+        <app-medicine-history-section [customerId]="customerId()" />
       }
       @case ('allergies') {
-        <app-allergies-section [customerId]="customerId" />
+        <app-allergies-section [customerId]="customerId()" />
       }
       @case ('chronic') {
-        <app-chronic-conditions-section [customerId]="customerId" />
+        <app-chronic-conditions-section [customerId]="customerId()" />
       }
       @case ('organs') {
-        <app-organ-functions-section [customerId]="customerId" />
+        <app-organ-functions-section [customerId]="customerId()" />
       }
     }
   </div>

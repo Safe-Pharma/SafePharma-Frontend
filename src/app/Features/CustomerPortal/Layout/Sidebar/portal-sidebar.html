@@ -28,6 +28,7 @@
     @for (item of navItems; track item.route) {
       <a
         [routerLink]="item.route"
+        [queryParams]="item.queryParams"
         routerLinkActive
         #rla="routerLinkActive"
         [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
@@ -50,7 +51,7 @@
     <button
       type="button"
       class="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-destructive-soft hover:text-destructive"
-      (click)="logout.emit()"
+      (click)="handleBottomAction()"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0">
         <path d="m16 17 5-5-5-5"></path>

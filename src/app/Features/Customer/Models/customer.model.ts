@@ -33,6 +33,7 @@ export interface CustomerUpsertDto {
   dateOfBirth?: string | null;
   notes?: string | null;
   status: CustomerStatus;
+  hasParent: boolean;
 }
 
 // Matches RecordCustomerPaymentDto
@@ -135,6 +136,7 @@ export interface CustomerRelative {
 export interface CreateCustomerRelativeDto {
   customerId: string;
   relativeId: string;
+  hasAccessToRelative: boolean;
 }
 
 // Matches AssignOrganFunctionDto

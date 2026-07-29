@@ -35,7 +35,11 @@ export class MedicineHistorySection implements OnChanges {
 
   load(): void {
     this.loading.set(true);
-    this.api.getMedicineHistory().subscribe({
+    const request = this.customerId
+      ? this.api.getDependentMedicineHistory(this.customerId)
+      : this.api.getMedicineHistory();
+
+    request.subscribe({
       next: (history) => {
         this.history.set(
           [...history].sort((a, b) => (a.purchaseDate < b.purchaseDate ? 1 : -1)),
