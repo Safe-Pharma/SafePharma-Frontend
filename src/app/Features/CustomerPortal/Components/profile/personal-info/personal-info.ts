@@ -88,13 +88,16 @@ export class PersonalInfoSection implements OnChanges {
 
     this.saving.set(true);
     this.api
-      .updateProfile({
-        name: this.form.name.trim(),
-        email: this.form.email.trim() || null,
-        address: this.form.address.trim() || null,
-        dateOfBirth: this.form.dateOfBirth || null,
-        notes: this.form.notes.trim() || null,
-      })
+      .updateProfile(
+        {
+          name: this.form.name.trim(),
+          email: this.form.email.trim() || null,
+          address: this.form.address.trim() || null,
+          dateOfBirth: this.form.dateOfBirth || null,
+          notes: this.form.notes.trim() || null,
+        },
+        this.customerId || undefined,
+      )
       .subscribe({
         next: (updated) => {
           let phone = current.phone;

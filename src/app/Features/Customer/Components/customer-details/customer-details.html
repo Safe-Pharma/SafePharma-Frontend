@@ -1,300 +1,448 @@
 <div class="mx-auto w-full max-w-5xl p-6 md:p-8">
-  <a routerLink="/app/customers" class="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-      stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+  <a
+    routerLink="/app/customers"
+    class="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="h-4 w-4"
+    >
       <path d="m15 18-6-6 6-6" />
     </svg>
     Back to customers
   </a>
 
   @if (errorMsg(); as msg) {
-  <div class="mb-4 rounded-md bg-destructive-soft p-3 text-sm text-destructive">{{ msg }}</div>
+    <div class="mb-4 rounded-md bg-destructive-soft p-3 text-sm text-destructive">{{ msg }}</div>
   }
 
   @if (loading()) {
-  <div class="p-8 text-center text-sm text-muted-foreground">Loading…</div>
+    <div class="p-8 text-center text-sm text-muted-foreground">Loading…</div>
   } @else if (customer(); as c) {
-
-  <!-- Profile card -->
-  <div class="mb-6 rounded-xl border border-border bg-card p-6 shadow-card">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-2xl font-semibold tracking-tight text-foreground">{{ c.name }}</h1>
-          <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-            [ngClass]="c.status === 'Active' ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground'">
-            <span class="size-1.5 rounded-full bg-current"></span>{{ c.status }}
-          </span>
+    <!-- Profile card -->
+    <div class="mb-6 rounded-xl border border-border bg-card p-6 shadow-card">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-semibold tracking-tight text-foreground">{{ c.name }}</h1>
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+              [ngClass]="
+                c.status === 'Active'
+                  ? 'bg-success-soft text-success'
+                  : 'bg-muted text-muted-foreground'
+              "
+            >
+              <span class="size-1.5 rounded-full bg-current"></span>{{ c.status }}
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ c.phone }} · {{ c.email || 'no email' }}
+          </p>
+          @if (c.address) {
+            <p class="mt-1 text-sm text-muted-foreground">{{ c.address }}</p>
+          }
+          @if (c.notes) {
+            <p class="mt-2 text-sm text-muted-foreground italic">{{ c.notes }}</p>
+          }
         </div>
-        <p class="mt-1 text-sm text-muted-foreground">{{ c.phone }} · {{ c.email || 'no email' }}</p>
-        @if (c.address) {
-        <p class="mt-1 text-sm text-muted-foreground">{{ c.address }}</p>
-        }
-        @if (c.notes) {
-        <p class="mt-2 text-sm text-muted-foreground italic">{{ c.notes }}</p>
-        }
-      </div>
-      <button type="button" (click)="onOpenEditDialog()"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs">
-        Edit
-      </button>
-    </div>
-
-    <div class="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3">
-      <div>
-        <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Paid at your pharmacy</div>
-        <div class="mt-1 text-xl font-semibold tracking-tight">{{ c.totalPaid | currency }}</div>
-        <div class="mt-0.5 text-[11px] text-muted-foreground">From completed sales — not entered manually.</div>
-      </div>
-      @if (c.dateOfBirth) {
-      <div>
-        <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Date of birth</div>
-        <div class="mt-1 text-sm">{{ c.dateOfBirth | date }}</div>
-      </div>
-      }
-    </div>
-  </div>
-
-  <!-- Medicine history -->
-  <div class="rounded-xl border border-border bg-card shadow-card">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-      <div>
-        <h2 class="text-sm font-semibold">Medicine history</h2>
-        <p class="mt-0.5 text-xs text-muted-foreground">Shared across every pharmacy this customer has visited.</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="flex rounded-md border border-input p-0.5 text-xs">
-          <button type="button" (click)="onFilterChange('all')"
-            class="rounded px-2 py-1" [class.bg-accent]="historyFilter() === 'all'">All</button>
-          <button type="button" (click)="onFilterChange('active')"
-            class="rounded px-2 py-1" [class.bg-accent]="historyFilter() === 'active'">Currently taking</button>
-        </div>
-        <button type="button" (click)="onOpenAddHistoryForm()"
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs">
-          Add medicine
+        <button
+          type="button"
+          (click)="onOpenEditDialog()"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+        >
+          Edit
         </button>
       </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3">
+        <div>
+          <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Paid at your pharmacy
+          </div>
+          <div class="mt-1 text-xl font-semibold tracking-tight">{{ c.totalPaid | currency }}</div>
+          <div class="mt-0.5 text-[11px] text-muted-foreground">
+            From completed sales — not entered manually.
+          </div>
+        </div>
+        @if (c.dateOfBirth) {
+          <div>
+            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Date of birth
+            </div>
+            <div class="mt-1 text-sm">{{ c.dateOfBirth | date }}</div>
+          </div>
+        }
+      </div>
     </div>
 
-    @if (showAddHistoryForm()) {
-    <form [formGroup]="historyForm" (ngSubmit)="onAddHistory()" class="grid gap-3 border-b border-border p-4">
-      <div class="grid gap-1.5">
-        <label class="text-xs font-medium">Medicine</label>
-        <app-medicine-picker (selectionChange)="onMedicineSelectionChange($event)" />
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="grid gap-1.5">
-          <label class="text-xs font-medium" for="hist-qty">Quantity</label>
-          <input id="hist-qty" type="number" formControlName="quantity"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+    <!-- Medicine history -->
+    <div class="rounded-xl border border-border bg-card shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+        <div>
+          <h2 class="text-sm font-semibold">Medicine history</h2>
+          <p class="mt-0.5 text-xs text-muted-foreground">
+            Shared across every pharmacy this customer has visited.
+          </p>
         </div>
-        <label class="flex items-center gap-2 self-end pb-2 text-xs">
-          <input type="checkbox" formControlName="isActive" class="h-4 w-4 rounded-sm border border-primary" />
-          Currently taking this
+        <div class="flex items-center gap-2">
+          <div class="flex rounded-md border border-input p-0.5 text-xs">
+            <button
+              type="button"
+              (click)="onFilterChange('all')"
+              class="rounded px-2 py-1"
+              [class.bg-accent]="historyFilter() === 'all'"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              (click)="onFilterChange('active')"
+              class="rounded px-2 py-1"
+              [class.bg-accent]="historyFilter() === 'active'"
+            >
+              Currently taking
+            </button>
+          </div>
+          <button
+            type="button"
+            (click)="onOpenAddHistoryForm()"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs"
+          >
+            Add medicine
+          </button>
+        </div>
+      </div>
+
+      @if (showAddHistoryForm()) {
+        <form
+          [formGroup]="historyForm"
+          (ngSubmit)="onAddHistory()"
+          class="grid gap-3 border-b border-border p-4"
+        >
+          <div class="grid gap-1.5">
+            <label class="text-xs font-medium">Medicine</label>
+            <app-medicine-picker (selectionChange)="onMedicineSelectionChange($event)" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="grid gap-1.5">
+              <label class="text-xs font-medium" for="hist-qty">Quantity</label>
+              <input
+                id="hist-qty"
+                type="number"
+                formControlName="quantity"
+                class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <label class="flex items-center gap-2 self-end pb-2 text-xs">
+              <input
+                type="checkbox"
+                formControlName="isActive"
+                class="h-4 w-4 rounded-sm border border-primary"
+              />
+              Currently taking this
+            </label>
+          </div>
+          <div class="grid gap-1.5">
+            <label class="text-xs font-medium" for="hist-notes">Notes</label>
+            <input
+              id="hist-notes"
+              formControlName="notes"
+              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+          @if (historyErrorMsg(); as msg) {
+            <div class="rounded-md bg-destructive-soft p-2.5 text-xs text-destructive">
+              {{ msg }}
+            </div>
+          }
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              (click)="onCloseAddHistoryForm()"
+              class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="addingHistory()"
+              class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-8 rounded-md px-3 text-xs"
+            >
+              {{ addingHistory() ? 'Saving…' : 'Add' }}
+            </button>
+          </div>
+        </form>
+      }
+
+      @if (history().length === 0) {
+        <div class="p-8 text-center text-sm text-muted-foreground">No medicine history yet.</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground"
+              >
+                <th class="px-4 py-3 font-medium">Medicine</th>
+                <th class="px-4 py-3 font-medium">Source</th>
+                <th class="px-4 py-3 font-medium">Date</th>
+                <th class="px-4 py-3 font-medium">Qty</th>
+                <th class="px-4 py-3 font-medium">Currently taking</th>
+                <th class="px-4 py-3 text-right font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of history(); track entry.id) {
+                <tr class="border-b border-border last:border-0 hover:bg-muted/30">
+                  <td class="px-4 py-3 font-medium">{{ entry.medicineName }}</td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium"
+                      [ngClass]="
+                        entry.isGlobalMatch
+                          ? 'bg-primary-soft text-primary'
+                          : 'bg-muted text-muted-foreground'
+                      "
+                    >
+                      {{ entry.isGlobalMatch ? 'Catalog' : 'Free text' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-muted-foreground">{{ entry.purchaseDate | date }}</td>
+                  <td class="px-4 py-3">{{ entry.quantity }}</td>
+                  <td class="px-4 py-3">
+                    <button
+                      type="button"
+                      (click)="onToggleActive(entry)"
+                      class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer"
+                      [ngClass]="
+                        entry.isActive
+                          ? 'bg-success-soft text-success'
+                          : 'bg-muted text-muted-foreground'
+                      "
+                    >
+                      <span class="size-1.5 rounded-full bg-current"></span
+                      >{{ entry.isActive ? 'Active' : 'Stopped' }}
+                    </button>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    @if (isOwner()) {
+                      <button
+                        type="button"
+                        (click)="onDeleteHistory(entry)"
+                        class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2"
+                      >
+                        Delete
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Allergies -->
+    <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+      <div class="border-b border-border p-4">
+        <h2 class="text-sm font-semibold">Allergies</h2>
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          Shared across every pharmacy this customer has visited.
+        </p>
+      </div>
+      <div class="p-4">
+        <app-tag-picker
+          [items]="allergyItems()"
+          [selectedIds]="selectedAllergyIds()"
+          placeholder="Search allergies…"
+          emptyLabel="No matching allergies."
+          (selectionChange)="onAllergySelectionChange($event)"
+        />
+      </div>
+    </div>
+
+    <!-- Chronic conditions -->
+    <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+      <div class="border-b border-border p-4">
+        <h2 class="text-sm font-semibold">Chronic conditions</h2>
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          Shared across every pharmacy this customer has visited.
+        </p>
+      </div>
+      <div class="p-4">
+        <app-tag-picker
+          [items]="chronicConditionItems()"
+          [selectedIds]="selectedChronicConditionIds()"
+          placeholder="Search conditions…"
+          emptyLabel="No matching conditions."
+          (selectionChange)="onChronicConditionSelectionChange($event)"
+        />
+      </div>
+    </div>
+
+    <!-- Organ functions -->
+    <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+      <div class="border-b border-border p-4">
+        <h2 class="text-sm font-semibold">Organ function</h2>
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          One entry per organ — recording a new level for an organ already listed updates it.
+        </p>
+      </div>
+
+      <form
+        [formGroup]="organFunctionForm"
+        (ngSubmit)="onAssignOrganFunction()"
+        class="flex flex-wrap items-end gap-3 border-b border-border p-4"
+      >
+        <div class="grid min-w-40 gap-1.5">
+          <label class="text-xs font-medium" for="organ-select">Organ</label>
+          <select
+            id="organ-select"
+            formControlName="organId"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <option value="" disabled>Select an organ…</option>
+            @for (item of organCatalog(); track item.id) {
+              <option [value]="item.id">{{ item.nameEn }}</option>
+            }
+          </select>
+        </div>
+        <div class="grid min-w-40 gap-1.5">
+          <label class="text-xs font-medium" for="level-select">Impairment level</label>
+          <select
+            id="level-select"
+            formControlName="organImpairmentLevelId"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <option value="" disabled>Select a level…</option>
+            @for (item of organImpairmentLevelCatalog(); track item.id) {
+              <option [value]="item.id">{{ item.nameEn }}</option>
+            }
+          </select>
+        </div>
+        <button
+          type="submit"
+          [disabled]="
+            assigningOrganFunction() ||
+            !organFunctionForm.value.organId ||
+            !organFunctionForm.value.organImpairmentLevelId
+          "
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm"
+        >
+          {{ assigningOrganFunction() ? 'Saving…' : 'Save' }}
+        </button>
+      </form>
+
+      @if (organFunctions().length === 0) {
+        <div class="p-6 text-center text-sm text-muted-foreground">No organ function recorded.</div>
+      } @else {
+        <ul class="divide-y divide-border">
+          @for (entry of organFunctions(); track entry.id) {
+            <li class="flex items-center justify-between px-4 py-3 text-sm">
+              <span>
+                {{ entry.organNameEn }}
+                <span
+                  class="ms-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  {{ entry.impairmentLevelNameEn }}
+                </span>
+              </span>
+              <button
+                type="button"
+                (click)="onRemoveOrganFunction(entry)"
+                class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2"
+              >
+                Remove
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <!-- Relatives -->
+    <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
+      <div class="border-b border-border p-4">
+        <h2 class="text-sm font-semibold">Relatives</h2>
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          A relative is another customer on the platform. Not registered yet? Add them as a new
+          customer first.
+        </p>
+      </div>
+
+      <div class="flex flex-col border-b border-border p-5 gap-3">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-64 flex-1">
+            <app-customer-picker
+              [excludeIds]="relativeExcludeIds()"
+              (selectionChange)="onRelativeSelectionChange($event)"
+            />
+          </div>
+
+          <button
+            type="button"
+            (click)="onAddRelative()"
+            [disabled]="addingRelative()"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm"
+          >
+            {{ addingRelative() ? 'Adding…' : 'Add relative' }}
+          </button>
+        </div>
+        <label
+          class="inline-flex items-center gap-2.5 text-sm font-medium text-muted-foreground cursor-pointer select-none"
+        >
+          <input
+            type="checkbox"
+            [checked]="makeRelativeChild()"
+            (change)="makeRelativeChild.set($any($event.target).checked)"
+            class="w-4 h-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 cursor-pointer accent-blue-600"
+          />
+          <span class="leading-none">Make this relative a child</span>
         </label>
       </div>
-      <div class="grid gap-1.5">
-        <label class="text-xs font-medium" for="hist-notes">Notes</label>
-        <input id="hist-notes" formControlName="notes"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-      </div>
-      @if (historyErrorMsg(); as msg) {
-      <div class="rounded-md bg-destructive-soft p-2.5 text-xs text-destructive">{{ msg }}</div>
-      }
-      <div class="flex justify-end gap-2">
-        <button type="button" (click)="onCloseAddHistoryForm()"
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs">
-          Cancel
-        </button>
-        <button type="submit" [disabled]="addingHistory()"
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-8 rounded-md px-3 text-xs">
-          {{ addingHistory() ? 'Saving…' : 'Add' }}
-        </button>
-      </div>
-    </form>
-    }
-
-    @if (history().length === 0) {
-    <div class="p-8 text-center text-sm text-muted-foreground">No medicine history yet.</div>
-    } @else {
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
-            <th class="px-4 py-3 font-medium">Medicine</th>
-            <th class="px-4 py-3 font-medium">Source</th>
-            <th class="px-4 py-3 font-medium">Date</th>
-            <th class="px-4 py-3 font-medium">Qty</th>
-            <th class="px-4 py-3 font-medium">Currently taking</th>
-            <th class="px-4 py-3 text-right font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (entry of history(); track entry.id) {
-          <tr class="border-b border-border last:border-0 hover:bg-muted/30">
-            <td class="px-4 py-3 font-medium">{{ entry.medicineName }}</td>
-            <td class="px-4 py-3">
-              <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium"
-                [ngClass]="entry.isGlobalMatch ? 'bg-primary-soft text-primary' : 'bg-muted text-muted-foreground'">
-                {{ entry.isGlobalMatch ? 'Catalog' : 'Free text' }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-muted-foreground">{{ entry.purchaseDate | date }}</td>
-            <td class="px-4 py-3">{{ entry.quantity }}</td>
-            <td class="px-4 py-3">
-              <button type="button" (click)="onToggleActive(entry)"
-                class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer"
-                [ngClass]="entry.isActive ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground'">
-                <span class="size-1.5 rounded-full bg-current"></span>{{ entry.isActive ? 'Active' : 'Stopped' }}
-              </button>
-            </td>
-            <td class="px-4 py-3 text-right">
-              @if (isOwner()) {
-              <button type="button" (click)="onDeleteHistory(entry)"
-                class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2">
-                Delete
-              </button>
-              }
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    }
-  </div>
-
-  <!-- Allergies -->
-  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
-    <div class="border-b border-border p-4">
-      <h2 class="text-sm font-semibold">Allergies</h2>
-      <p class="mt-0.5 text-xs text-muted-foreground">Shared across every pharmacy this customer has visited.</p>
-    </div>
-    <div class="p-4">
-      <app-tag-picker [items]="allergyItems()" [selectedIds]="selectedAllergyIds()" placeholder="Search allergies…"
-        emptyLabel="No matching allergies." (selectionChange)="onAllergySelectionChange($event)" />
-    </div>
-  </div>
-
-  <!-- Chronic conditions -->
-  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
-    <div class="border-b border-border p-4">
-      <h2 class="text-sm font-semibold">Chronic conditions</h2>
-      <p class="mt-0.5 text-xs text-muted-foreground">Shared across every pharmacy this customer has visited.</p>
-    </div>
-    <div class="p-4">
-      <app-tag-picker [items]="chronicConditionItems()" [selectedIds]="selectedChronicConditionIds()"
-        placeholder="Search conditions…" emptyLabel="No matching conditions."
-        (selectionChange)="onChronicConditionSelectionChange($event)" />
-    </div>
-  </div>
-
-  <!-- Organ functions -->
-  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
-    <div class="border-b border-border p-4">
-      <h2 class="text-sm font-semibold">Organ function</h2>
-      <p class="mt-0.5 text-xs text-muted-foreground">
-        One entry per organ — recording a new level for an organ already listed updates it.
-      </p>
-    </div>
-
-    <form [formGroup]="organFunctionForm" (ngSubmit)="onAssignOrganFunction()" class="flex flex-wrap items-end gap-3 border-b border-border p-4">
-      <div class="grid min-w-40 gap-1.5">
-        <label class="text-xs font-medium" for="organ-select">Organ</label>
-        <select id="organ-select" formControlName="organId"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-          <option value="" disabled>Select an organ…</option>
-          @for (item of organCatalog(); track item.id) {
-          <option [value]="item.id">{{ item.nameEn }}</option>
-          }
-        </select>
-      </div>
-      <div class="grid min-w-40 gap-1.5">
-        <label class="text-xs font-medium" for="level-select">Impairment level</label>
-        <select id="level-select" formControlName="organImpairmentLevelId"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-          <option value="" disabled>Select a level…</option>
-          @for (item of organImpairmentLevelCatalog(); track item.id) {
-          <option [value]="item.id">{{ item.nameEn }}</option>
-          }
-        </select>
-      </div>
-      <button type="submit"
-        [disabled]="assigningOrganFunction() || !organFunctionForm.value.organId || !organFunctionForm.value.organImpairmentLevelId"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
-        {{ assigningOrganFunction() ? 'Saving…' : 'Save' }}
-      </button>
-    </form>
-
-    @if (organFunctions().length === 0) {
-    <div class="p-6 text-center text-sm text-muted-foreground">No organ function recorded.</div>
-    } @else {
-    <ul class="divide-y divide-border">
-      @for (entry of organFunctions(); track entry.id) {
-      <li class="flex items-center justify-between px-4 py-3 text-sm">
-        <span>
-          {{ entry.organNameEn }}
-          <span class="ms-2 inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-            {{ entry.impairmentLevelNameEn }}
-          </span>
-        </span>
-        <button type="button" (click)="onRemoveOrganFunction(entry)"
-          class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2">
-          Remove
-        </button>
-      </li>
-      }
-    </ul>
-    }
-  </div>
-
-  <!-- Relatives -->
-  <div class="mt-6 rounded-xl border border-border bg-card shadow-card">
-    <div class="border-b border-border p-4">
-      <h2 class="text-sm font-semibold">Relatives</h2>
-      <p class="mt-0.5 text-xs text-muted-foreground">
-        A relative is another customer on the platform. Not registered yet? Add them as a new customer first.
-      </p>
-    </div>
-
-    <div class="flex flex-wrap items-end gap-3 border-b border-border p-4">
-      <div class="min-w-64 flex-1">
-        <app-customer-picker [excludeIds]="relativeExcludeIds()" (selectionChange)="onRelativeSelectionChange($event)" />
-      </div>
-      <button type="button" (click)="onAddRelative()" [disabled]="addingRelative()"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
-        {{ addingRelative() ? 'Adding…' : 'Add relative' }}
-      </button>
-    </div>
-
-    @if (relativesErrorMsg(); as msg) {
-    <div class="border-b border-border p-3">
-      <div class="rounded-md bg-destructive-soft p-2.5 text-xs text-destructive">{{ msg }}</div>
-    </div>
-    }
-
-    @if (relatives().length === 0) {
-    <div class="p-6 text-center text-sm text-muted-foreground">No relatives linked yet.</div>
-    } @else {
-    <ul class="divide-y divide-border">
-      @for (entry of relatives(); track entry.id) {
-      <li class="flex items-center justify-between px-4 py-3 text-sm">
-        <div>
-          <span class="font-medium">{{ entry.relativeName }}</span>
-          <span class="ms-2 text-xs text-muted-foreground">{{ entry.relativePhone }}</span>
+      @if (relativesErrorMsg(); as msg) {
+        <div class="border-b border-border p-3">
+          <div class="rounded-md bg-destructive-soft p-2.5 text-xs text-destructive">{{ msg }}</div>
         </div>
-        <button type="button" (click)="onRemoveRelative(entry)"
-          class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2">
-          Remove
-        </button>
-      </li>
       }
-    </ul>
-    }
-  </div>
+
+      @if (relatives().length === 0) {
+        <div class="p-6 text-center text-sm text-muted-foreground">No relatives linked yet.</div>
+      } @else {
+        <ul class="divide-y divide-border">
+          @for (entry of relatives(); track entry.id) {
+            <li class="flex items-center justify-between px-4 py-3 text-sm">
+              <div>
+                <span class="font-medium">{{ entry.relativeName }}</span>
+                <span class="ms-2 text-xs text-muted-foreground">{{ entry.relativePhone }}</span>
+              </div>
+              <button
+                type="button"
+                (click)="onRemoveRelative(entry.id)"
+                class="inline-flex items-center justify-center rounded-md text-xs font-medium cursor-pointer text-destructive hover:bg-destructive-soft h-7 px-2"
+              >
+                Remove
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
   }
 </div>
 
 @if (showEditDialog()) {
-<app-add-edit-customer-dialog [customer]="customer()" (closed)="onCloseEditDialog()" (saved)="onCustomerSaved()" />
+  <app-add-edit-customer-dialog
+    [customer]="customer()"
+    (closed)="onCloseEditDialog()"
+    (saved)="onCustomerSaved()"
+  />
 }

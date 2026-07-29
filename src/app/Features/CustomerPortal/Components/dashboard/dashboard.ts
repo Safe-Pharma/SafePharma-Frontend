@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PortalApiService } from '../../Services/portal-api.service';
 import { PortalAuthService } from '../../Services/portal-auth.service';
@@ -36,6 +36,7 @@ export class PortalDashboard implements OnInit {
   private readonly api = inject(PortalApiService);
   private readonly portalAuth = inject(PortalAuthService);
   private readonly toast = inject(Toast);
+  private readonly route = inject(ActivatedRoute);
   readonly i18n = inject(PortalI18nService);
 
   readonly icons = ICONS;
@@ -61,17 +62,23 @@ export class PortalDashboard implements OnInit {
   }
 
   load(): void {
-    const customerId = this.portalAuth.session()?.customerId;
+    const sessionCustomerId = this.portalAuth.session()?.customerId;
+    const requestedCustomerId = this.route.snapshot.queryParamMap.get('customerId');
+    const customerId = requestedCustomerId || sessionCustomerId;
     if (!customerId) return;
 
     this.loading.set(true);
     this.error.set(false);
 
+    const isDependentView = !!requestedCustomerId && requestedCustomerId !== sessionCustomerId;
+
     forkJoin({
-      profile: this.api.getProfile(),
-      chronicConditions: this.api.getChronicConditions(),
-      allergies: this.api.getAllergies(),
-      receipts: this.api.getPurchaseHistory(),
+      profile: isDependentView ? this.api.getDependentProfile(customerId) : this.api.getProfile(),
+      chronicConditions: isDependentView
+        ? this.api.getDependentChronicConditions(customerId)
+        : this.api.getChronicConditions(),
+      allergies: isDependentView ? this.api.getDependentAllergies(customerId) : this.api.getAllergies(),
+      receipts: isDependentView ? this.api.getPurchaseHistory(customerId) : this.api.getPurchaseHistory(),
     }).subscribe({
       next: ({ profile, chronicConditions, allergies, receipts }) => {
         this.profile.set(profile);

@@ -124,9 +124,10 @@ export interface CustomerOrganFunction {
   recordedAt: string;
 }
 
-// Matches CustomerRelativeReadDto 
+// Matches CustomerRelativeReadDto
 export interface CustomerRelative {
   id: string;
+  
   relativeId: string;
   relativeName: string;
   relativePhone: string;
@@ -137,6 +138,7 @@ export interface CreateCustomerRelativeDto {
   customerId: string;
   relativeId: string;
   hasAccessToRelative: boolean;
+  isChild?: boolean;
 }
 
 // Matches AssignOrganFunctionDto

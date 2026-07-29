@@ -70,7 +70,7 @@
     </div>
 
     @if (childrenLoading()) {
-      <div class="grid gap-3 sm:grid-cols-2">
+      <div class="grid gap-3 sm:grid-cols-2 ">
         @for (i of [1, 2]; track i) {
           <portal-skeleton [height]="56" />
         }
@@ -84,7 +84,7 @@
         @for (child of children(); track child.relativeId) {
           <button
             type="button"
-            class="flex items-center justify-between rounded-lg border border-border bg-background/70 p-3 text-left transition-colors duration-150 hover:bg-muted/40"
+            class="flex items-center hover:cursor-pointer justify-between rounded-lg border border-border bg-background/70 p-3 text-left transition-colors duration-150 hover:bg-muted/40"
             @listItem
             (click)="openChildProfile(child.relativeId)"
           >

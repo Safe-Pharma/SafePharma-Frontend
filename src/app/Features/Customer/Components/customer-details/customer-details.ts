@@ -365,6 +365,7 @@ export class CustomerDetailsComponent {
   protected readonly relativesErrorMsg = signal<string | null>(null);
   protected readonly addingRelative = signal(false);
   protected readonly pendingRelative = signal<CustomerPickResult | null>(null);
+  protected readonly makeRelativeChild = signal(false);
 
   // The current customer, plus anyone already linked, shouldn't show up as pickable.
   protected readonly relativeExcludeIds = computed(() => [
@@ -399,6 +400,7 @@ export class CustomerDetailsComponent {
         customerId: this.id,
         relativeId: selection.customerId,
         hasAccessToRelative: true,
+        isChild: this.makeRelativeChild(),
       })
       .subscribe({
         next: (res) => {
@@ -408,6 +410,7 @@ export class CustomerDetailsComponent {
             return;
           }
           this.pendingRelative.set(null);
+          this.makeRelativeChild.set(false);
           this.loadRelatives();
           this.toast.show(`${selection.name} added as a relative.`, 'success');
         },
@@ -418,10 +421,10 @@ export class CustomerDetailsComponent {
       });
   }
 
-  onRemoveRelative(entry: CustomerRelative): void {
-    if (!confirm(`Remove ${entry.relativeName} as a relative?`)) return;
-
-    this.api.removeRelative(entry.id).subscribe({
+  onRemoveRelative(id: string): void {
+    if (!confirm(`Remove this relative?`)) return;
+    console.log(id);
+    this.api.removeRelative(id).subscribe({
       next: () => this.loadRelatives(),
       error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not remove relative.')),
     });
