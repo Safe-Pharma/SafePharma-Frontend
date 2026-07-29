@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { SafeHtmlPipe } from '../../../../Shared/Pipes/safe-html.pipe';
+import { PortalAuthService } from '../../Services/portal-auth.service';
 import { PortalI18nService } from '../../Services/portal-i18n.service';
 
 const ICONS = {
@@ -16,26 +17,44 @@ const ICONS = {
   imports: [RouterLink, RouterLinkActive, SafeHtmlPipe],
   templateUrl: './portal-sidebar.html',
 })
-export class PortalSidebar {
+export class PortalSidebar implements OnInit {
   readonly i18n = inject(PortalI18nService);
   readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
+  readonly portalAuth = inject(PortalAuthService);
   readonly icons = ICONS;
+  readonly isChildView = signal(false);
 
   @Input() mobileOpen = false;
   @Output() closeMobile = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
-  get childId(): string | null {
-    return this.route.snapshot.queryParamMap.get('customerId');
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const requestedCustomerId = params.get('customerId');
+      const parentCustomerId = this.portalAuth.session()?.customerId;
+      this.isChildView.set(
+        Boolean(
+          requestedCustomerId && parentCustomerId && requestedCustomerId !== parentCustomerId,
+        ),
+      );
+    });
   }
 
   get navItems() {
-    const childId = this.childId;
+    const childId = this.isChildView()
+      ? this.route.snapshot.queryParamMap.get('customerId')
+      : undefined;
     const queryParams = childId ? { customerId: childId } : undefined;
 
     return [
-      { label: 'nav.dashboard', route: '/portal/dashboard', queryParams, icon: ICONS.dashboard, exact: true },
+      {
+        label: 'nav.dashboard',
+        route: '/portal/dashboard',
+        queryParams,
+        icon: ICONS.dashboard,
+        exact: true,
+      },
       { label: 'nav.profile', route: '/portal/profile', queryParams, icon: ICONS.profile },
       { label: 'nav.purchases', route: '/portal/purchases', queryParams, icon: ICONS.purchases },
       { label: 'nav.relatives', route: '/portal/relatives', queryParams, icon: ICONS.relatives },
@@ -43,7 +62,7 @@ export class PortalSidebar {
   }
 
   handleBottomAction(): void {
-    if (this.childId) {
+    if (this.isChildView()) {
       this.router.navigate(['/portal/profile']);
       return;
     }

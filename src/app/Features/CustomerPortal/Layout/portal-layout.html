@@ -1,5 +1,5 @@
 @if (portalAuth.isAuthenticated()) {
-  <div class="flex h-screen overflow-hidden bg-background">
+  <div class="flex min-h-screen overflow-hidden bg-background">
     <portal-sidebar
       [mobileOpen]="mobileNavOpen()"
       (closeMobile)="mobileNavOpen.set(false)"

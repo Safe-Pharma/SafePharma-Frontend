@@ -49,8 +49,12 @@ export class PortalApiService {
       .pipe(map((response) => this.unwrapData<Customer>(response)));
   }
 
-  updateProfile(dto: PortalProfileUpdateDto): Observable<Customer> {
-    return this.http.put<Customer>(`${this.customerPortalUrl}/editMe`, dto);
+  updateProfile(dto: PortalProfileUpdateDto, childId?: string): Observable<Customer> {
+    const url = childId
+      ? `${this.customerPortalUrl}/eiteDependents/${childId}`
+      : `${this.customerPortalUrl}/editMe`;
+
+    return this.http.put<Customer>(url, dto);
   }
 
   // ============================================================

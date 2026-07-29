@@ -17,6 +17,7 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'nav.purchases': 'Purchase History',
     'nav.relatives': 'Relatives',
     'nav.logout': 'Logout',
+    'nav.backToParent': 'Back to parent',
 
     // Common
     'common.retry': 'Retry',
@@ -59,7 +60,8 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
 
     // Profile shell / tabs
     'profile.title': 'My Profile',
-    'profile.subtitle': 'Keep your medical information up to date so pharmacists can serve you safely.',
+    'profile.subtitle':
+      'Keep your medical information up to date so pharmacists can serve you safely.',
     'profile.tabs.personal': 'Personal Info',
     'profile.tabs.medical': 'Medicine History',
     'profile.tabs.allergies': 'Allergies',
@@ -116,7 +118,8 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'organs.title': 'Organ Functions',
     'organs.add': 'Update Organ Function',
     'organs.emptyTitle': 'No organ function data recorded',
-    'organs.emptyDesc': 'Add organ impairment levels if you have reduced kidney, liver, or heart function.',
+    'organs.emptyDesc':
+      'Add organ impairment levels if you have reduced kidney, liver, or heart function.',
     'organs.currentStatus': 'Current status',
     'organs.lastUpdated': 'Last updated {date}',
     'organs.addTitle': 'Add organ function',
@@ -169,9 +172,11 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'purchases.view': 'View',
     'purchases.showingSummary': 'Page {page} of {totalPages} · {total} receipts',
     'purchases.noResultsTitle': 'No receipts found',
-    'purchases.noResultsDesc': 'Try adjusting your filters, or check back after your next purchase.',
+    'purchases.noResultsDesc':
+      'Try adjusting your filters, or check back after your next purchase.',
     'purchases.neverPurchasedTitle': "You haven't made a purchase yet",
-    'purchases.neverPurchasedDesc': 'Once you buy from a participating pharmacy, your receipts will show up here.',
+    'purchases.neverPurchasedDesc':
+      'Once you buy from a participating pharmacy, your receipts will show up here.',
     'purchases.prev': 'Prev',
     'purchases.next': 'Next',
     'purchases.pageOf': 'Page {page} of {totalPages}',
@@ -210,6 +215,7 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'nav.purchases': 'سجل المشتريات',
     'nav.relatives': 'الأقارب',
     'nav.logout': 'تسجيل الخروج',
+    'nav.backToParent': 'العودة إلى الحساب الرئيسي',
 
     // Common
     'common.retry': 'إعادة المحاولة',
@@ -273,10 +279,14 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'personalInfo.saved': 'تم تحديث الملف الشخصي',
 
     // AI safety explanations
-    'ai.allergiesExplain': 'حافظ على تحديث قائمة حساسيتك ليتمكن الذكاء الاصطناعي من رصد الأدوية التي قد تسبب لك حساسية وتحسين سلامة الدواء.',
-    'ai.chronicExplain': 'أضف أمراضك المزمنة لمساعدة الذكاء الاصطناعي على فهم حالتك الصحية طويلة المدى وتقديم توصيات دوائية أكثر أماناً.',
-    'ai.organsExplain': 'حدّث وظائف الكلى والكبد وغيرها من الأعضاء ليتمكن الذكاء الاصطناعي من رصد الأدوية التي تحتاج لتعديل الجرعة أو يجب تجنبها.',
-    'ai.medicineHistoryExplain': 'راجع الأدوية التي اشتريتها من الصيدليات المشاركة. هذا يساعد الذكاء الاصطناعي على فهم تاريخك الدوائي.',
+    'ai.allergiesExplain':
+      'حافظ على تحديث قائمة حساسيتك ليتمكن الذكاء الاصطناعي من رصد الأدوية التي قد تسبب لك حساسية وتحسين سلامة الدواء.',
+    'ai.chronicExplain':
+      'أضف أمراضك المزمنة لمساعدة الذكاء الاصطناعي على فهم حالتك الصحية طويلة المدى وتقديم توصيات دوائية أكثر أماناً.',
+    'ai.organsExplain':
+      'حدّث وظائف الكلى والكبد وغيرها من الأعضاء ليتمكن الذكاء الاصطناعي من رصد الأدوية التي تحتاج لتعديل الجرعة أو يجب تجنبها.',
+    'ai.medicineHistoryExplain':
+      'راجع الأدوية التي اشتريتها من الصيدليات المشاركة. هذا يساعد الذكاء الاصطناعي على فهم تاريخك الدوائي.',
 
     // Allergies
     'allergies.title': 'الحساسيات',
@@ -329,7 +339,8 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'relatives.emptyTitle': 'لا يوجد أقارب مرتبطون بحسابك.',
     'relatives.emptyDesc': 'الأقارب الذين يضيفهم الصيدلي سيظهرون هنا.',
     'relatives.noticeTitle': 'تحتاج لإضافة أحد أفراد العائلة؟',
-    'relatives.noticeMessage': 'لا يمكن ربط أفراد العائلة إلا من قبل الصيدلية لضمان دقة السجلات الطبية. يرجى زيارة صيدلية مشاركة وطلب ربط قريبك بحسابك من الصيدلي.',
+    'relatives.noticeMessage':
+      'لا يمكن ربط أفراد العائلة إلا من قبل الصيدلية لضمان دقة السجلات الطبية. يرجى زيارة صيدلية مشاركة وطلب ربط قريبك بحسابك من الصيدلي.',
     'relatives.findPharmacy': 'البحث عن صيدلية مشاركة',
     'relatives.findPharmacyComingSoon': 'هذه الميزة غير متاحة بعد. يرجى التحقق مرة أخرى قريباً.',
 

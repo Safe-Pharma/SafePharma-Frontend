@@ -32,4 +32,26 @@ describe('PortalApiService', () => {
     expect(req.request.method).toBe('GET');
     req.flush(response);
   });
+
+  it('should send child profile updates to the child-specific endpoint', () => {
+    const childId = 'child-456';
+    const payload = {
+      name: 'Child Name',
+      email: 'child@example.com',
+      address: '123 Main St',
+      dateOfBirth: '2010-01-01',
+      notes: 'Updated',
+    };
+
+    service.updateProfile(payload, childId).subscribe((customer) => {
+      expect(customer.name).toBe('Child Name');
+    });
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}/CustomerPortal/dependents/${childId}`,
+    );
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ id: childId, name: 'Child Name' });
+  });
 });
