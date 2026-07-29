@@ -5,7 +5,9 @@
 -->
 <div class="mx-auto max-w-4xl space-y-5" @fadeSlideIn>
   <div>
-    <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('relatives.title') }}</h2>
+    <h2 class="text-xl font-semibold tracking-tight text-foreground">
+      {{ i18n.t('relatives.title') }}
+    </h2>
     <p class="text-sm text-muted-foreground">{{ i18n.t('relatives.subtitle') }}</p>
   </div>
 
@@ -17,9 +19,19 @@
     </div>
   } @else if (relatives().length === 0) {
     <div @fadeSlideIn>
-      <portal-empty-state [title]="i18n.t('relatives.emptyTitle')" [description]="i18n.t('relatives.emptyDesc')">
+      <portal-empty-state
+        [title]="i18n.t('relatives.emptyTitle')"
+        [description]="i18n.t('relatives.emptyDesc')"
+      >
         <span slot="icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
             <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
@@ -31,8 +43,13 @@
   } @else {
     <div class="grid gap-3 sm:grid-cols-2" [@staggerList]="relatives().length">
       @for (r of relatives(); track r.id) {
-        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:bg-muted/30" @listItem>
-          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+        <div
+          class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:bg-muted/30"
+          @listItem
+        >
+          <span
+            class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary"
+          >
             {{ initials(r.relativeName) }}
           </span>
           <div class="min-w-0">
@@ -44,10 +61,63 @@
     </div>
   }
 
+  <div class="rounded-xl border border-border bg-card p-4" @fadeSlideIn>
+    <div class="mb-3 flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-foreground">Children</h3>
+        <p class="text-xs text-muted-foreground">Open a child profile to view their details.</p>
+      </div>
+    </div>
+
+    @if (childrenLoading()) {
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (i of [1, 2]; track i) {
+          <portal-skeleton [height]="56" />
+        }
+      </div>
+    } @else if (children().length === 0) {
+      <div class="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+        No children linked to this customer yet.
+      </div>
+    } @else {
+      <div class="grid gap-3 sm:grid-cols-2" [@staggerList]="children().length">
+        @for (child of children(); track child.relativeId) {
+          <button
+            type="button"
+            class="flex items-center justify-between rounded-lg border border-border bg-background/70 p-3 text-left transition-colors duration-150 hover:bg-muted/40"
+            @listItem
+            (click)="openChildProfile(child.relativeId)"
+          >
+            <div class="min-w-0">
+              <div class="truncate text-sm font-semibold text-foreground">
+                {{ child.relativeName }}
+              </div>
+            </div>
+            <span class="text-xs font-medium text-primary">View</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
   <!-- Pharmacy-only linking notice — relatives can never be added from inside the portal. -->
-  <div class="flex flex-col items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft p-4 sm:flex-row sm:items-center" @fadeSlideIn>
-    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-card text-primary" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+  <div
+    class="flex flex-col items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft p-4 sm:flex-row sm:items-center"
+    @fadeSlideIn
+  >
+    <span
+      class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-card text-primary"
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5"
+      >
         <path d="M12 8v4l3 3"></path>
         <circle cx="12" cy="12" r="10"></circle>
       </svg>

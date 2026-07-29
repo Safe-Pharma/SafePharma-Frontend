@@ -1,12 +1,24 @@
 <div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
   <div
     class="relative grid w-full max-w-lg gap-4 rounded-lg border border-border bg-background p-6 shadow-lg max-h-[92vh] overflow-y-auto"
-    (click)="$event.stopPropagation()">
-    <button type="button"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
       class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
-      (click)="onClose()" aria-label="Close">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+      (click)="onClose()"
+      aria-label="Close"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
+      >
         <path d="M18 6 6 18"></path>
         <path d="m6 6 12 12"></path>
       </svg>
@@ -24,55 +36,88 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="grid gap-4">
       <div class="grid gap-2">
         <label class="text-sm font-medium" for="c-name">Name</label>
-        <input id="c-name" formControlName="name"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        <input
+          id="c-name"
+          formControlName="name"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
         @if (form.get('name')?.invalid && form.get('name')?.touched) {
-        <p class="text-xs text-destructive">
-          @if (form.get('name')?.hasError('required')) { Name is required. }
-          @else if (form.get('name')?.hasError('maxlength')) { Name is too long. }
-          @else if (form.get('name')?.hasError('invalidName')) { Enter a valid name (letters only). }
-        </p>
+          <p class="text-xs text-destructive">
+            @if (form.get('name')?.hasError('required')) {
+              Name is required.
+            } @else if (form.get('name')?.hasError('maxlength')) {
+              Name is too long.
+            } @else if (form.get('name')?.hasError('invalidName')) {
+              Enter a valid name (letters only).
+            }
+          </p>
         }
       </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="grid gap-2">
-          <label class="text-sm font-medium" for="c-phone">Phone</label>
-          <input id="c-phone" formControlName="phone"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-          @if (form.get('phone')?.invalid && form.get('phone')?.touched) {
-          <p class="text-xs text-destructive">
-            @if (form.get('phone')?.hasError('required')) { Phone is required. }
-            @else if (form.get('phone')?.hasError('invalidPhone')) { Use international format, e.g. +201001234567. }
-          </p>
-          }
-        </div>
-        <div class="grid gap-2">
-          <label class="text-sm font-medium" for="c-email">Email</label>
-          <input id="c-email" type="email" formControlName="email"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
-          @if (form.get('email')?.invalid && form.get('email')?.touched) {
+ <div class="grid gap-2">
+        <label class="text-sm font-medium" for="c-email">Email</label>
+        <input
+          id="c-email"
+          type="email"
+          formControlName="email"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
           <p class="text-xs text-destructive">Enter a valid email address.</p>
-          }
-        </div>
+        }
       </div>
-
+      <div class="grid gap-2">
+        <label class="text-sm font-medium" for="c-phone">Phone</label>
+        <input
+          id="c-phone"
+          formControlName="phone"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+        <p class="text-xs text-muted-foreground">
+          Required when doesn't choose Parent customer.
+        </p>
+        @if (form.get('phone')?.invalid && form.get('phone')?.touched) {
+          <p class="text-xs text-destructive">
+            @if (form.get('phone')?.hasError('invalidPhone')) {
+              Use international format, e.g. +201001234567.
+            }
+          </p>
+        }
+      </div>
+     
+      <div class="grid gap-2">
+        <label class="text-sm font-medium">Parent customer</label>
+        <p class="text-xs text-muted-foreground">
+          Choose an existing customer to link as this customer's parent. Access to the parent will
+          be enabled automatically.
+        </p>
+        <app-customer-picker (selectionChange)="onParentSelectionChange($event)" />
+      </div>
       <div class="grid gap-2">
         <label class="text-sm font-medium" for="c-address">Address</label>
-        <input id="c-address" formControlName="address"
-          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+        <input
+          id="c-address"
+          formControlName="address"
+          class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div class="grid gap-2">
           <label class="text-sm font-medium" for="c-dob">Date of birth</label>
-          <input id="c-dob" type="date" formControlName="dateOfBirth"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+          <input
+            id="c-dob"
+            type="date"
+            formControlName="dateOfBirth"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
         </div>
         <div class="grid gap-2">
           <label class="text-sm font-medium" for="c-status">Status</label>
-          <select id="c-status" formControlName="status"
-            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <select
+            id="c-status"
+            formControlName="status"
+            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
@@ -81,102 +126,144 @@
 
       <div class="grid gap-2">
         <label class="text-sm font-medium" for="c-notes">Notes</label>
-        <textarea id="c-notes" formControlName="notes" rows="2"
-          class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"></textarea>
+        <textarea
+          id="c-notes"
+          formControlName="notes"
+          rows="2"
+          class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        ></textarea>
       </div>
 
       @if (errorMsg(); as msg) {
-      <div class="text-sm text-destructive">{{ msg }}</div>
+        <div class="text-sm text-destructive">{{ msg }}</div>
       }
 
       @if (!isEdit()) {
-      <div class="grid gap-4 border-t border-border pt-4">
-        <p class="text-xs text-muted-foreground">
-          Optional — added right after the customer is created (separate requests).
-        </p>
+        <div class="grid gap-4 border-t border-border pt-4">
+          <p class="text-xs text-muted-foreground">
+            Optional — added right after the customer is created (separate requests).
+          </p>
 
-        <!-- Medicine (search global catalog, or add manually) -->
-        <div [formGroup]="medicineForm" class="grid gap-2">
-          <label class="text-sm font-medium">Medicine</label>
-          <app-medicine-picker (selectionChange)="onMedicineSelectionChange($event)" />
-          <div class="flex items-center gap-3">
-            <label class="text-xs font-medium" for="c-medicine-qty">Qty</label>
-            <input id="c-medicine-qty" type="number" formControlName="quantity" min="1"
-              class="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+          <!-- Medicine (search global catalog, or add manually) -->
+          <div [formGroup]="medicineForm" class="grid gap-2">
+            <label class="text-sm font-medium">Medicine</label>
+            <app-medicine-picker (selectionChange)="onMedicineSelectionChange($event)" />
+            <div class="flex items-center gap-3">
+              <label class="text-xs font-medium" for="c-medicine-qty">Qty</label>
+              <input
+                id="c-medicine-qty"
+                type="number"
+                formControlName="quantity"
+                min="1"
+                class="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <label class="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                formControlName="isActive"
+                class="h-4 w-4 rounded-sm border border-primary"
+              />
+              Currently taking this
+            </label>
           </div>
-          <label class="flex items-center gap-2 text-xs">
-            <input type="checkbox" formControlName="isActive" class="h-4 w-4 rounded-sm border border-primary" />
-            Currently taking this
-          </label>
-        </div>
 
-        <!-- Allergies -->
-        @if (allergyCatalog().length > 0) {
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Allergies</label>
-          <app-tag-picker [items]="allergyItems()" [selectedIds]="selectedAllergyIds()" placeholder="Search allergies…"
-            emptyLabel="No matching allergies." (selectionChange)="onAllergySelectionChange($event)" />
-        </div>
-        }
+          <!-- Allergies -->
+          @if (allergyCatalog().length > 0) {
+            <div class="grid gap-2">
+              <label class="text-sm font-medium">Allergies</label>
+              <app-tag-picker
+                [items]="allergyItems()"
+                [selectedIds]="selectedAllergyIds()"
+                placeholder="Search allergies…"
+                emptyLabel="No matching allergies."
+                (selectionChange)="onAllergySelectionChange($event)"
+              />
+            </div>
+          }
 
-        <!-- Chronic conditions -->
-        @if (chronicConditionCatalog().length > 0) {
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Chronic conditions</label>
-          <app-tag-picker [items]="chronicConditionItems()" [selectedIds]="selectedChronicConditionIds()"
-            placeholder="Search conditions…" emptyLabel="No matching conditions."
-            (selectionChange)="onChronicConditionSelectionChange($event)" />
-        </div>
-        }
+          <!-- Chronic conditions -->
+          @if (chronicConditionCatalog().length > 0) {
+            <div class="grid gap-2">
+              <label class="text-sm font-medium">Chronic conditions</label>
+              <app-tag-picker
+                [items]="chronicConditionItems()"
+                [selectedIds]="selectedChronicConditionIds()"
+                placeholder="Search conditions…"
+                emptyLabel="No matching conditions."
+                (selectionChange)="onChronicConditionSelectionChange($event)"
+              />
+            </div>
+          }
 
-        <!-- Organ function -->
-        @if (organCatalog().length > 0) {
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Organ function</label>
-          <div [formGroup]="organFunctionForm" class="flex flex-wrap items-end gap-2">
-            <select formControlName="organId"
-              class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-              <option value="" disabled>Organ…</option>
-              @for (item of organCatalog(); track item.id) {
-              <option [value]="item.id">{{ item.nameEn }}</option>
+          <!-- Organ function -->
+          @if (organCatalog().length > 0) {
+            <div class="grid gap-2">
+              <label class="text-sm font-medium">Organ function</label>
+              <div [formGroup]="organFunctionForm" class="flex flex-wrap items-end gap-2">
+                <select
+                  formControlName="organId"
+                  class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="" disabled>Organ…</option>
+                  @for (item of organCatalog(); track item.id) {
+                    <option [value]="item.id">{{ item.nameEn }}</option>
+                  }
+                </select>
+                <select
+                  formControlName="organImpairmentLevelId"
+                  class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="" disabled>Level…</option>
+                  @for (item of organImpairmentLevelCatalog(); track item.id) {
+                    <option [value]="item.id">{{ item.nameEn }}</option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  (click)="onAddOrganFunctionEntry()"
+                  class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3 text-xs"
+                >
+                  Add
+                </button>
+              </div>
+              @if (organFunctionEntries().length > 0) {
+                <div class="flex flex-wrap gap-2">
+                  @for (entry of organFunctionEntries(); track entry.organId) {
+                    <span
+                      class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-1 text-xs"
+                    >
+                      {{ entry.organName }}: {{ entry.levelName }}
+                      <button
+                        type="button"
+                        (click)="onRemoveOrganFunctionEntry(entry.organId)"
+                        class="cursor-pointer text-muted-foreground hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  }
+                </div>
               }
-            </select>
-            <select formControlName="organImpairmentLevelId"
-              class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-              <option value="" disabled>Level…</option>
-              @for (item of organImpairmentLevelCatalog(); track item.id) {
-              <option [value]="item.id">{{ item.nameEn }}</option>
-              }
-            </select>
-            <button type="button" (click)="onAddOrganFunctionEntry()"
-              class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3 text-xs">
-              Add
-            </button>
-          </div>
-          @if (organFunctionEntries().length > 0) {
-          <div class="flex flex-wrap gap-2">
-            @for (entry of organFunctionEntries(); track entry.organId) {
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-1 text-xs">
-              {{ entry.organName }}: {{ entry.levelName }}
-              <button type="button" (click)="onRemoveOrganFunctionEntry(entry.organId)"
-                class="cursor-pointer text-muted-foreground hover:text-destructive">×</button>
-            </span>
-            }
-          </div>
+            </div>
           }
         </div>
-        }
-      </div>
       }
 
       <div class="flex justify-end gap-2 pt-2">
-        <button type="button" (click)="onClose()"
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-4 text-sm">
+        <button
+          type="button"
+          (click)="onClose()"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-4 text-sm"
+        >
           Cancel
         </button>
-        <button type="submit" [disabled]="submitting()"
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
-          {{ submitting() ? 'Saving…' : (isEdit() ? 'Save changes' : 'Create customer') }}
+        <button
+          type="submit"
+          [disabled]="submitting()"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm"
+        >
+          {{ submitting() ? 'Saving…' : isEdit() ? 'Save changes' : 'Create customer' }}
         </button>
       </div>
     </form>

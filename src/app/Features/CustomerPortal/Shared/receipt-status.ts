@@ -1,26 +1,45 @@
 import { BadgeTone } from './status-badge';
 
-// The Sales feature elsewhere in the app owns the canonical status enum; until that's
-// exported/shared, this mirrors the numeric codes the portal spec's sales payload uses.
-// Adjust the mapping here if the backend's enum values differ.
-const LABELS: Record<number, string> = {
-  0: 'Pending',
-  1: 'Completed',
-  2: 'Refunded',
-  3: 'Cancelled',
+const LABELS: Record<string, string> = {
+  completed: 'Completed',
+  open: 'Open',
+  cancelled: 'Cancelled',
+  '0': 'Pending',
+  '1': 'Completed',
+  '2': 'Open',
+  '3': 'Cancelled',
 };
 
-const TONES: Record<number, BadgeTone> = {
-  0: 'warning',
-  1: 'success',
-  2: 'destructive',
-  3: 'muted',
+const TONES: Record<string, BadgeTone> = {
+  open: 'warning',
+  completed: 'success',
+  cancelled: 'destructive',
+  //open: 'muted',
+  '0': 'warning',
+  '1': 'success',
+  '2': 'destructive',
+  '3': 'muted',
 };
 
-export function receiptStatusLabel(status: number): string {
-  return LABELS[status] ?? 'Unknown';
+function normalizeReceiptStatus(status: string | number | null | undefined): string {
+  if (status === null || status === undefined) {
+    return '';
+  }
+
+  const value = String(status).trim();
+  if (!value) {
+    return '';
+  }
+
+  return value.toLowerCase();
 }
 
-export function receiptStatusTone(status: number): BadgeTone {
-  return TONES[status] ?? 'muted';
+export function receiptStatusLabel(status: string | number | null | undefined): string {
+  const normalized = normalizeReceiptStatus(status);
+  return LABELS[normalized] ?? 'Unknown';
+}
+
+export function receiptStatusTone(status: string | number | null | undefined): BadgeTone {
+  const normalized = normalizeReceiptStatus(status);
+  return TONES[normalized] ?? 'muted';
 }

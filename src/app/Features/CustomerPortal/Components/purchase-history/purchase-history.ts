@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortalApiService } from '../../Services/portal-api.service';
 import { PortalAuthService } from '../../Services/portal-auth.service';
 import { PortalI18nService } from '../../Services/portal-i18n.service';
@@ -28,8 +28,11 @@ const PAGE_SIZE = 10;
 export class PurchaseHistoryPage implements OnInit {
   private readonly api = inject(PortalApiService);
   private readonly portalAuth = inject(PortalAuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(Toast);
   readonly i18n = inject(PortalI18nService);
+
+  @Input() customerId = '';
 
   readonly loading = signal(true);
   readonly receipts = signal<PortalReceiptListItem[]>([]);
@@ -50,11 +53,10 @@ export class PurchaseHistoryPage implements OnInit {
   }
 
   load(): void {
-    const customerId = this.portalAuth.session()?.customerId;
-    if (!customerId) return;
+    const customerId = this.customerId || this.route.snapshot.queryParamMap.get('customerId') || this.portalAuth.session()?.customerId;
 
     this.loading.set(true);
-    this.api.getPurchaseHistory().subscribe({
+    this.api.getPurchaseHistory(customerId || undefined).subscribe({
       next: (receipts) => {
         this.receipts.set([...receipts].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
         this.loading.set(false);

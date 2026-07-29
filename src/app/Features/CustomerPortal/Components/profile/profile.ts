@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PortalAuthService } from '../../Services/portal-auth.service';
 import { PortalI18nService } from '../../Services/portal-i18n.service';
@@ -23,17 +23,17 @@ type ProfileTab = 'personal' | 'medical' | 'allergies' | 'chronic' | 'organs';
     ChronicConditionsSection,
     OrganFunctionsSection,
     PortalSkeleton,
-    PortalEmptyStateComponent
+    PortalEmptyStateComponent,
   ],
   templateUrl: './profile.html',
-  animations: [fadeSlideIn , staggerList, listItem, dialogOverlay, dialogPanel, successPulse], 
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
-export class PortalProfile {
+export class PortalProfile implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly portalAuth = inject(PortalAuthService);
   protected readonly i18n = inject(PortalI18nService);
 
-  readonly customerId = this.portalAuth.session()?.customerId ?? '';
+  readonly customerId = signal('');
 
   // labelKey values must match the actual keys in portal-i18n.service.ts,
   // which are nested under 'profile.tabs.*' — not 'profile.*'.
@@ -48,6 +48,22 @@ export class PortalProfile {
   readonly activeTab = signal<ProfileTab>(
     (this.route.snapshot.queryParamMap.get('tab') as ProfileTab) ?? 'personal',
   );
+
+  ngOnInit(): void {
+    this.syncCustomerId(this.route.snapshot.queryParamMap.get('customerId'));
+
+    this.route.queryParamMap.subscribe((params) => {
+      this.syncCustomerId(params.get('customerId'));
+      const tab = params.get('tab') as ProfileTab | null;
+      if (tab) {
+        this.activeTab.set(tab);
+      }
+    });
+  }
+
+  private syncCustomerId(customerId: string | null): void {
+    this.customerId.set(customerId ?? this.portalAuth.session()?.customerId ?? '');
+  }
 
   setTab(tab: ProfileTab): void {
     this.activeTab.set(tab);

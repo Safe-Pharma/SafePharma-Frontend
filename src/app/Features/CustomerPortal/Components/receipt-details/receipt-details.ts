@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { PortalApiService } from '../../Services/portal-api.service';
@@ -10,16 +10,30 @@ import { PortalSkeleton } from '../../Shared/skeleton';
 import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
 import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
-import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../Shared/portal-animations';
-import {PortalSectionHeaderComponent  } from '../../Shared/portal-section-header.component';
+import {
+  fadeSlideIn,
+  staggerList,
+  listItem,
+  dialogOverlay,
+  dialogPanel,
+  successPulse,
+} from '../../Shared/portal-animations';
+import { PortalSectionHeaderComponent } from '../../Shared/portal-section-header.component';
 import { PortalI18nService } from '../../Services/portal-i18n.service';
 
 @Component({
   selector: 'app-receipt-details',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    PortalSkeleton,
+    PortalEmptyStateComponent,
+    PortalStatusBadge,
+    PortalSectionHeaderComponent,
+  ],
   templateUrl: './receipt-details.html',
-    animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
+  animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
 export class ReceiptDetailsPage implements OnInit {
   private readonly api = inject(PortalApiService);
@@ -27,7 +41,9 @@ export class ReceiptDetailsPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(Toast);
   readonly location = inject(Location);
-    readonly i18n = inject(PortalI18nService);
+  readonly i18n = inject(PortalI18nService);
+
+  @Input() customerId = '';
 
   readonly loading = signal(true);
   readonly notFound = signal(false);
@@ -37,21 +53,21 @@ export class ReceiptDetailsPage implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    const customerId = this.portalAuth.session()?.customerId;
+    const customerId =
+      this.customerId ||
+      this.route.snapshot.queryParamMap.get('customerId') ||
+      this.portalAuth.session()?.customerId;
     if (!id || !customerId) {
       this.notFound.set(true);
       this.loading.set(false);
       return;
     }
 
-    // The portal spec doesn't define a dedicated GET /sales/{id}, so the detail is looked
-    // up from the same aggregated list the Purchase History page fetches.
     this.loading.set(true);
-    this.api.getPurchaseHistory().subscribe({
-      next: (receipts) => {
-        const found = receipts.find((r) => r.id === id) ?? null;
-        this.receipt.set(found);
-        this.notFound.set(!found);
+    this.api.getPurchaseDetails(id, customerId || undefined).subscribe({
+      next: (receipt) => {
+        this.receipt.set(receipt ?? null);
+        this.notFound.set(!receipt);
         this.loading.set(false);
       },
       error: (err) => {

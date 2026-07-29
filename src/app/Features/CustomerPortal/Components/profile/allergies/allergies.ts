@@ -9,7 +9,14 @@ import { PortalSkeleton } from '../../../Shared/skeleton';
 import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
 import { PortalConfirmDialog } from '../../../Shared/confirm-dialog';
 import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
-import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
+import {
+  fadeSlideIn,
+  staggerList,
+  listItem,
+  dialogOverlay,
+  dialogPanel,
+  successPulse,
+} from '../../../Shared/portal-animations';
 
 @Component({
   selector: 'app-allergies-section',
@@ -45,7 +52,9 @@ export class AllergiesSection implements OnChanges {
     this.loading.set(true);
     forkJoin({
       catalog: this.api.getAllergyCatalog(),
-      assigned: this.api.getAllergies(),
+      assigned: this.customerId
+        ? this.api.getDependentAllergies(this.customerId)
+        : this.api.getAllergies(),
     }).subscribe({
       next: ({ catalog, assigned }) => {
         this.catalog.set(catalog);
@@ -67,7 +76,11 @@ export class AllergiesSection implements OnChanges {
   add(item: CatalogItem): void {
     if (this.saving()) return;
     this.saving.set(true);
-    this.api.assignAllergy({ allergyId: item.id }).subscribe({
+    const request = this.customerId
+      ? this.api.assignDependentAllergy(this.customerId, { allergyId: item.id })
+      : this.api.assignAllergy({ allergyId: item.id });
+
+    request.subscribe({
       next: () => {
         this.assigned.update((list) => [
           ...list,
@@ -95,7 +108,11 @@ export class AllergiesSection implements OnChanges {
   removeConfirmed(): void {
     const id = this.pendingRemoveId();
     if (!id) return;
-    this.api.removeAllergy(id).subscribe({
+    const request = this.customerId
+      ? this.api.removeDependentAllergy(this.customerId, id)
+      : this.api.removeAllergy(id);
+
+    request.subscribe({
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.allergyId !== id));
         this.pendingRemoveId.set(null);

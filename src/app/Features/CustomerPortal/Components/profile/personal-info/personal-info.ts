@@ -7,8 +7,15 @@ import { Customer } from '../../../../Customer/Models/customer.model';
 import { PortalSkeleton } from '../../../Shared/skeleton';
 import { PortalAuthService } from '../../../Services/portal-auth.service';
 import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
-import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
-import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
+import {
+  fadeSlideIn,
+  staggerList,
+  listItem,
+  dialogOverlay,
+  dialogPanel,
+  successPulse,
+} from '../../../Shared/portal-animations';
+import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
 import { PortalI18nService } from '../../../Services/portal-i18n.service';
 
 interface EditableFields {
@@ -22,7 +29,7 @@ interface EditableFields {
 @Component({
   selector: 'app-personal-info-section',
   standalone: true,
-  imports: [FormsModule, PortalSkeleton , PortalEmptyStateComponent, PortalSectionHeaderComponent],
+  imports: [FormsModule, PortalSkeleton, PortalEmptyStateComponent, PortalSectionHeaderComponent],
   templateUrl: './personal-info.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
@@ -46,9 +53,14 @@ export class PersonalInfoSection implements OnChanges {
 
   load(): void {
     this.loading.set(true);
-    this.api.getProfile().subscribe({
+
+    const profileRequest = this.customerId
+      ? this.api.getDependentProfile(this.customerId)
+      : this.api.getProfile(undefined);
+
+    profileRequest.subscribe({
       next: (profile) => {
-        this.profile?.set(profile);
+        this.profile.set(profile);
         this.form = {
           name: profile?.name ?? '',
           email: profile.email ?? '',
@@ -58,7 +70,6 @@ export class PersonalInfoSection implements OnChanges {
         };
         this.dirty.set(false);
         this.loading.set(false);
-        console.log('Loaded profile:', profile);
       },
       error: (err) => {
         this.loading.set(false);
@@ -83,11 +94,13 @@ export class PersonalInfoSection implements OnChanges {
         address: this.form.address.trim() || null,
         dateOfBirth: this.form.dateOfBirth || null,
         notes: this.form.notes.trim() || null,
-        
       })
       .subscribe({
         next: (updated) => {
+          let phone = current.phone;
+          updated.phone = phone;
           this.profile.set(updated);
+
           this.saving.set(false);
           this.dirty.set(false);
           this.toast.show('Profile updated.', 'success');

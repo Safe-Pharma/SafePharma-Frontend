@@ -1,8 +1,6 @@
 // Matches the customer-scoped sales/receipts endpoints from the portal spec.
-// Status is a numeric code on the wire (e.g. Sales/invoice status enum shared with the
-// pharmacist-facing Sales feature) — mapped to a label/badge in the UI layer.
-
-export type PortalReceiptStatusCode = number;
+// Status may come back as either a readable name or a numeric/string code from the backend,
+// and is normalized in the UI layer before rendering labels/badges.
 
 export interface PortalSaleItem {
   medicineName: string;
@@ -20,7 +18,7 @@ export interface PortalReceiptListItem {
   createdAt: string;
   pharmacyName?: string | null;
   grandTotal: number;
-  status: PortalReceiptStatusCode;
+  status: string | number;
   items: PortalSaleItem[];
 }
 

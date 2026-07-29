@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,9 +23,15 @@ import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { AddEditCustomerDialogComponent } from '../add-edit-customer-dialog/add-edit-customer-dialog';
 import { TagPickerComponent } from '../../../../Shared/Components/tag-picker/tag-picker';
-import { MedicinePickerComponent, MedicineSelection } from '../../../../Shared/Components/medicine-picker/medicine-picker';
+import {
+  MedicinePickerComponent,
+  MedicineSelection,
+} from '../../../../Shared/Components/medicine-picker/medicine-picker';
 import { Toast } from '../../../../Shared/Toasts/toast';
-import { CustomerPickerComponent, CustomerPickResult } from '../../../../Shared/Components/customer-picker/customer-picker';
+import {
+  CustomerPickerComponent,
+  CustomerPickResult,
+} from '../../../../Shared/Components/customer-picker/customer-picker';
 
 @Component({
   selector: 'app-customer-details',
@@ -139,7 +152,7 @@ export class CustomerDetailsComponent {
     this.historyForm.reset({ quantity: 1, isActive: true });
   }
 
-onMedicineSelectionChange(selection: MedicineSelection | null): void {
+  onMedicineSelectionChange(selection: MedicineSelection | null): void {
     this.medicineSelection.set(selection);
     if (selection) {
       this.historyErrorMsg.set(null);
@@ -156,7 +169,9 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     }
 
     if (!selection || !selection.label.trim()) {
-      this.historyErrorMsg.set('Select a medicine from the catalog, or enter it manually with both a name and scientific name.');
+      this.historyErrorMsg.set(
+        'Select a medicine from the catalog, or enter it manually with both a name and scientific name.',
+      );
       return;
     }
 
@@ -171,7 +186,7 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
       .addMedicineHistory(this.id, {
         medicineId: selection.medicineId,
         tradeName: selection.medicineId ? null : selection.label,
-        scientificName: selection.medicineId ? null : selection.scientificName ?? null,
+        scientificName: selection.medicineId ? null : (selection.scientificName ?? null),
         quantity: raw.quantity,
         isActive: raw.isActive,
         notes: raw.notes || null,
@@ -219,7 +234,9 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
 
   private loadCatalogs(): void {
     this.api.getAllergyCatalog().subscribe({ next: (list) => this.allergyCatalog.set(list) });
-    this.api.getChronicConditionCatalog().subscribe({ next: (list) => this.chronicConditionCatalog.set(list) });
+    this.api
+      .getChronicConditionCatalog()
+      .subscribe({ next: (list) => this.chronicConditionCatalog.set(list) });
     this.api.getOrganCatalog().subscribe({ next: (list) => this.organCatalog.set(list) });
     this.api
       .getOrganImpairmentLevelCatalog()
@@ -284,12 +301,14 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     if (added) {
       this.api.assignChronicCondition(this.id, { chronicConditionId: added }).subscribe({
         next: () => this.loadChronicConditions(),
-        error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not assign chronic condition.')),
+        error: (err) =>
+          this.errorMsg.set(getErrorMessage(err, 'Could not assign chronic condition.')),
       });
     } else if (removed) {
       this.api.removeChronicCondition(this.id, removed).subscribe({
         next: () => this.loadChronicConditions(),
-        error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not remove chronic condition.')),
+        error: (err) =>
+          this.errorMsg.set(getErrorMessage(err, 'Could not remove chronic condition.')),
       });
     }
   }
@@ -375,22 +394,28 @@ onMedicineSelectionChange(selection: MedicineSelection | null): void {
     }
 
     this.addingRelative.set(true);
-    this.api.addRelative({ customerId: this.id, relativeId: selection.customerId }).subscribe({
-      next: (res) => {
-        this.addingRelative.set(false);
-        if (!res.success) {
-          this.relativesErrorMsg.set(res.message || 'Could not add relative.');
-          return;
-        }
-        this.pendingRelative.set(null);
-        this.loadRelatives();
-        this.toast.show(`${selection.name} added as a relative.`, 'success');
-      },
-      error: (err) => {
-        this.addingRelative.set(false);
-        this.relativesErrorMsg.set(getErrorMessage(err, 'Could not add relative.'));
-      },
-    });
+    this.api
+      .addRelative({
+        customerId: this.id,
+        relativeId: selection.customerId,
+        hasAccessToRelative: true,
+      })
+      .subscribe({
+        next: (res) => {
+          this.addingRelative.set(false);
+          if (!res.success) {
+            this.relativesErrorMsg.set(res.message || 'Could not add relative.');
+            return;
+          }
+          this.pendingRelative.set(null);
+          this.loadRelatives();
+          this.toast.show(`${selection.name} added as a relative.`, 'success');
+        },
+        error: (err) => {
+          this.addingRelative.set(false);
+          this.relativesErrorMsg.set(getErrorMessage(err, 'Could not add relative.'));
+        },
+      });
   }
 
   onRemoveRelative(entry: CustomerRelative): void {

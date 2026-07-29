@@ -409,7 +409,11 @@ export class Pos implements OnInit {
     }
 
     this.customerApi
-      .addRelative({ customerId: currentCustomer!.id, relativeId: customer.id })
+      .addRelative({
+        customerId: currentCustomer!.id,
+        relativeId: customer.id,
+        hasAccessToRelative: true,
+      })
       .subscribe({
         next: (res) => {
           if (res.success) {

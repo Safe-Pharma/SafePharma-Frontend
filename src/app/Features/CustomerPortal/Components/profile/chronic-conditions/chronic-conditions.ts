@@ -8,13 +8,25 @@ import { CatalogItem, CustomerChronicCondition } from '../../../../Customer/Mode
 import { PortalSkeleton } from '../../../Shared/skeleton';
 import { PortalEmptyStateComponent } from '../../../Shared/empty-state';
 import { PortalConfirmDialog } from '../../../Shared/confirm-dialog';
-import {PortalSectionHeaderComponent  } from '../../../Shared/portal-section-header.component';
-import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../../Shared/portal-animations';
+import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
+import {
+  fadeSlideIn,
+  staggerList,
+  listItem,
+  dialogOverlay,
+  dialogPanel,
+  successPulse,
+} from '../../../Shared/portal-animations';
 
 @Component({
   selector: 'app-chronic-conditions-section',
   standalone: true,
-  imports: [PortalSkeleton, PortalEmptyStateComponent, PortalConfirmDialog, PortalSectionHeaderComponent],
+  imports: [
+    PortalSkeleton,
+    PortalEmptyStateComponent,
+    PortalConfirmDialog,
+    PortalSectionHeaderComponent,
+  ],
   templateUrl: './chronic-conditions.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
@@ -40,7 +52,9 @@ export class ChronicConditionsSection implements OnChanges {
     this.loading.set(true);
     forkJoin({
       catalog: this.api.getChronicConditionCatalog(),
-      assigned: this.api.getChronicConditions(),
+      assigned: this.customerId
+        ? this.api.getDependentChronicConditions(this.customerId)
+        : this.api.getChronicConditions(),
     }).subscribe({
       next: ({ catalog, assigned }) => {
         this.catalog.set(catalog);
@@ -62,7 +76,11 @@ export class ChronicConditionsSection implements OnChanges {
   add(item: CatalogItem): void {
     if (this.saving()) return;
     this.saving.set(true);
-    this.api.assignChronicCondition( { chronicConditionId: item.id }).subscribe({
+    const request = this.customerId
+      ? this.api.assignDependentChronicCondition(this.customerId, { chronicConditionId: item.id })
+      : this.api.assignChronicCondition({ chronicConditionId: item.id });
+
+    request.subscribe({
       next: () => {
         this.assigned.update((list) => [
           ...list,
@@ -90,7 +108,11 @@ export class ChronicConditionsSection implements OnChanges {
   removeConfirmed(): void {
     const id = this.pendingRemoveId();
     if (!id) return;
-    this.api.removeChronicCondition( id).subscribe({
+    const request = this.customerId
+      ? this.api.removeDependentChronicCondition(this.customerId, id)
+      : this.api.removeChronicCondition(id);
+
+    request.subscribe({
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.chronicConditionId !== id));
         this.pendingRemoveId.set(null);
