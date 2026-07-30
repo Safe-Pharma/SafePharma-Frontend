@@ -169,18 +169,16 @@
   <!-- Action Buttons -->
   <div class="flex justify-end gap-3">
     <button
-      class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer"
-    >
-      Discard
-    </button>
-    <button
       (click)="onSubmit()"
-      class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 cursor-pointer"
+      [disabled]="isLoading"
+      class="px-6 py-2 text-sm cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       @if (isLoading) {
-        <span class="animate-spin">⟳</span>
+        <app-spinner size="sm"></app-spinner>
+        <span>Saving...</span>
+      } @else {
+        <span>Save changes</span>
       }
-      Save changes
     </button>
   </div>
 </div>

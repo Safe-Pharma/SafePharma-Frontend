@@ -1,6 +1,6 @@
 <div class="mx-auto w-full max-w-7xl p-6 md:p-8">
   <!-- Header -->
-  <div class="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+  <div class="mb-6 flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
     <div>
       <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Purchases</h1>
 
@@ -11,7 +11,7 @@
 
     <button
       (click)="openCreateModal()"
-      class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+      class="inline-flex items-center w-full md:w-auto gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
     >
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -227,11 +227,12 @@
     </div>
   </div>
   @if (showCreateModal) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div class="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    >
+      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <!-- Header -->
-
-        <div class="flex items-center justify-between p-4">
+        <div class="flex items-start justify-between p-6 border-b">
           <div>
             <h2 class="text-xl font-medium">New purchase order</h2>
 
@@ -244,13 +245,15 @@
         </div>
 
         <!-- Body -->
-
-        <div class="px-6 py-4">
-          <div class="grid grid-cols-3 gap-5">
+        <div class="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
+          <!-- Basic Info -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
               <label class="mb-2 block font-medium"> Supplier </label>
+
               <select [(ngModel)]="purchaseOrder.supplierId" class="w-full rounded-lg border p-2">
                 <option value="">Select supplier</option>
+
                 @for (supplier of suppliers; track supplier.id) {
                   <option [value]="supplier.id">
                     {{ supplier.name }}
@@ -264,124 +267,143 @@
 
               <input
                 type="date"
-                class="w-full rounded-lg border p-2"
                 [(ngModel)]="purchaseOrder.orderDate"
+                class="h-10 w-full rounded-lg border px-3 text-sm"
               />
             </div>
+
             <div>
               <label class="mb-2 block font-medium"> Expected Date </label>
 
               <input
                 type="date"
-                class="w-full rounded-lg border p-2"
                 [(ngModel)]="purchaseOrder.expectedDate"
+                class="h-10 w-full rounded-lg border px-3 text-sm"
               />
             </div>
           </div>
 
-          <div class="mt-6 rounded-xl border-gray-400 border">
+          <!-- Items -->
+          <div class="mt-6 rounded-xl border">
+            <!-- Header -->
             <div
-              class="flex items-center justify-between border-b border-gray-400 rounded-t-xl bg-blue-50 px-3 py-2"
+              class="flex justify-between items-center rounded-t-xl border-b bg-blue-50 px-4 py-3"
             >
               <h3 class="font-semibold text-gray-700">Line Items</h3>
 
               <button
-                class="rounded-lg border border-gray-500 px-4 py-2 hover:bg-blue-100"
                 (click)="addLine()"
+                class="rounded-lg border border-gray-500 px-4 py-2 hover:bg-blue-100"
               >
                 + Add line
               </button>
             </div>
 
-            <div class="p-4 space-y-3">
-              <div
-                class="grid grid-cols-12 gap-3 border-b border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
-              >
-                <div class="col-span-3">Medicine</div>
+            <!-- Table -->
+            <div class="p-4">
+              <div class="w-full overflow-x-auto">
+                <table class="w-full min-w-200">
+                  <thead>
+                    <tr class="border-b text-sm text-gray-600">
+                      <th class="text-left p-3">Medicine</th>
 
-                <div class="col-span-2">Qty</div>
+                      <th class="text-left p-3">Qty</th>
 
-                <div class="col-span-2">Unit Price</div>
-                <div class="col-span-2">Selling Price</div>
+                      <th class="text-left p-3">Unit Price</th>
 
-                <div class="col-span-1 text-right">Total</div>
-                <div class="col-span-2 text-right">Action</div>
+                      <th class="text-left p-3">Selling Price</th>
+
+                      <th class="text-right p-3">Total</th>
+
+                      <th class="text-right p-3">Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    @if (purchaseOrder.items.length === 0) {
+                      <tr>
+                        <td colspan="6" class="text-center py-5 text-gray-400">
+                          No line items added.
+                        </td>
+                      </tr>
+                    } @else {
+                      @for (line of purchaseOrder.items; track $index) {
+                        <tr class="border-b">
+                          <!-- Medicine -->
+                          <td class="p-3">
+                            <select
+                              [(ngModel)]="line.pharmacyMedicineId"
+                              (ngModelChange)="onMedicineChange(line)"
+                              class="h-10 w-full rounded-lg border px-3 text-sm"
+                            >
+                              <option value="">Select medicine</option>
+
+                              @for (medicine of Medicines; track medicine.pharmacyMedicineId) {
+                                <option [value]="medicine.pharmacyMedicineId">
+                                  {{ medicine.tradeNameEn }}
+                                </option>
+                              }
+                            </select>
+                          </td>
+
+                          <!-- Qty -->
+                          <td class="p-3">
+                            <input
+                              type="number"
+                              [(ngModel)]="line.quantityOrdered"
+                              class="w-24 rounded-lg border p-2"
+                            />
+                          </td>
+
+                          <!-- Unit Price -->
+                          <td class="p-3">
+                            <input
+                              type="number"
+                              [(ngModel)]="line.unitPrice"
+                              class="w-32 rounded-lg border p-2"
+                            />
+                          </td>
+
+                          <!-- Selling -->
+                          <td class="p-3">
+                            <input
+                              type="number"
+                              [(ngModel)]="line.sellingPrice"
+                              class="w-32 rounded-lg border p-2"
+                            />
+                          </td>
+
+                          <!-- Total -->
+                          <td class="p-3 text-right font-semibold text-gray-500">
+                            {{ line.quantityOrdered * line.unitPrice | number }}$
+                          </td>
+
+                          <!-- Delete -->
+                          <td class="p-3 text-right">
+                            <button
+                              (click)="removeLine($index)"
+                              class="rounded-md bg-red-100 px-3 py-2 text-sm text-red-600 hover:bg-red-200"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
               </div>
-              @if (purchaseOrder.items.length === 0) {
-                <div class="text-center text-gray-400">No line items added.</div>
-              } @else {
-                @for (line of purchaseOrder.items; track $index) {
-                  <div class="grid grid-cols-12 gap-3 items-center">
-                    <!-- Medicine -->
-                    <div class="col-span-3">
-                      <select
-                        [(ngModel)]="line.pharmacyMedicineId"
-                        (ngModelChange)="onMedicineChange(line)"
-                        class="w-full rounded-lg border p-2"
-                      >
-                        <option value="">Select medicine</option>
 
-                        @for (medicine of Medicines; track medicine.pharmacyMedicineId) {
-                          <option [value]="medicine.pharmacyMedicineId">
-                            {{ medicine.tradeNameEn }}
-                          </option>
-                        }
-                      </select>
-                    </div>
-
-                    <!-- Quantity -->
-                    <div class="col-span-2">
-                      <input
-                        type="number"
-                        [(ngModel)]="line.quantityOrdered"
-                        class="w-full rounded-lg border p-2"
-                      />
-                    </div>
-
-                    <!-- Unit Price -->
-                    <div class="col-span-2">
-                      <input
-                        type="number"
-                        [(ngModel)]="line.unitPrice"
-                        class="w-full rounded-lg border p-2"
-                      />
-                    </div>
-                    <div class="col-span-2">
-                      <input
-                        type="number"
-                        [(ngModel)]="line.sellingPrice"
-                        class="w-full rounded-lg border p-2"
-                      />
-                    </div>
-
-                    <div class="col-span-1 text-right">
-                      <span class="font-semibold text-gray-500">
-                        {{ line.quantityOrdered * line.unitPrice | number }}$
-                      </span>
-                    </div>
-
-                    <!-- Delete -->
-                    <div class="col-span-2 text-right">
-                      <button
-                        (click)="removeLine($index)"
-                        class="rounded-md bg-red-100 px-3 py-2 text-sm text-red-600 hover:bg-red-200"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                }
-                <div class="flex justify-end px-1 font-semibold text-gray-600">
-                  Total {{ totalPrice | number }}$
-                </div>
-              }
+              <div class="mt-4 text-right font-semibold text-gray-600">
+                Total:
+                {{ totalPrice | number }}$
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
-
-        <div class="flex justify-end gap-3 py-2 px-4">
+        <div class="flex flex-col-reverse gap-3 px-6 py-4 border-t md:flex-row md:justify-end">
           <button
             (click)="closeCreateModal()"
             class="rounded-lg border px-5 py-2 hover:bg-gray-100"
@@ -390,82 +412,95 @@
           </button>
 
           <button
-            class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
             (click)="createPurchaseOrder()"
+            [disabled]="isCreatingOrder"
+            class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Create Order
+            @if (!isCreatingOrder) {
+              Create Order
+            } @else {
+              <app-spinner size="sm"></app-spinner>
+              Creating...
+            }
           </button>
         </div>
       </div>
     </div>
   }
   @if (showReceiveModal) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div class="w-full max-w-4xl rounded-2xl bg-white shadow-xl">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    >
+      <div
+        class="flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
         <!-- Header -->
-
-        <div class="flex justify-between px-5 py-2">
+        <div
+          class="flex flex-col gap-2 border-b px-4 py-3 md:flex-row md:items-start md:justify-between md:px-6"
+        >
           <div>
             <h2 class="text-xl font-semibold">Receive goods · {{ selectedOrder.orderNumber }}</h2>
 
-            <p class="text-sm text-gray-500">
+            <p class="mt-1 text-sm text-gray-500">
               Enter batch number and expiry per line, then confirm receipt.
             </p>
           </div>
 
-          <button (click)="showReceiveModal = false" class="text-2xl text-gray-500">×</button>
+          <button
+            (click)="showReceiveModal = false"
+            class="text-3xl text-gray-500 hover:text-red-500"
+          >
+            ×
+          </button>
         </div>
 
-        <div class="px-6 py-3">
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
           <!-- Invoice -->
-
-          <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="grid grid-cols-1 gap-4 mb-6 md:grid-cols-3">
             <div>
-              <label class="text-sm font-medium"> Invoice Number </label>
+              <label class="mb-2 block text-sm font-medium"> Invoice Number </label>
 
               <input [(ngModel)]="receipt.invoiceNumber" class="w-full rounded-lg border p-2" />
             </div>
 
             <div>
-              <label class="text-sm font-medium"> Invoice Date </label>
+              <label class="mb-2 block text-sm font-medium"> Invoice Date </label>
 
               <input
                 type="date"
                 [(ngModel)]="receipt.invoiceDate"
-                class="w-full rounded-lg border p-2"
+                class="h-10 w-full rounded-lg border px-3 text-sm"
               />
             </div>
 
             <div>
-              <label class="text-sm font-medium"> Invoice Total </label>
+              <label class="mb-2 block text-sm font-medium"> Invoice Total </label>
 
               <input
                 type="number"
                 [(ngModel)]="receipt.invoiceTotal"
-                class="w-full rounded-lg border p-2"
+                class="h-10 w-full rounded-lg border px-3 text-sm"
               />
             </div>
           </div>
 
           <!-- Items -->
-
-          <div class="rounded-xl border border-gray-400">
-            <div class="grid grid-cols-12 bg-blue-50 rounded-t-2xl p-3 text-sm font-semibold">
+          <div class="rounded-xl border overflow-hidden">
+            <div
+              class="hidden md:grid grid-cols-12 bg-blue-50 rounded-t-xl p-3 text-sm font-semibold"
+            >
               <div class="col-span-4">Medicine</div>
-
               <div class="col-span-2">Qty</div>
-
               <div class="col-span-3">Batch #</div>
-
               <div class="col-span-3">Expiry</div>
             </div>
 
             @for (item of receipt.items; track $index) {
-              <div class="grid grid-cols-12 items-center gap-3 border-gray-500 border-t p-3">
-                <div class="col-span-4">
-                  <p class="font-medium">
-                    {{ item.medicineName }}
-                  </p>
+              <!-- Desktop -->
+              <div class="hidden md:grid grid-cols-12 items-center gap-3 border-t p-3">
+                <div class="col-span-4 font-medium">
+                  {{ item.medicineName }}
                 </div>
 
                 <div class="col-span-2">
@@ -476,7 +511,7 @@
                   <input
                     [(ngModel)]="item.batchNumber"
                     placeholder="BATCH-###"
-                    class="w-full rounded-lg border p-2"
+                    class="h-10 w-full rounded-lg border px-3 text-sm"
                   />
                 </div>
 
@@ -484,7 +519,38 @@
                   <input
                     type="date"
                     [(ngModel)]="item.expiryDate"
-                    class="w-full rounded-lg border p-2"
+                    class="h-10 w-full rounded-lg border px-3 text-sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Mobile Card -->
+              <div class="space-y-1 border-t px-3 py-2 md:hidden">
+                <p class="text-sm font-semibold">💊 {{ item.medicineName }}</p>
+                <p class="text-sm text-gray-600">
+                  Qty:
+                  <span class="font-semibold text-gray-800">
+                    {{ item.quantity }}
+                  </span>
+                </p>
+
+                <div>
+                  <label class="mb-1 block text-sm"> Batch Number </label>
+
+                  <input
+                    [(ngModel)]="item.batchNumber"
+                    placeholder="BATCH-###"
+                    class="h-10 w-full rounded-lg border px-3 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label class="mb-1 block text-sm"> Expiry Date </label>
+
+                  <input
+                    type="date"
+                    [(ngModel)]="item.expiryDate"
+                    class="h-10 w-full rounded-lg border px-3 text-sm"
                   />
                 </div>
               </div>
@@ -493,14 +559,27 @@
         </div>
 
         <!-- Footer -->
-
-        <div class="flex justify-end gap-3 px-5 py-3">
-          <button (click)="showReceiveModal = false" class="rounded-lg border px-5 py-2">
+        <div
+          class="flex shrink-0 flex-col-reverse gap-3 border-t px-4 py-3 md:flex-row md:justify-end md:px-6"
+        >
+          <button
+            (click)="showReceiveModal = false"
+            class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+          >
             Cancel
           </button>
 
-          <button (click)="confirmReceipt()" class="rounded-lg bg-blue-600 px-5 py-2 text-white">
-            Confirm receipt
+          <button
+            (click)="confirmReceipt()"
+            [disabled]="isReceiving"
+            class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-white disabled:opacity-50"
+          >
+            @if (isReceiving) {
+              <app-spinner size="sm"></app-spinner>
+              <span>Receiving...</span>
+            } @else {
+              <span>Confirm Receipt</span>
+            }
           </button>
         </div>
       </div>
@@ -508,13 +587,15 @@
   }
   @if (showReceiptHistoryModal) {
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-6"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
     >
       <div
-        class="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-3xl bg-white shadow-2xl overflow-hidden"
+        class="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-slate-200 px-8 py-6">
+        <div
+          class="flex flex-col gap-3 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between md:px-8"
+        >
           <div>
             <h2 class="text-2xl font-bold text-slate-800">🧾 Receipt Orders</h2>
 
@@ -523,58 +604,59 @@
 
           <button
             (click)="showReceiptHistoryModal = false"
-            class="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500"
+            class="flex h-10 w-10 items-center justify-center self-end rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500 md:self-auto"
           >
             ✕
           </button>
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-3 gap-5 px-8 py-6 border-b border-slate-100">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p class="text-sm text-slate-500">Total Receipts</p>
+        <div
+          class="grid grid-cols-3 gap-2 border-b border-slate-100 px-4 py-3 md:gap-4 md:px-8 md:py-5"
+        >
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 md:rounded-2xl md:p-5">
+            <p class="truncate text-[11px] text-slate-500 md:text-sm">Total Receipts</p>
 
-            <h3 class="mt-2 text-3xl font-bold text-slate-800">
+            <h3 class="mt-1 text-lg font-bold text-slate-800 md:mt-2 md:text-3xl">
               {{ receiptHistory.length }}
             </h3>
           </div>
 
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p class="text-sm text-slate-500">Total Value</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 md:rounded-2xl md:p-5">
+            <p class="truncate text-[11px] text-slate-500 md:text-sm">Total Value</p>
 
-            <h3 class="mt-2 text-3xl font-bold text-green-600">
+            <h3 class="mt-1 text-lg font-bold text-green-600 md:mt-2 md:text-3xl">
               {{
-              receiptHistory.reduce((t,r)=>t+r.invoiceTotal,0)
-              | number
+      receiptHistory.reduce((t,r)=>t+r.invoiceTotal,0)
+      | number
               }}
             </h3>
           </div>
 
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p class="text-sm text-slate-500">Medicines</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 md:rounded-2xl md:p-5">
+            <p class="truncate text-[11px] text-slate-500 md:text-sm">Medicines</p>
 
-            <h3 class="mt-2 text-3xl font-bold text-blue-600">
+            <h3 class="mt-1 text-lg font-bold text-blue-600 md:mt-2 md:text-3xl">
               {{
-              receiptHistory.reduce((t,r)=>t+r.items.length,0)
+      receiptHistory.reduce((t,r)=>t+r.items.length,0)
               }}
             </h3>
           </div>
         </div>
 
         <!-- Cards -->
-
-        <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4">
+        <div class="flex-1 overflow-y-auto space-y-4 px-6 py-5 md:px-8">
           @for (receipt of receiptHistory; track $index) {
             <div
-              class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-lg"
             >
-              <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h3 class="text-lg font-semibold text-slate-800">
                     {{ receipt.invoiceNumber }}
                   </h3>
 
-                  <div class="mt-3 flex flex-wrap gap-5 text-sm text-slate-500">
+                  <div class="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
                     <span>
                       📅
                       {{ receipt.invoiceDate | date: 'dd MMM yyyy' }}
@@ -593,7 +675,7 @@
 
                 <button
                   (click)="openReceiptDetails(receipt)"
-                  class="rounded-xl bg-blue-600 px-4 py-2.5 font-medium text-white transition hover:bg-blue-700"
+                  class="w-full rounded-xl bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700 md:w-auto md:px-4 md:py-2.5 md:text-base"
                 >
                   View Details →
                 </button>
@@ -606,11 +688,15 @@
   }
   @if (showReceiptDetailsModal && selectedReceipt) {
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-6"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
     >
-      <div class="flex w-full max-w-5xl max-h-[90vh] flex-col rounded-3xl bg-white">
+      <div
+        class="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+      >
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-slate-200 px-8 py-6">
+        <div
+          class="flex flex-col gap-3 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between md:px-8"
+        >
           <div>
             <h2 class="text-2xl font-bold text-slate-800">
               🧾 {{ selectedReceipt.invoiceNumber }}
@@ -621,77 +707,76 @@
 
           <button
             (click)="showReceiptDetailsModal = false"
-            class="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500"
+            class="flex h-10 w-10 items-center justify-center self-end rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500 md:self-auto"
           >
             ✕
           </button>
         </div>
 
         <!-- Summary -->
+        <div
+          class="grid grid-cols-3 gap-2 border-b border-slate-100 px-4 py-3 md:gap-4 md:px-8 md:py-5"
+        >
+          <div class="rounded-xl border bg-slate-50 p-2.5 md:rounded-2xl md:p-5">
+            <p class="truncate text-[11px] text-slate-500 md:text-sm">Invoice Date</p>
 
-        <div class="grid grid-cols-3 gap-5 border-b border-slate-100 px-8 py-6">
-          <div class="rounded-2xl border bg-slate-50 p-5">
-            <p class="text-sm text-slate-500">Invoice Date</p>
-
-            <h3 class="mt-2 text-lg font-semibold text-slate-800">
+            <h3 class="mt-1 truncate text-sm font-semibold text-slate-800 md:mt-2 md:text-lg">
               {{ selectedReceipt.invoiceDate | date: 'dd MMM yyyy' }}
             </h3>
           </div>
 
-          <div class="rounded-2xl border bg-slate-50 p-5">
-            <p class="text-sm text-slate-500">Received At</p>
+          <div class="rounded-xl border bg-slate-50 p-2.5 md:rounded-2xl md:p-5">
+            <p class="truncate text-[11px] text-slate-500 md:text-sm">Received At</p>
 
-            <h3 class="mt-2 text-lg font-semibold text-slate-800">
+            <h3 class="mt-1 truncate text-sm font-semibold text-slate-800 md:mt-2 md:text-lg">
               {{ selectedReceipt.receivedAt | date: 'dd MMM yyyy' }}
             </h3>
           </div>
 
-          <div class="rounded-2xl border bg-slate-50 p-5">
-            <p class="text-sm text-slate-500">Invoice Total</p>
+          <div class="rounded-xl border bg-slate-50 p-2.5 md:rounded-2xl md:p-5">
+            <p class="truncate text-[11px] text-slate-500 md:text-sm">Invoice Total</p>
 
-            <h3 class="mt-2 text-xl font-bold text-green-600">
+            <h3 class="mt-1 truncate text-sm font-bold text-green-600 md:mt-2 md:text-xl">
               {{ selectedReceipt.invoiceTotal | number }}
             </h3>
           </div>
         </div>
 
         <!-- Items -->
-
-        <div class="max-h-125 overflow-y-auto p-8 space-y-5">
+        <div class="flex-1 overflow-y-auto space-y-5 px-6 py-5 md:px-8">
           @for (item of selectedReceipt.items; track item.purchaseReceiptItemId) {
             <div
-              class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition"
+              class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md md:p-6"
             >
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-lg font-semibold text-slate-800">💊 {{ item.medicineName }}</h3>
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800">💊 {{ item.medicineName }}</h3>
 
-                  <div class="mt-3 flex flex-wrap gap-6 text-sm text-slate-500">
-                    <span>
-                      Qty:
-                      <span class="font-semibold text-slate-700">
-                        {{ item.quantity }}
-                      </span>
+                <div class="mt-3 flex flex-wrap gap-4 text-sm text-slate-500">
+                  <span>
+                    Qty:
+                    <span class="font-semibold text-slate-700">
+                      {{ item.quantity }}
                     </span>
+                  </span>
 
-                    <span>
-                      Batch:
-                      <span class="font-semibold text-slate-700">
-                        {{ item.batchNumber }}
-                      </span>
+                  <span>
+                    Batch:
+                    <span class="font-semibold text-slate-700">
+                      {{ item.batchNumber }}
                     </span>
+                  </span>
 
-                    <span>
-                      Exp:
-                      <span class="font-semibold text-slate-700">
-                        {{ item.expiryDate | date: 'dd MMM yyyy' }}
-                      </span>
+                  <span>
+                    Exp:
+                    <span class="font-semibold text-slate-700">
+                      {{ item.expiryDate | date: 'dd MMM yyyy' }}
                     </span>
-                  </div>
+                  </span>
                 </div>
               </div>
 
-              <div class="mt-6 grid grid-cols-2 gap-6">
+              <!-- Prices -->
+              <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
                 <div>
                   <label class="mb-2 block text-sm font-medium text-slate-600">
                     Purchase Price
@@ -721,20 +806,28 @@
         </div>
 
         <!-- Footer -->
-
-        <div class="flex justify-end gap-4 border-t border-slate-200 px-8 py-5">
+        <div
+          class="flex flex-col-reverse gap-3 border-t border-slate-200 px-6 py-4 md:flex-row md:justify-end md:px-8"
+        >
           <button
             (click)="showReceiptDetailsModal = false"
-            class="rounded-xl border border-slate-300 px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100"
+            class="rounded-xl border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100"
           >
             Cancel
           </button>
 
           <button
             (click)="saveReceiptPrices()"
-            class="rounded-xl bg-blue-600 px-4 py-2.5 font-medium text-white shadow transition hover:bg-blue-700"
+            [disabled]="isSavingPrices"
+            class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Save Changes
+            @if (isSavingPrices) {
+              <app-spinner size="sm"></app-spinner>
+
+              <span> Saving... </span>
+            } @else {
+              <span> Save Changes </span>
+            }
           </button>
         </div>
       </div>

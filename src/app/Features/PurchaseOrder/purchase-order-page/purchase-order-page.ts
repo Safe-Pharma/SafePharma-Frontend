@@ -5,11 +5,12 @@ import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { forkJoin } from 'rxjs';
+import { Spinner } from '../../../Shared/Components/spinner/spinner';
 
 @Component({
   selector: 'app-purchase-order-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Spinner],
   templateUrl: './purchase-order-page.html',
   styleUrl: './purchase-order-page.css',
 })
@@ -22,6 +23,10 @@ export class PurchaseOrderPage implements OnInit {
 
   Medicines: any[] = [];
   selectedMedicine: string = '';
+
+  isCreatingOrder = false;
+  isReceiving = false;
+  isSavingPrices = false;
 
   purchaseOrder = {
     orderDate: '',
@@ -204,11 +209,18 @@ export class PurchaseOrderPage implements OnInit {
         return;
       }
     }
+
+    if (this.isCreatingOrder) {
+      return;
+    }
+
+    this.isCreatingOrder = true;
     console.log(this.purchaseOrder);
 
     this.purchaseOrderService.addPurchaseOrder(this.purchaseOrder).subscribe({
       next: (res) => {
-        console.log(res);
+        this.isCreatingOrder = false;
+
         this.toast.show('Order Created Successfully!', 'success');
         setTimeout(() => {
           this.resetForm();
@@ -217,6 +229,8 @@ export class PurchaseOrderPage implements OnInit {
         });
       },
       error: (err) => {
+        this.isCreatingOrder = false;
+
         console.log(err);
         this.toast.show('Failed to create Purchase Order', 'error');
       },
@@ -285,10 +299,18 @@ export class PurchaseOrderPage implements OnInit {
       }
     }
 
+    if (this.isReceiving) {
+      return;
+    }
+
+    this.isReceiving = true;
+
     console.log(this.receipt);
 
     this.purchaseOrderService.receivePurchaseOrder(this.selectedOrder.id, this.receipt).subscribe({
       next: (res) => {
+        this.isReceiving = false;
+
         this.toast.show('Receipt created successfully', 'success');
 
         this.showReceiveModal = false;
@@ -298,6 +320,8 @@ export class PurchaseOrderPage implements OnInit {
       },
 
       error: (err) => {
+        this.isReceiving = false;
+
         console.log(err);
 
         this.toast.show('Failed to receive goods', 'error');
@@ -325,6 +349,11 @@ export class PurchaseOrderPage implements OnInit {
     this.showReceiptDetailsModal = true;
   }
   saveReceiptPrices() {
+    if (this.isSavingPrices) {
+      return;
+    }
+
+    this.isSavingPrices = true;
     const requests = this.selectedReceipt.items.map((item: any) =>
       this.purchaseOrderService.updateReceiptItem(item.purchaseReceiptItemId, {
         unitPrice: item.unitPrice,
@@ -334,6 +363,8 @@ export class PurchaseOrderPage implements OnInit {
 
     forkJoin(requests).subscribe({
       next: () => {
+        this.isSavingPrices = false;
+
         this.toast.show('Prices updated successfully', 'success');
 
         this.showReceiptDetailsModal = false;
@@ -343,6 +374,8 @@ export class PurchaseOrderPage implements OnInit {
       },
 
       error: (err) => {
+        this.isSavingPrices = false;
+
         console.log(err);
         this.toast.show('Failed to update prices', 'error');
       },

@@ -5,10 +5,11 @@ import { PharmacySettings as PharmacySettingsService } from './Services/pharmacy
 import { ChangeDetectorRef } from '@angular/core';
 import { UserLanguage } from './Services/user-language';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { Spinner } from '../../../Shared/Components/spinner/spinner';
 
 @Component({
   selector: 'app-pharmacy-settings',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Spinner],
   templateUrl: './pharmacy-settings.html',
   styleUrl: './pharmacy-settings.css',
 })
@@ -61,6 +62,9 @@ export class PharmacySettings implements OnInit {
     });
   }
   onSubmit(): void {
+    if (this.isLoading) {
+      return;
+    }
     this.isLoading = true;
     this.cdr.detectChanges();
 
