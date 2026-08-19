@@ -45,6 +45,7 @@ interface PosTab {
   tabId: string;
   sale: Sale;
   selectedCustomer: Customer | null;
+  hasBackendSale: boolean;
 }
 
 type DiscountMode = 'amount' | 'percent';
@@ -185,18 +186,34 @@ export class Pos implements OnInit {
   // ================= tabs =================
 
   openNewTab(): void {
-    this.service.createDraftSale().subscribe({
-      next: (res) => {
-        if (res.success && res.data) {
-          const tab: PosTab = { tabId: res.data.id, sale: res.data, selectedCustomer: null };
-          this.tabs.update((list) => [...list, tab]);
-          this.activeTabId.set(tab.tabId);
-        } else {
-          this.toast.show(res.message || 'Could not start a new sale.', 'error');
-        }
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not start a new sale.'), 'error'),
-    });
+    const tabId = crypto.randomUUID();
+    const emptySale: Sale = {
+      id: '',
+      invoiceNumber: 'New Sale',
+      customerId: null,
+      customerName: '',
+      paymentMethod: 'Cash',
+      subTotal: 0,
+      discount: 0,
+      tax: 0,
+      grandTotal: 0,
+      amountPaidByCash: 0,
+      amountPaidByCard: 0,
+      amountPaid: 0,
+      change: 0,
+      status: SaleStatus.Open,
+      items: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    const tab: PosTab = {
+      tabId,
+      sale: emptySale,
+      selectedCustomer: null,
+      hasBackendSale: false,
+    };
+    this.tabs.update((list) => [...list, tab]);
+    this.activeTabId.set(tabId);
   }
 
   switchTab(tabId: string): void {
@@ -209,6 +226,11 @@ export class Pos implements OnInit {
     const tab = this.tabs().find((t) => t.tabId === tabId);
     if (!tab) return;
 
+    if (!tab.hasBackendSale) {
+      this.removeTabLocally(tabId);
+      return;
+    }
+
     if (tab.sale.status !== SaleStatus.Open) {
       this.removeTabLocally(tabId);
       return;
@@ -220,7 +242,7 @@ export class Pos implements OnInit {
       return;
     }
 
-    this.service.cancelSale(tab.tabId).subscribe({
+    this.service.cancelSale(tab.sale.id).subscribe({
       next: () => this.removeTabLocally(tabId),
       error: (err) => this.toast.show(getErrorMessage(err, 'Could not close this tab.'), 'error'),
     });
@@ -440,12 +462,19 @@ export class Pos implements OnInit {
 
   selectCustomer(customer: Customer | null): void {
     this.showCustomerDropdown.set(false);
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const currentTab = this.activeTab();
+    if (!currentTab) return;
 
     this.patchActiveCustomer(customer);
+
+    if (!currentTab.hasBackendSale) {
+      // No backend sale yet — the choice is remembered locally and gets
+      // synced to the server on the first addToCart() call.
+      return;
+    }
+
     this.service
-      .setSaleCustomer(currentSale.id, { customerId: customer ? customer.id : EMPTY_GUID })
+      .setSaleCustomer(currentTab.sale.id, { customerId: customer ? customer.id : EMPTY_GUID })
       .subscribe({
         next: (res) => {
           if (res.success && res.data) this.patchActiveSale(res.data);
@@ -466,31 +495,93 @@ export class Pos implements OnInit {
   }
 
   addToCart(item: MedicineSearchResult): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const currentTab = this.activeTab();
+    if (!currentTab) return;
 
     const customer = this.selectedCustomer();
-    this.service
-      .addItemToSale(currentSale.id, {
-        pharmacyMedicineId: item.pharmacyMedicineId,
-        customerId: customer ? customer.id : undefined,
-        quantity: 1,
-        discount: 0,
-        taxAmount: 0,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) {
-            this.patchActiveSale(res.data);
-            this.query.set('');
-            this.searchOpen.set(false);
+    const addItemDto = {
+      pharmacyMedicineId: item.pharmacyMedicineId,
+      customerId: customer ? customer.id : undefined,
+      quantity: 1,
+      discount: 0,
+      taxAmount: 0,
+    };
+
+    if (!currentTab.hasBackendSale) {
+      this.service.createDraftSale().subscribe({
+        next: (createRes) => {
+          if (!createRes.success || !createRes.data) {
+            this.toast.show(createRes.message || 'Could not start the sale.', 'error');
+            return;
+          }
+
+          const realSaleId = createRes.data.id;
+          this.promoteTabToBackendSale(currentTab.tabId, createRes.data);
+
+          const preSelectedCustomer = currentTab.selectedCustomer;
+
+          const addFirstItem = () => {
+            this.service.addItemToSale(realSaleId, addItemDto).subscribe({
+              next: (res) => {
+                if (res.success && res.data) {
+                  this.patchTabSale(currentTab.tabId, res.data);
+                  this.query.set('');
+                  this.searchOpen.set(false);
+                } else {
+                  this.toast.show(res.message || 'Could not add item.', 'error');
+                }
+              },
+              error: (err) =>
+                this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
+            });
+          };
+
+          if (preSelectedCustomer) {
+            // A customer was chosen locally before the backend sale existed —
+            // sync it now, then add the item.
+            this.service
+              .setSaleCustomer(realSaleId, { customerId: preSelectedCustomer.id })
+              .subscribe({
+                next: (res) => {
+                  if (res.success && res.data) this.patchTabSale(currentTab.tabId, res.data);
+                  addFirstItem();
+                },
+                error: (err) => {
+                  this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error');
+                  addFirstItem(); // don't block adding the item just because customer-sync failed
+                },
+              });
           } else {
-            this.toast.show(res.message || 'Could not add item.', 'error');
+            addFirstItem();
           }
         },
-        error: (err) =>
-          this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
+        error: (err) => this.toast.show(getErrorMessage(err, 'Could not start the sale.'), 'error'),
       });
+      return;
+    }
+
+    this.service.addItemToSale(currentTab.sale.id, addItemDto).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.patchActiveSale(res.data);
+          this.query.set('');
+          this.searchOpen.set(false);
+        } else {
+          this.toast.show(res.message || 'Could not add item.', 'error');
+        }
+      },
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
+    });
+  }
+
+  private promoteTabToBackendSale(tabId: string, backendSale: Sale): void {
+    this.tabs.update((list) =>
+      list.map((t) => (t.tabId === tabId ? { ...t, sale: backendSale, hasBackendSale: true } : t)),
+    );
+  }
+
+  private patchTabSale(tabId: string, updated: Sale): void {
+    this.tabs.update((list) => list.map((t) => (t.tabId === tabId ? { ...t, sale: updated } : t)));
   }
 
   /** Enter key in the search box = barcode scanner behavior: if there's exactly
@@ -619,10 +710,10 @@ export class Pos implements OnInit {
   // ================= sale-level discount =================
 
   openDiscountEditor(): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const currentTab = this.activeTab();
+    if (!currentTab || !currentTab.hasBackendSale) return;
     this.discountMode.set('amount');
-    this.discountInput.set(currentSale.discount);
+    this.discountInput.set(currentTab.sale.discount);
     this.showTaxEditor.set(false);
     this.showDiscountEditor.set(true);
   }
@@ -650,9 +741,15 @@ export class Pos implements OnInit {
   }
 
   saveDiscount(): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const currentTab = this.activeTab();
+    if (!currentTab) return;
 
+    if (!currentTab.hasBackendSale) {
+      this.toast.show('Add an item to the cart before applying a discount.', 'error');
+      return;
+    }
+
+    const currentSale = currentTab.sale;
     const raw = this.discountInput() || 0;
     const dollarAmount =
       this.discountMode() === 'percent' ? Math.round(currentSale.subTotal * raw) / 100 : raw;
@@ -679,7 +776,8 @@ export class Pos implements OnInit {
   // ================= sale-level tax =================
 
   openTaxEditor(): void {
-    if (!this.sale()) return;
+    const currentTab = this.activeTab();
+    if (!currentTab || !currentTab.hasBackendSale) return;
     this.taxInput.set(this.taxes()[0]?.id ?? '');
     this.showDiscountEditor.set(false);
     this.showTaxEditor.set(true);
@@ -690,12 +788,17 @@ export class Pos implements OnInit {
   }
 
   saveTax(): void {
-    const currentSale = this.sale();
+    const currentTab = this.activeTab();
     const taxId = this.taxInput();
-    if (!currentSale || !taxId) return;
+    if (!currentTab || !taxId) return;
+
+    if (!currentTab.hasBackendSale) {
+      this.toast.show('Add an item to the cart before applying a tax.', 'error');
+      return;
+    }
 
     this.savingTax.set(true);
-    this.service.applyTax(currentSale.id, { taxId }).subscribe({
+    this.service.applyTax(currentTab.sale.id, { taxId }).subscribe({
       next: (res) => {
         this.savingTax.set(false);
         if (res.success && res.data) {
@@ -716,8 +819,16 @@ export class Pos implements OnInit {
   // ================= cancel / clear =================
 
   cancelSale(): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const currentTab = this.activeTab();
+    if (!currentTab) return;
+
+    if (!currentTab.hasBackendSale) {
+      // Nothing exists on the backend yet — just drop the local tab.
+      this.removeTabLocally(this.activeTabId());
+      return;
+    }
+
+    const currentSale = currentTab.sale;
     if (currentSale.items.length > 0 && !confirm('Cancel this sale and clear the cart?')) return;
 
     this.service.cancelSale(currentSale.id).subscribe({
