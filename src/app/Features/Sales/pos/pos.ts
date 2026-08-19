@@ -11,17 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import {
-  catchError,
-  concatMap,
-  debounceTime,
-  distinctUntilChanged,
-  forkJoin,
-  from,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { PosService } from './Services/pos-service';
 import { PatientSafetyService } from './Services/patient-safety-service';
 import { PaymentModalComponent } from './Components/payment-modal/payment-modal';
@@ -34,8 +24,8 @@ import { AddEditCustomerDialogComponent } from '../../Customer/Components/add-ed
 import { CustomersApiService } from '../../Customer/Services/customers-api.service';
 import { Tax } from '../../Tax/Models/tax';
 import {
+  CheckoutDto,
   Customer,
-  EMPTY_GUID,
   MedicineSearchResult,
   PaymentMethodChoice,
   PaySaleDto,
@@ -46,12 +36,32 @@ import {
 import { PatientSafetyResult } from './Model/patient-safety.models';
 import { RelativeDropDown } from './Components/relative-drop-down/relative-drop-down';
 
+/** One line of a cart that only exists in the browser — no PharmacyMedicine
+ *  batch/price is "locked in" server-side until checkout; `unitPrice` here is
+ *  just the last price we previewed via getAvailability(). */
+interface LocalCartItem {
+  /** Client-generated — used purely as a correlation id for the AI safety
+   *  check (relatedDrugRefs) and for row identity in the UI. Means nothing
+   *  to the backend, since this line has never been persisted. */
+  id: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  customerId: string | null;
+  customerName: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  taxAmount: number;
+}
+
 interface PosTab {
   tabId: string;
-  sale: Sale;
+  items: LocalCartItem[];
   selectedCustomer: Customer | null;
+  discountAmount: number;
+  taxId: string | null;
   /** True once "Check all" has succeeded for the cart's current contents.
-   *  Reset to false any time the cart/customer changes (see patchActiveSale). */
+   *  Reset to false any time the cart/customer changes (see updateActiveTab). */
   safetyChecked: boolean;
   /** Per-line-item highest-severity outcome from the last check, for the small
    *  status dot on each row. Cleared together with safetyChecked. */
@@ -60,11 +70,12 @@ interface PosTab {
 
 type DiscountMode = 'amount' | 'percent';
 
-/** localStorage key for restoring open POS tabs across page reloads. */
-const POS_TABS_STORAGE_KEY = 'safepharma_pos_open_tabs';
+/** localStorage key the whole local cart lives under — the source of truth
+ *  is the browser, not the database, until the pharmacist actually pays. */
+const POS_TABS_STORAGE_KEY = 'safepharma_pos_local_tabs';
 
 interface StoredPosTabs {
-  tabIds: string[];
+  tabs: PosTab[];
   activeTabId: string;
 }
 
@@ -90,26 +101,35 @@ export class Pos implements OnInit {
   private readonly customerApi = inject(CustomersApiService);
   private readonly safetyApi = inject(PatientSafetyService);
 
-  // ---- tabs ----
+  // ---- tabs (each one is a purely local cart until checkout) ----
   protected readonly tabs = signal<PosTab[]>([]);
   protected readonly activeTabId = signal<string>('');
   protected readonly activeTab = computed(
     () => this.tabs().find((t) => t.tabId === this.activeTabId()) ?? null,
   );
-  protected readonly sale = computed(() => this.activeTab()?.sale ?? null);
+
+  /** A Sale-shaped read model built from the active tab's local cart, purely
+   *  so the rest of this component/template can keep reading `sale()` like
+   *  it always has. `id`/`invoiceNumber` are placeholders — nothing real
+   *  exists until checkout() succeeds. */
+  protected readonly sale = computed<Sale | null>(() => {
+    const tab = this.activeTab();
+    if (!tab) return null;
+    return this.buildVirtualSale(tab);
+  });
   protected readonly selectedCustomer = computed(() => this.activeTab()?.selectedCustomer ?? null);
   protected readonly itemCheckStatus = computed(() => this.activeTab()?.itemCheckStatus ?? {});
 
-  /** Keeps the tab bar in sync with localStorage so a page reload can restore it
-   *  (requirement: tabs persist until the user explicitly closes them). */
+  /** Persists the whole cart (not just an id) to localStorage — a reload
+   *  restores tabs directly from here, with no backend round trip, since
+   *  nothing about an in-progress cart exists in the database yet. */
   private readonly persistTabsEffect = effect(() => {
-    const tabIds = this.tabs().map((t) => t.tabId);
-    const active = this.activeTabId();
-    if (tabIds.length === 0) {
+    const tabs = this.tabs();
+    if (tabs.length === 0) {
       localStorage.removeItem(POS_TABS_STORAGE_KEY);
       return;
     }
-    const payload: StoredPosTabs = { tabIds, activeTabId: active };
+    const payload: StoredPosTabs = { tabs, activeTabId: this.activeTabId() };
     localStorage.setItem(POS_TABS_STORAGE_KEY, JSON.stringify(payload));
   });
 
@@ -215,45 +235,65 @@ export class Pos implements OnInit {
     });
   }
 
-  /** Reopens whatever tabs were left open before the last reload (each tab is
-   *  just a draft Sale id, so we re-fetch the live state from the backend).
-   *  Falls back to a single new tab if nothing was stored or every stored
-   *  sale turned out to be gone/finalized already. */
+  /** Reopens whatever tabs were left open before the last reload. Everything
+   *  needed is already in localStorage — there is nothing to fetch from the
+   *  backend, since an in-progress cart was never sent there in the first
+   *  place. Falls back to a single new tab if nothing was stored. */
   private restoreTabsOrOpenNew(): void {
     const raw = localStorage.getItem(POS_TABS_STORAGE_KEY);
     const stored: StoredPosTabs | null = raw ? JSON.parse(raw) : null;
 
-    if (!stored || stored.tabIds.length === 0) {
+    if (!stored || stored.tabs.length === 0) {
       this.openNewTab();
       return;
     }
 
-    forkJoin(stored.tabIds.map((id) => this.service.getSaleById(id).pipe(catchError(() => of(null)))))
-      .subscribe((responses) => {
-        const restored: PosTab[] = [];
-        responses.forEach((res) => {
-          const openSale = res?.success && res.data && res.data.status === SaleStatus.Open ? res.data : null;
-          if (!openSale) return;
-          restored.push({
-            tabId: openSale.id,
-            sale: openSale,
-            selectedCustomer: openSale.customerId
-              ? { id: openSale.customerId, name: openSale.customerName, phone: '' }
-              : null,
-            safetyChecked: false,
-            itemCheckStatus: {},
-          });
-        });
+    this.tabs.set(stored.tabs);
+    const stillActive = stored.tabs.find((t) => t.tabId === stored.activeTabId);
+    this.activeTabId.set(stillActive ? stillActive.tabId : stored.tabs[0].tabId);
+  }
 
-        if (restored.length === 0) {
-          this.openNewTab();
-          return;
-        }
+  /** Builds the read-only Sale-shaped view the rest of the component/template
+   *  works off of, from the active tab's local cart. */
+  private buildVirtualSale(tab: PosTab): Sale {
+    const items: SaleItem[] = tab.items.map((i) => ({
+      id: i.id,
+      pharmacyMedicineId: i.pharmacyMedicineId,
+      medicineName: i.medicineName,
+      customerId: i.customerId,
+      customerName: i.customerName,
+      batchId: '',
+      batchNumber: '',
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      discount: i.discount,
+      taxAmount: i.taxAmount,
+      lineTotal: i.unitPrice * i.quantity - i.discount + i.taxAmount,
+    }));
 
-        this.tabs.set(restored);
-        const stillActive = restored.find((t) => t.tabId === stored.activeTabId);
-        this.activeTabId.set(stillActive ? stillActive.tabId : restored[0].tabId);
-      });
+    const subTotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
+    const taxRate = tab.taxId ? (this.taxes().find((t) => t.id === tab.taxId)?.rate ?? 0) : 0;
+    const taxAmount = Math.round(subTotal * (taxRate / 100) * 100) / 100;
+    const grandTotal = subTotal - tab.discountAmount + taxAmount;
+
+    return {
+      id: '',
+      invoiceNumber: 'Draft',
+      customerId: tab.selectedCustomer?.id ?? null,
+      customerName: tab.selectedCustomer?.name ?? '',
+      paymentMethod: 'Cash',
+      subTotal,
+      discount: tab.discountAmount,
+      tax: taxAmount,
+      grandTotal,
+      amountPaidByCash: 0,
+      amountPaidByCard: 0,
+      amountPaid: 0,
+      change: 0,
+      status: SaleStatus.Open,
+      items,
+      createdAt: '',
+    };
   }
 
   // ================= click-outside-to-close =================
@@ -275,25 +315,20 @@ export class Pos implements OnInit {
 
   // ================= tabs =================
 
+  /** Opens a purely local, empty cart. Nothing is created on the backend —
+   *  a tab only ever touches the database once, at checkout. */
   openNewTab(): void {
-    this.service.createDraftSale().subscribe({
-      next: (res) => {
-        if (res.success && res.data) {
-          const tab: PosTab = {
-            tabId: res.data.id,
-            sale: res.data,
-            selectedCustomer: null,
-            safetyChecked: false,
-            itemCheckStatus: {},
-          };
-          this.tabs.update((list) => [...list, tab]);
-          this.activeTabId.set(tab.tabId);
-        } else {
-          this.toast.show(res.message || 'Could not start a new sale.', 'error');
-        }
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not start a new sale.'), 'error'),
-    });
+    const tab: PosTab = {
+      tabId: crypto.randomUUID(),
+      items: [],
+      selectedCustomer: null,
+      discountAmount: 0,
+      taxId: null,
+      safetyChecked: false,
+      itemCheckStatus: {},
+    };
+    this.tabs.update((list) => [...list, tab]);
+    this.activeTabId.set(tab.tabId);
   }
 
   switchTab(tabId: string): void {
@@ -301,30 +336,22 @@ export class Pos implements OnInit {
     this.syncExcludedCustomerIds(this.selectedCustomer());
   }
 
+  /** The X button on a tab. Since nothing about an in-progress cart is ever
+   *  persisted, there's nothing to cancel/delete on the backend — closing a
+   *  tab just discards the local cart. */
   closeTab(tabId: string, event: Event): void {
     event.stopPropagation();
     const tab = this.tabs().find((t) => t.tabId === tabId);
     if (!tab) return;
 
-    if (tab.sale.status !== SaleStatus.Open) {
-      this.removeTabLocally(tabId);
-      return;
-    }
-    if (
-      tab.sale.items.length > 0 &&
-      !confirm(`Close ${tab.sale.invoiceNumber}? This will cancel the draft sale.`)
-    ) {
+    if (tab.items.length > 0 && !confirm('Close this tab? The cart will be discarded.')) {
       return;
     }
 
-    this.service.cancelSale(tab.tabId).subscribe({
-      next: () => this.removeTabLocally(tabId),
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not close this tab.'), 'error'),
-    });
+    this.removeTabLocally(tabId);
   }
 
-  /** Removes a tab from local state only (assumes the backend sale is already
-   *  in its final state — cancelled or completed). Opens a fresh tab if none remain. */
+  /** Removes a tab from local state. Opens a fresh tab if none remain. */
   private removeTabLocally(tabId: string): void {
     const remaining = this.tabs().filter((t) => t.tabId !== tabId);
     this.tabs.set(remaining);
@@ -337,26 +364,16 @@ export class Pos implements OnInit {
     }
   }
 
-  /** Replace the active tab's sale snapshot with a fresh one from the API.
-   *  Any cart-affecting change invalidates the previous safety check — the
-   *  pharmacist must run "Check all" again before Pay unlocks. */
-  private patchActiveSale(updated: Sale): void {
+  /** Applies a local mutation to the active tab's cart. Any cart-affecting
+   *  change invalidates the previous safety check — the pharmacist must run
+   *  "Check all" again before Pay unlocks. */
+  private updateActiveTab(patch: (tab: PosTab) => PosTab): void {
     const id = this.activeTabId();
     this.tabs.update((list) =>
       list.map((t) =>
-        t.tabId === id
-          ? { ...t, sale: updated, safetyChecked: false, itemCheckStatus: {} }
-          : t,
+        t.tabId === id ? { ...patch(t), safetyChecked: false, itemCheckStatus: {} } : t,
       ),
     );
-  }
-
-  private patchActiveCustomer(customer: Customer | null): void {
-    const id = this.activeTabId();
-    this.tabs.update((list) =>
-      list.map((t) => (t.tabId === id ? { ...t, selectedCustomer: customer } : t)),
-    );
-    this.updateExcludedCustomerIds(customer);
   }
 
   private updateExcludedCustomerIds(customer: Customer | null): void {
@@ -543,20 +560,12 @@ export class Pos implements OnInit {
       });
   }
 
+  /** Purely local — there's no backend Sale to sync a customer onto until
+   *  checkout, so this just updates the active tab's cart state. */
   selectCustomer(customer: Customer | null): void {
     this.showCustomerDropdown.set(false);
-    const currentSale = this.sale();
-    if (!currentSale) return;
-
-    this.patchActiveCustomer(customer);
-    this.service
-      .setSaleCustomer(currentSale.id, { customerId: customer ? customer.id : EMPTY_GUID })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error'),
-      });
+    this.updateActiveTab((t) => ({ ...t, selectedCustomer: customer }));
+    this.updateExcludedCustomerIds(customer);
   }
 
   // ================= product search =================
@@ -570,32 +579,64 @@ export class Pos implements OnInit {
     if (this.query().trim().length >= 1) this.searchOpen.set(true);
   }
 
+  /** Adding an item only ever does a read-only availability/price check
+   *  against the backend (see PosService.getAvailability) — the line itself
+   *  stays purely local until checkout. */
   addToCart(item: MedicineSearchResult): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const tab = this.activeTab();
+    if (!tab) return;
 
-    const customer = this.selectedCustomer();
-    this.service
-      .addItemToSale(currentSale.id, {
-        pharmacyMedicineId: item.pharmacyMedicineId,
-        customerId: customer ? customer.id : undefined,
-        quantity: 1,
-        discount: 0,
-        taxAmount: 0,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) {
-            this.patchActiveSale(res.data);
-            this.query.set('');
-            this.searchOpen.set(false);
-          } else {
-            this.toast.show(res.message || 'Could not add item.', 'error');
-          }
-        },
-        error: (err) =>
-          this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
-      });
+    this.service.getAvailability(item.pharmacyMedicineId).subscribe({
+      next: (res) => {
+        if (!res.success || !res.data) {
+          this.toast.show(res.message || 'Could not check availability.', 'error');
+          return;
+        }
+
+        const available = res.data.availableQuantity;
+        if (available <= 0) {
+          this.toast.show('No available stock for this medicine.', 'error');
+          return;
+        }
+
+        const customer = this.selectedCustomer();
+        const customerId = customer?.id ?? null;
+        const existing = tab.items.find(
+          (i) => i.pharmacyMedicineId === item.pharmacyMedicineId && i.customerId === customerId,
+        );
+        const nextQuantity = (existing?.quantity ?? 0) + 1;
+
+        if (nextQuantity > available) {
+          this.toast.show(`Only ${available} units available.`, 'error');
+          return;
+        }
+
+        const unitPrice = res.data.unitPrice;
+        this.updateActiveTab((t) => ({
+          ...t,
+          items: existing
+            ? t.items.map((i) => (i.id === existing.id ? { ...i, quantity: nextQuantity } : i))
+            : [
+                ...t.items,
+                {
+                  id: crypto.randomUUID(),
+                  pharmacyMedicineId: item.pharmacyMedicineId,
+                  medicineName: item.tradeNameEn,
+                  customerId,
+                  customerName: customer?.name ?? '',
+                  quantity: 1,
+                  unitPrice,
+                  discount: 0,
+                  taxAmount: 0,
+                },
+              ],
+        }));
+
+        this.query.set('');
+        this.searchOpen.set(false);
+      },
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not add item to cart.'), 'error'),
+    });
   }
 
   /** Enter key in the search box = barcode scanner behavior: if there's exactly
@@ -624,36 +665,25 @@ export class Pos implements OnInit {
     item: SaleItem,
     changes: Partial<Pick<SaleItem, 'quantity' | 'discount' | 'taxAmount'>>,
   ): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    if (changes.quantity !== undefined && changes.quantity <= 0) return;
 
-    this.service
-      .updateSaleItem(currentSale.id, item.id, {
-        customerId: item.customerId ?? undefined,
-        quantity: changes.quantity ?? item.quantity,
-        discount: changes.discount ?? item.discount,
-        taxAmount: changes.taxAmount ?? item.taxAmount,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-          else this.toast.show(res.message || 'Could not update item.', 'error');
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not update item.'), 'error'),
-      });
+    this.updateActiveTab((t) => ({
+      ...t,
+      items: t.items.map((i) =>
+        i.id === item.id
+          ? {
+              ...i,
+              quantity: changes.quantity ?? i.quantity,
+              discount: changes.discount ?? i.discount,
+              taxAmount: changes.taxAmount ?? i.taxAmount,
+            }
+          : i,
+      ),
+    }));
   }
 
   removeItem(item: SaleItem): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
-
-    this.service.removeSaleItem(currentSale.id, item.id).subscribe({
-      next: (res) => {
-        if (res.success && res.data) this.patchActiveSale(res.data);
-        else this.toast.show(res.message || 'Could not remove item.', 'error');
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not remove item.'), 'error'),
-    });
+    this.updateActiveTab((t) => ({ ...t, items: t.items.filter((i) => i.id !== item.id) }));
   }
 
   toggleItemCustomerPicker(itemId: string): void {
@@ -662,22 +692,14 @@ export class Pos implements OnInit {
 
   selectCartItemCustomer(item: SaleItem, customer: Customer | null): void {
     this.openItemCustomerPickerId.set(null);
-    const currentSale = this.sale();
-    if (!currentSale) return;
-
-    this.service
-      .updateSaleItem(currentSale.id, item.id, {
-        customerId: customer ? customer.id : undefined,
-        quantity: item.quantity,
-        discount: item.discount,
-        taxAmount: item.taxAmount,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error'),
-      });
+    this.updateActiveTab((t) => ({
+      ...t,
+      items: t.items.map((i) =>
+        i.id === item.id
+          ? { ...i, customerId: customer?.id ?? null, customerName: customer?.name ?? '' }
+          : i,
+      ),
+    }));
   }
 
   // ================= per-row discount (amount or percent, always sent as $) =================
@@ -754,6 +776,7 @@ export class Pos implements OnInit {
     this.showDiscountEditor.set(false);
   }
 
+  /** Purely local — nothing to PATCH on a backend Sale that doesn't exist yet. */
   saveDiscount(): void {
     const currentSale = this.sale();
     if (!currentSale) return;
@@ -762,23 +785,20 @@ export class Pos implements OnInit {
     const dollarAmount =
       this.discountMode() === 'percent' ? Math.round(currentSale.subTotal * raw) / 100 : raw;
 
+    if (dollarAmount < 0) {
+      this.toast.show('Discount cannot be negative.', 'error');
+      return;
+    }
+    if (dollarAmount > currentSale.subTotal) {
+      this.toast.show('Discount cannot exceed the sale subtotal.', 'error');
+      return;
+    }
+
     this.savingDiscount.set(true);
-    this.service.applyDiscount(currentSale.id, { discountAmount: dollarAmount }).subscribe({
-      next: (res) => {
-        this.savingDiscount.set(false);
-        if (res.success && res.data) {
-          this.patchActiveSale(res.data);
-          this.showDiscountEditor.set(false);
-          this.toast.show('Discount applied.', 'success');
-        } else {
-          this.toast.show(res.message || 'Could not apply discount.', 'error');
-        }
-      },
-      error: (err) => {
-        this.savingDiscount.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not apply discount.'), 'error');
-      },
-    });
+    this.updateActiveTab((t) => ({ ...t, discountAmount: dollarAmount }));
+    this.savingDiscount.set(false);
+    this.showDiscountEditor.set(false);
+    this.toast.show('Discount applied.', 'success');
   }
 
   // ================= sale-level tax =================
@@ -794,48 +814,30 @@ export class Pos implements OnInit {
     this.showTaxEditor.set(false);
   }
 
+  /** Purely local — nothing to PATCH on a backend Sale that doesn't exist yet. */
   saveTax(): void {
     const currentSale = this.sale();
     const taxId = this.taxInput();
     if (!currentSale || !taxId) return;
 
     this.savingTax.set(true);
-    this.service.applyTax(currentSale.id, { taxId }).subscribe({
-      next: (res) => {
-        this.savingTax.set(false);
-        if (res.success && res.data) {
-          this.patchActiveSale(res.data);
-          this.showTaxEditor.set(false);
-          this.toast.show('Tax applied.', 'success');
-        } else {
-          this.toast.show(res.message || 'Could not apply tax.', 'error');
-        }
-      },
-      error: (err) => {
-        this.savingTax.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not apply tax.'), 'error');
-      },
-    });
+    this.updateActiveTab((t) => ({ ...t, taxId }));
+    this.savingTax.set(false);
+    this.showTaxEditor.set(false);
+    this.toast.show('Tax applied.', 'success');
   }
 
   // ================= cancel / clear =================
 
+  /** Nothing exists server-side to cancel yet — this just discards the local
+   *  cart and drops the tab (same end state as before, no API call needed). */
   cancelSale(): void {
     const currentSale = this.sale();
-    if (!currentSale) return;
-    if (currentSale.items.length > 0 && !confirm('Cancel this sale and clear the cart?')) return;
+    if (!currentSale || currentSale.items.length === 0) return;
+    if (!confirm('Cancel this sale and clear the cart?')) return;
 
-    this.service.cancelSale(currentSale.id).subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.toast.show('Sale cancelled.', 'success');
-          this.removeTabLocally(this.activeTabId());
-        } else {
-          this.toast.show(res.message || 'Could not cancel sale.', 'error');
-        }
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not cancel sale.'), 'error'),
-    });
+    this.toast.show('Sale cancelled.', 'success');
+    this.removeTabLocally(this.activeTabId());
   }
 
   clearCart(): void {
@@ -843,16 +845,8 @@ export class Pos implements OnInit {
     if (!currentSale || currentSale.items.length === 0) return;
     if (!confirm('Remove all items from this cart?')) return;
 
-    const itemIds = currentSale.items.map((i) => i.id);
-    from(itemIds)
-      .pipe(concatMap((itemId) => this.service.removeSaleItem(currentSale.id, itemId)))
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not clear the cart.'), 'error'),
-        complete: () => this.toast.show('Cart cleared.', 'success'),
-      });
+    this.updateActiveTab((t) => ({ ...t, items: [] }));
+    this.toast.show('Cart cleared.', 'success');
   }
 
   // ================= AI patient safety check =================
@@ -860,9 +854,7 @@ export class Pos implements OnInit {
   /** Which customer a line item's safety check should run against: its own
    *  per-line customer if one was picked, otherwise the sale's customer. */
   private effectiveCustomerId(item: SaleItem): string | null {
-    if (item.customerId && item.customerId !== EMPTY_GUID) return item.customerId;
-    const saleCustomerId = this.sale()?.customerId;
-    return saleCustomerId && saleCustomerId !== EMPTY_GUID ? saleCustomerId : null;
+    return item.customerId || this.sale()?.customerId || null;
   }
 
   private toneFor(result: PatientSafetyResult): 'ok' | 'warn' | 'danger' {
@@ -890,7 +882,10 @@ export class Pos implements OnInit {
     this.showSafetyModal.set(false);
   }
 
-  /** Per-line "Check" button — validates a single cart line against its own customer. */
+  /** Per-line "Check" button — validates a single cart line against its own
+   *  customer. `item.id` is just this line's local client id — the AI
+   *  endpoint only uses it as an opaque correlation token, so this works
+   *  identically whether or not the line has ever been persisted. */
   checkItem(item: SaleItem): void {
     const customerId = this.effectiveCustomerId(item);
     if (!customerId) {
@@ -1015,7 +1010,7 @@ export class Pos implements OnInit {
       });
   }
 
-  // ================= payment =================
+  // ================= payment / checkout =================
 
   openPaymentModal(method: PaymentMethodChoice): void {
     const currentSale = this.sale();
@@ -1033,18 +1028,37 @@ export class Pos implements OnInit {
     this.showPaymentModal.set(false);
   }
 
+  /** The only moment the cart ever touches the database: everything the
+   *  pharmacist built up locally is sent in one call, which creates the Sale,
+   *  adds every item, applies discount/tax, and records payment atomically. */
   confirmPayment(dto: PaySaleDto): void {
+    const tab = this.activeTab();
     const currentSale = this.sale();
-    if (!currentSale) return;
+    if (!tab || !currentSale || currentSale.items.length === 0) return;
+
+    const checkoutDto: CheckoutDto = {
+      customerId: tab.selectedCustomer?.id,
+      items: tab.items.map((i) => ({
+        pharmacyMedicineId: i.pharmacyMedicineId,
+        customerId: i.customerId ?? undefined,
+        quantity: i.quantity,
+        discount: i.discount,
+        taxAmount: i.taxAmount,
+      })),
+      discountAmount: tab.discountAmount,
+      taxId: tab.taxId ?? undefined,
+      amountPaidByCash: dto.amountPaidByCash,
+      amountPaidByCard: dto.amountPaidByCard,
+    };
 
     this.payingInProgress.set(true);
-    this.service.pay(currentSale.id, dto).subscribe({
+    this.service.checkout(checkoutDto).subscribe({
       next: (res) => {
         this.payingInProgress.set(false);
         if (res.success && res.data) {
           this.showPaymentModal.set(false);
           this.toast.show(`Sale ${res.data.invoiceNumber} completed successfully.`, 'success');
-          // Drop this finished tab and open a fresh draft in its place.
+          // Drop this finished tab and open a fresh empty one in its place.
           const finishedTabId = this.activeTabId();
           this.tabs.update((list) => list.filter((t) => t.tabId !== finishedTabId));
           this.openNewTab();
@@ -1058,6 +1072,7 @@ export class Pos implements OnInit {
       },
     });
   }
+
   onRelativeSelected(relative: any) {
     console.log('Selected relative:', relative);
     // اعمل اللي انت عايزه بالبيانات دي

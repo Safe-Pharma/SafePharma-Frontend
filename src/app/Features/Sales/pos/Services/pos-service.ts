@@ -6,6 +6,7 @@ import { GeneralResult } from '../../../../Core/Models/general-result.model';
 import {
   ApplySaleDiscountDto,
   ApplySaleTaxDto,
+  CheckoutDto,
   Customer,
   CreateSaleItemsDto,
   MedicineSearchResult,
@@ -13,6 +14,7 @@ import {
   PaySaleDto,
   Sale,
   SetSaleCustomerDto,
+  StockAvailability,
   UpdateSaleItemDto,
 } from '../Model/pos.models';
 
@@ -80,6 +82,13 @@ export class PosService {
     return this.http.post<GeneralResult<Sale>>(`${this.saleApi}/${saleId}/cancel`, {});
   }
 
+  /** Hard-deletes an untouched Open draft (used when the X button on an empty
+   *  POS tab is clicked) — actually removes the row, unlike cancelSale which
+   *  just marks it Cancelled. Only works on the backend while status is Open. */
+  deleteDraftSale(saleId: string): Observable<GeneralResult<null>> {
+    return this.http.delete<GeneralResult<null>>(`${this.saleApi}/${saleId}`);
+  }
+
   setSaleCustomer(saleId: string, dto: SetSaleCustomerDto): Observable<GeneralResult<Sale>> {
     return this.http.patch<GeneralResult<Sale>>(`${this.saleApi}/${saleId}/customer`, dto);
   }
@@ -89,4 +98,19 @@ export class PosService {
       if (search) params = params.set('search', search);
       return this.http.get<Customer[]>(this.customersApi , { params });
     }
+
+  /** Read-only stock/price preview for a medicine, used while the cart is
+   *  still purely local — never touches Sales/SaleItems. */
+  getAvailability(pharmacyMedicineId: string): Observable<GeneralResult<StockAvailability>> {
+    return this.http.get<GeneralResult<StockAvailability>>(
+      `${this.saleApi}/availability/${pharmacyMedicineId}`,
+    );
+  }
+
+  /** Submits the whole local cart at once: creates the Sale, adds every item,
+   *  applies discount/tax, and records payment — the only point at which the
+   *  cart actually touches the database. */
+  checkout(dto: CheckoutDto): Observable<GeneralResult<Sale>> {
+    return this.http.post<GeneralResult<Sale>>(`${this.saleApi}/checkout`, dto);
+  }
 }
