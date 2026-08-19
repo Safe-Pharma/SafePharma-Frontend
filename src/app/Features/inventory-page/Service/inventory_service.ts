@@ -1,6 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
+interface newStockBatchDto {
+  batchId: string;
+  newStock: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -14,9 +18,9 @@ export class InventoryService {
     console.log('Fetching inventory data from:', this.BaseUrl);
     return this.http.get<any>(this.BaseUrl).pipe(map((response) => response.data));
   }
-  editBatchStock(id: string, newStock: number): Observable<number> {
-    const safeId = encodeURIComponent(id ?? '');
-    return this.http.put<any>(`${this.BaseUrl}${safeId}?newStock=${newStock}`, {});
+  editBatchStock(newStockBatch: newStockBatchDto): Observable<number> {
+    console.log('Updating batch stock with data:', newStockBatch);
+    return this.http.put<any>(`${this.BaseUrl}`, newStockBatch);
   }
 
   deleteBatch(id: string): Observable<void> {
