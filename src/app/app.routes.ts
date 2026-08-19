@@ -115,6 +115,14 @@ export const routes: Routes = [
           title: 'Suppliers',
         },
       },
+       {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./Features/PharmacyDashborad/Components/pharmacy_dashborad').then((m) => m.DashboardPage),
+        data: {
+          title: 'Dashboard',
+        },
+      },
       {
         path: 'purchases',
         loadComponent: () =>
