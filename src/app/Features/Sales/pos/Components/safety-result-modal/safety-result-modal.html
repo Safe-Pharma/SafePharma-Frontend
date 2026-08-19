@@ -1,0 +1,169 @@
+<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+  <div
+    class="relative grid w-full max-w-lg gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="absolute right-4 top-4 rounded-sm text-slate-400 opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      (click)="onClose()"
+      aria-label="Close"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-4 w-4"
+      >
+        <path d="M18 6 6 18"></path>
+        <path d="m6 6 12 12"></path>
+      </svg>
+    </button>
+
+    <div>
+      <h2 class="text-lg font-semibold leading-none tracking-tight text-slate-900">
+        Medicine safety check
+      </h2>
+      <p class="mt-1.5 text-sm text-slate-500">
+        Grounded in official drug labeling (OpenFDA / DailyMed).
+      </p>
+    </div>
+
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center gap-3 py-10 text-slate-400">
+        <svg class="h-6 w-6 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"
+          ></path>
+        </svg>
+        <p class="text-sm">Checking with official medical sources…</p>
+      </div>
+    } @else if (errorMessage()) {
+      <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ errorMessage() }}
+      </div>
+    } @else {
+      <div class="grid gap-4">
+        @for (card of cards(); track card.result.patientRef) {
+          <div
+            class="rounded-xl border p-4"
+            [class.border-emerald-200]="card.decisionTone === 'ok'"
+            [class.bg-emerald-50]="card.decisionTone === 'ok'"
+            [class.border-amber-200]="card.decisionTone === 'warn'"
+            [class.bg-amber-50]="card.decisionTone === 'warn'"
+            [class.border-red-200]="card.decisionTone === 'danger'"
+            [class.bg-red-50]="card.decisionTone === 'danger'"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-slate-900">{{ card.patientName }}</p>
+                @if (card.result.overallDecision) {
+                  <p
+                    class="mt-0.5 text-sm font-medium"
+                    [class.text-emerald-700]="card.decisionTone === 'ok'"
+                    [class.text-amber-700]="card.decisionTone === 'warn'"
+                    [class.text-red-700]="card.decisionTone === 'danger'"
+                  >
+                    {{ card.result.overallDecision }}
+                  </p>
+                }
+              </div>
+              @if (card.result.checkSucceeded && card.result.riskScore !== null) {
+                <span
+                  class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                  [class.bg-emerald-100]="card.decisionTone === 'ok'"
+                  [class.text-emerald-700]="card.decisionTone === 'ok'"
+                  [class.bg-amber-100]="card.decisionTone === 'warn'"
+                  [class.text-amber-700]="card.decisionTone === 'warn'"
+                  [class.bg-red-100]="card.decisionTone === 'danger'"
+                  [class.text-red-700]="card.decisionTone === 'danger'"
+                >
+                  Risk {{ card.result.riskScore }}/100
+                </span>
+              }
+            </div>
+
+            @if (!card.result.checkSucceeded) {
+              <p class="mt-2 text-sm text-amber-700">
+                {{ card.result.failureReason || 'The safety check could not be completed.' }}
+              </p>
+            } @else {
+              @if (card.result.issues.length > 0) {
+                <ul class="mt-3 grid gap-2">
+                  @for (issue of card.result.issues; track issue.reason) {
+                    <li class="rounded-lg bg-white/70 border border-black/5 px-3 py-2 text-xs">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="rounded px-1.5 py-0.5 font-semibold"
+                          [class.bg-red-100]="severityWeight(issue.severity) === 3"
+                          [class.text-red-700]="severityWeight(issue.severity) === 3"
+                          [class.bg-amber-100]="severityWeight(issue.severity) === 2"
+                          [class.text-amber-700]="severityWeight(issue.severity) === 2"
+                          [class.bg-slate-100]="severityWeight(issue.severity) === 1"
+                          [class.text-slate-600]="severityWeight(issue.severity) === 1"
+                        >
+                          {{ issue.severity }}
+                        </span>
+                        <span class="font-medium text-slate-700">{{ issue.type }}</span>
+                      </div>
+                      <p class="mt-1 text-slate-600 leading-relaxed">{{ issue.reason }}</p>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="mt-3 text-sm text-emerald-700">
+                  No warnings found in official drug labeling.
+                </p>
+              }
+
+              <p class="mt-3 text-sm font-medium text-slate-800">{{ card.result.recommendation }}</p>
+
+              @if (card.result.suggestedAlternatives.length > 0) {
+                <p class="mt-2 text-xs text-slate-500">
+                  Suggested alternatives:
+                  @for (
+                    alt of card.result.suggestedAlternatives;
+                    track alt.drugName;
+                    let last = $last
+                  ) {
+                    {{ alt.drugName }}{{ last ? '' : ', ' }}
+                  }
+                </p>
+              }
+
+              @if (card.result.sources.length > 0) {
+                <p class="mt-2 text-[11px] uppercase tracking-wide text-slate-400">
+                  Sources: {{ card.result.sources.join(', ') }}
+                </p>
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="flex justify-end">
+      <button
+        type="button"
+        (click)="onClose()"
+        class="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
