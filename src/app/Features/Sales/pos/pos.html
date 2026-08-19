@@ -287,6 +287,53 @@
                     </p>
                   </div>
 
+                  <!-- AI safety check for this line item -->
+                  <button
+                    type="button"
+                    (click)="stop($event); checkItem(item)"
+                    [disabled]="checkingItemId() === item.id"
+                    [title]="'Check ' + item.medicineName + ' against this customer’s medical profile'"
+                    class="relative shrink-0 flex h-8 w-8 items-center justify-center rounded-lg border text-slate-500 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+                    [class.border-emerald-200]="itemCheckStatus()[item.id] === 'ok'"
+                    [class.text-emerald-600]="itemCheckStatus()[item.id] === 'ok'"
+                    [class.border-amber-200]="itemCheckStatus()[item.id] === 'warn'"
+                    [class.text-amber-600]="itemCheckStatus()[item.id] === 'warn'"
+                    [class.border-red-200]="itemCheckStatus()[item.id] === 'danger'"
+                    [class.text-red-600]="itemCheckStatus()[item.id] === 'danger'"
+                    [class.border-slate-200]="!itemCheckStatus()[item.id]"
+                  >
+                    @if (checkingItemId() === item.id) {
+                      <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"
+                        ></path>
+                      </svg>
+                    } @else {
+                      <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                    }
+                  </button>
+
                   <div class="relative shrink-0" (click)="stop($event)">
                     <button
                       (click)="toggleItemCustomerPicker(item.id)"
@@ -497,31 +544,95 @@
             </p>
           </div>
 
+          <!-- AI safety check for the whole cart — required before Pay unlocks -->
           <button
-            [disabled]="!sale() || sale()!.items.length === 0"
+            type="button"
+            [disabled]="!sale() || sale()!.items.length === 0 || checkingAll()"
+            (click)="checkAll()"
+            class="mt-4 w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            [class.border-emerald-200]="activeTab()?.safetyChecked"
+            [class.bg-emerald-50]="activeTab()?.safetyChecked"
+            [class.text-emerald-700]="activeTab()?.safetyChecked"
+            [class.border-blue-200]="!activeTab()?.safetyChecked"
+            [class.bg-blue-50]="!activeTab()?.safetyChecked"
+            [class.text-blue-700]="!activeTab()?.safetyChecked"
+          >
+            @if (checkingAll()) {
+              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"
+                ></path>
+              </svg>
+              Checking cart…
+            } @else if (activeTab()?.safetyChecked) {
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              Cart checked — safe to pay
+            } @else {
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+              </svg>
+              Check all before payment
+            }
+          </button>
+
+          <button
+            [disabled]="!canPay()"
+            [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
             (click)="openPaymentModal('Cash')"
-            class="mt-4 w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors cursor-pointer"
+            class="mt-2 w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors cursor-pointer"
           >
             Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
           </button>
 
           <div class="grid grid-cols-3 gap-2 mt-2">
             <button
-              [disabled]="!sale() || sale()!.items.length === 0"
+              [disabled]="!canPay()"
+              [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
               (click)="openPaymentModal('Cash')"
               class="flex items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               Cash
             </button>
             <button
-              [disabled]="!sale() || sale()!.items.length === 0"
+              [disabled]="!canPay()"
+              [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
               (click)="openPaymentModal('Card')"
               class="flex items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               Card
             </button>
             <button
-              [disabled]="!sale() || sale()!.items.length === 0"
+              [disabled]="!canPay()"
+              [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
               (click)="openPaymentModal('Mixed')"
               class="flex items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
@@ -633,7 +744,7 @@
     >
       <button
         (click)="stop($event); openDiscountEditor()"
-        [disabled]="!activeTab()?.hasBackendSale"
+        [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
         <svg
@@ -653,7 +764,7 @@
       </button>
       <button
         (click)="stop($event); openTaxEditor()"
-        [disabled]="!activeTab()?.hasBackendSale"
+        [disabled]="!sale()"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
         <svg
@@ -721,13 +832,24 @@
         ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
       </p>
     </div>
-    <button
-      [disabled]="!sale() || sale()!.items.length === 0"
-      (click)="openPaymentModal('Cash')"
-      class="flex-1 bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
-    >
-      Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
-    </button>
+    @if (!activeTab()?.safetyChecked) {
+      <button
+        type="button"
+        [disabled]="!sale() || sale()!.items.length === 0 || checkingAll()"
+        (click)="checkAll()"
+        class="flex-1 border border-blue-200 bg-blue-50 disabled:opacity-50 text-blue-700 font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
+      >
+        {{ checkingAll() ? 'Checking…' : 'Check all' }}
+      </button>
+    } @else {
+      <button
+        [disabled]="!canPay()"
+        (click)="openPaymentModal('Cash')"
+        class="flex-1 bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
+      >
+        Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+      </button>
+    }
   </div>
 </div>
 
@@ -847,5 +969,15 @@
     [customer]="null"
     (closed)="closeCreateCustomerModal()"
     (saved)="onCustomerCreated()"
+  />
+}
+
+@if (showSafetyModal()) {
+  <app-safety-result-modal
+    [results]="safetyResults()"
+    [patientNames]="safetyPatientNames()"
+    [loading]="safetyLoading()"
+    [errorMessage]="safetyError()"
+    (closed)="closeSafetyModal()"
   />
 }

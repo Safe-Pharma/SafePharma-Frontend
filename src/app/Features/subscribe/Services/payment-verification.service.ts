@@ -26,19 +26,28 @@ export class PaymentVerificationService {
     return this.http.post<GeneralResult<string>>(`${this.baseUrl(subscriptionId)}/proof/receipt`, formData);
   }
 
-  // Step 2 — JSON body, referencing the ReceiptUrl returned by uploadReceipt()
+  // Step 2 — the backend reads this with [FromForm], so it must be sent as
+  // multipart/form-data (NOT a JSON body — HttpClient would otherwise
+  // serialize a plain object as JSON, which [FromForm] can't bind at all).
   submitProof(
     subscriptionId: string,
     request: SubmitPaymentProofRequest,
   ): Observable<GeneralResult<PaymentVerificationRead>> {
-    return this.http.post<GeneralResult<PaymentVerificationRead>>(`${this.baseUrl(subscriptionId)}/proof`, request);
+    const formData = new FormData();
+    formData.append('paymentMethod', request.paymentMethod);
+    formData.append('transactionReference', request.transactionReference);
+    formData.append('paymentDate', request.paymentDate);
+    formData.append('paidAmount', request.paidAmount.toString());
+    formData.append('receiptUrl', request.receiptUrl);
+
+    return this.http.post<GeneralResult<PaymentVerificationRead>>(`${this.baseUrl(subscriptionId)}/proof`, formData);
   }
 
   getStatus(subscriptionId: string): Observable<GeneralResult<PaymentVerificationRead>> {
     return this.http.get<GeneralResult<PaymentVerificationRead>>(`${this.baseUrl(subscriptionId)}/status`);
   }
-  
+
   getHistory(subscriptionId: string): Observable<GeneralResult<PaymentVerificationRead[]>> {
-  return this.http.get<GeneralResult<PaymentVerificationRead[]>>(`${this.baseUrl(subscriptionId)}/history`);
-}
+    return this.http.get<GeneralResult<PaymentVerificationRead[]>>(`${this.baseUrl(subscriptionId)}/history`);
+  }
 }

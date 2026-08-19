@@ -43,6 +43,11 @@ export class PosService {
     return this.http.post<GeneralResult<Sale>>(this.saleApi, {});
   }
 
+  /** Used on app start to restore previously-open tabs (see pos.ts persistTabs). */
+  getSaleById(saleId: string): Observable<GeneralResult<Sale>> {
+    return this.http.get<GeneralResult<Sale>>(`${this.saleApi}/${saleId}`);
+  }
+
   addItemToSale(saleId: string, dto: CreateSaleItemsDto): Observable<GeneralResult<Sale>> {
     return this.http.post<GeneralResult<Sale>>(`${this.saleApi}/${saleId}/items`, dto);
   }
