@@ -2,7 +2,10 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from './Service/inventory_service';
-
+interface newStockBatchDto {
+  batchId: string;
+  newStock: number;
+}
 interface Batch {
   id?: string;
   batchNumber: string;
@@ -237,7 +240,12 @@ export class InventoryPage implements OnInit {
 
     const batchId = String(this.selectedBatch?.id ?? '').trim();
 
-    this.inventoryService.editBatchStock(batchId, this.newQuantity).subscribe({
+    const newStockBatchDto: newStockBatchDto = {
+      batchId: batchId,
+      newStock: this.newQuantity,
+    };
+
+    this.inventoryService.editBatchStock(newStockBatchDto).subscribe({
       next: () => {
         this.medicines.update((items) =>
           items.map((medicine) => {

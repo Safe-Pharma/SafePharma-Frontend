@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../Service/inventory_service';
-
+interface newStockBatchDto {
+  batchId: string;
+  newStock: number;
+}
 @Component({
   selector: 'app-batch-details',
   standalone: true,
@@ -38,7 +41,12 @@ export class BatchDetailsComponent {
     if (!this.selectedBatch) return;
 
     const batchId = this.selectedBatch?.id ?? this.selectedBatch?.batchNumber ?? '';
-    this.inventoryService.editBatchStock(batchId, this.newQuantity).subscribe({
+    const newStockBatchDto: newStockBatchDto = {
+      batchId: batchId,
+      newStock: this.newQuantity,
+    };
+
+    this.inventoryService.editBatchStock(newStockBatchDto).subscribe({
       next: () => {
         this.selectedBatch.quantityRemaining = this.newQuantity;
         this.closeEditModal();

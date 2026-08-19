@@ -1,0 +1,80 @@
+/* Owner Dashboard Styles */
+
+:host {
+  display: block;
+}
+
+/* Smooth row hover */
+table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+table tbody tr:hover {
+  background-color: var(--muted);
+}
+
+/* Focus states using theme ring color */
+input:focus,
+select:focus {
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 15%, transparent);
+}
+
+/* Card entrance animation stagger */
+.animate-fade-in-up:nth-child(1) { animation-delay: 0ms; }
+.animate-fade-in-up:nth-child(2) { animation-delay: 60ms; }
+.animate-fade-in-up:nth-child(3) { animation-delay: 120ms; }
+.animate-fade-in-up:nth-child(4) { animation-delay: 180ms; }
+
+/* Custom scrollbar */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--muted);
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Toggle switch smoothness */
+button[class*="rounded-full"] span {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Progress bar animation */
+.transition-all {
+  transition-property: width, background-color;
+}
+
+/* Badge hover subtle lift */
+.inline-flex.items-center.rounded-full {
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Responsive table font sizing */
+@media (max-width: 1024px) {
+  table {
+    font-size: 0.813rem;
+  }
+}
+
+@media (max-width: 640px) {
+  table th,
+  table td {
+    padding: 0.75rem 1rem;
+  }
+}

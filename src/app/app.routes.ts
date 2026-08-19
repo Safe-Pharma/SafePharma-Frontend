@@ -101,10 +101,11 @@ export const routes: Routes = [
         },
       },
       {
-      path: 'users/:id',
-      loadComponent: () =>
-        import('./Features/users/pages/user-details/user-details')
-          .then((m) => m.UserDetailComponent),
+        path: 'users/:id',
+        loadComponent: () =>
+          import('./Features/users/pages/user-details/user-details').then(
+            (m) => m.UserDetailComponent,
+          ),
       },
       { path: 'change-password', component: ChangePassword },
       {
@@ -196,9 +197,7 @@ export const routes: Routes = [
   {
     path: 'portal/login',
     loadComponent: () =>
-      import('./Features/CustomerPortal/Auth/portal-login/portal-login').then(
-        (m) => m.PortalLogin,
-      ),
+      import('./Features/CustomerPortal/Auth/portal-login/portal-login').then((m) => m.PortalLogin),
   },
   {
     path: 'portal/otp',
@@ -254,5 +253,54 @@ export const routes: Routes = [
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
+  },
+  {
+    path: 'portal',
+    canActivate: [portalAuthGuard],
+    canActivateChild: [portalAuthGuard],
+    loadComponent: () =>
+      import('./Features/CustomerPortal/Layout/portal-layout').then((m) => m.PortalLayout),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./Features/CustomerPortal/Components/dashboard/dashboard').then(
+            (m) => m.PortalDashboard,
+          ),
+        data: { title: 'Dashboard' },
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./Features/CustomerPortal/Components/profile/profile').then(
+            (m) => m.PortalProfile,
+          ),
+        data: { title: 'My Profile' },
+      },
+      {
+        path: 'purchases',
+        loadComponent: () =>
+          import('./Features/CustomerPortal/Components/purchase-history/purchase-history').then(
+            (m) => m.PurchaseHistoryPage,
+          ),
+        data: { title: 'Purchase History' },
+      },
+      {
+        path: 'purchases/:id',
+        loadComponent: () =>
+          import('./Features/CustomerPortal/Components/receipt-details/receipt-details').then(
+            (m) => m.ReceiptDetailsPage,
+          ),
+        data: { title: 'Receipt Details' },
+      },
+    ],
+  },
+  {
+    path: 'owner-dashboard',
+    loadComponent: () =>
+      import('./Features/owner-dashboard/owner-dashboard').then(
+        (m) => m.PharmaciesDashboardComponent,
+      ),
+    data: { title: 'Owner Dashboard' },
   },
 ];
