@@ -633,7 +633,7 @@
     >
       <button
         (click)="stop($event); openDiscountEditor()"
-        [disabled]="!sale()"
+        [disabled]="!activeTab()?.hasBackendSale"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
         <svg
@@ -653,7 +653,7 @@
       </button>
       <button
         (click)="stop($event); openTaxEditor()"
-        [disabled]="!sale()"
+        [disabled]="!activeTab()?.hasBackendSale"
         class="flex flex-col items-center justify-center gap-1.5 w-18 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 text-[11px] font-medium disabled:opacity-40 cursor-pointer"
       >
         <svg
