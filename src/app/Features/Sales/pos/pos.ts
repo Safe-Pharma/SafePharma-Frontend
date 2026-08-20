@@ -24,6 +24,8 @@ import { SafetyResultModalComponent } from './Components/safety-result-modal/saf
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { POS_DICT } from './pos.i18n';
 import { TaxesService } from '../../Tax/Services/tax';
 import { AddEditCustomerDialogComponent } from '../../Customer/Components/add-edit-customer-dialog/add-edit-customer-dialog';
 import { CustomersApiService } from '../../Customer/Services/customers-api.service';
@@ -126,6 +128,16 @@ export class Pos implements OnInit, AfterViewInit {
   private readonly customerApi = inject(CustomersApiService);
   private readonly safetyApi = inject(PatientSafetyService);
   private readonly relativesApi = inject(RelativesService);
+  private readonly i18n = inject(I18nService);
+
+  // ---- i18n (see Core/Services/i18n.service.ts + pos.i18n.ts) ----
+  protected readonly lang = this.i18n.lang;
+  protected readonly dir = this.i18n.dir;
+  protected readonly t = (key: string, params?: Record<string, string | number>) =>
+    this.i18n.t(POS_DICT, key, params);
+  protected toggleLanguage(): void {
+    this.i18n.toggle();
+  }
 
   // ---- tabs (each one is a purely local cart until checkout) ----
   protected readonly tabs = signal<PosTab[]>([]);
@@ -326,6 +338,7 @@ export class Pos implements OnInit, AfterViewInit {
   protected readonly rowTaxSelection = signal<Record<string, string>>({});
 
   ngOnInit(): void {
+    this.i18n.loadFromServer();
     this.restoreTabsOrOpenNew();
     this.loadCustomers();
     this.loadRelativesForCustomer(this.selectedCustomer()?.id ?? null);
@@ -627,7 +640,7 @@ export class Pos implements OnInit, AfterViewInit {
         ]);
         this.refreshCustomerSearchResults(this.customers());
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load relatives.'), 'error'),
+      error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.loadRelativesFailed')), 'error'),
     });
   }
 
@@ -782,14 +795,14 @@ export class Pos implements OnInit, AfterViewInit {
       .subscribe({
         next: (res) => {
           if (res.success) {
-            this.toast.show(`${customer.name ?? 'Customer'} added as a relative.`, 'success');
+            this.toast.show(this.t('toast.relativeAdded', { name: customer.name ?? this.t('toast.customerFallback') }), 'success');
             this.loadRelativesForCustomer(currentCustomer!.id);
           } else {
-            this.toast.show(res.message || 'Could not add relative.', 'error');
+            this.toast.show(res.message || this.t('toast.relativeAddFailed'), 'error');
           }
         },
         error: (err) => {
-          this.toast.show(getErrorMessage(err, 'Could not add relative.'), 'error');
+          this.toast.show(getErrorMessage(err, this.t('toast.relativeAddFailed')), 'error');
         },
       });
   }
@@ -814,6 +827,12 @@ export class Pos implements OnInit, AfterViewInit {
     if (this.query().trim().length >= 1) this.searchOpen.set(true);
   }
 
+  /** Search-result display name in whichever language is active — the item
+   *  itself always carries both (tradeNameEn/tradeNameAr) from the backend. */
+  protected medicineDisplayName(item: MedicineSearchResult): string {
+    return this.i18n.localizedName({ nameEn: item.tradeNameEn, nameAr: item.tradeNameAr });
+  }
+
   /** Adding an item only ever does a read-only availability/price check
    *  against the backend (see PosService.getAvailability) — the line itself
    *  stays purely local until checkout. */
@@ -824,13 +843,13 @@ export class Pos implements OnInit, AfterViewInit {
     this.service.getAvailability(item.pharmacyMedicineId).subscribe({
       next: (res) => {
         if (!res.success || !res.data) {
-          this.toast.show(res.message || 'Could not check availability.', 'error');
+          this.toast.show(res.message || this.t('toast.availabilityFailed'), 'error');
           return;
         }
 
         const available = res.data.availableQuantity;
         if (available <= 0) {
-          this.toast.show('No available stock for this medicine.', 'error');
+          this.toast.show(this.t('toast.noStock'), 'error');
           return;
         }
 
@@ -843,7 +862,7 @@ export class Pos implements OnInit, AfterViewInit {
         const itemId = existing?.id ?? crypto.randomUUID();
 
         if (nextQuantity > available) {
-          this.toast.show(`Only ${available} units available.`, 'error');
+          this.toast.show(this.t('toast.onlyAvailable', { available }), 'error');
           return;
         }
 
@@ -857,7 +876,10 @@ export class Pos implements OnInit, AfterViewInit {
                 {
                   id: itemId,
                   pharmacyMedicineId: item.pharmacyMedicineId,
-                  medicineName: item.tradeNameEn,
+                  medicineName: this.i18n.localizedName({
+                    nameEn: item.tradeNameEn,
+                    nameAr: item.tradeNameAr,
+                  }),
                   customerId,
                   customerName: customer?.name ?? '',
                   quantity: 1,
@@ -874,7 +896,7 @@ export class Pos implements OnInit, AfterViewInit {
         this.recentlyAddedItemId.set(itemId);
         this.restoreScannerFocus();
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not add item to cart.'), 'error'),
+      error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.addItemFailed')), 'error'),
     });
   }
 
@@ -1153,11 +1175,11 @@ export class Pos implements OnInit, AfterViewInit {
       this.discountMode() === 'percent' ? Math.round(currentSale.subTotal * raw) / 100 : raw;
 
     if (dollarAmount < 0) {
-      this.toast.show('Discount cannot be negative.', 'error');
+      this.toast.show(this.t('toast.discountNegative'), 'error');
       return;
     }
     if (dollarAmount > currentSale.subTotal) {
-      this.toast.show('Discount cannot exceed the sale subtotal.', 'error');
+      this.toast.show(this.t('toast.discountExceeds'), 'error');
       return;
     }
 
@@ -1165,7 +1187,7 @@ export class Pos implements OnInit, AfterViewInit {
     this.updateActiveTab((t) => ({ ...t, discountAmount: dollarAmount }), false);
     this.savingDiscount.set(false);
     this.showDiscountEditor.set(false);
-    this.toast.show('Discount applied.', 'success');
+    this.toast.show(this.t('toast.discountApplied'), 'success');
   }
 
   // ================= sale-level tax =================
@@ -1192,7 +1214,7 @@ export class Pos implements OnInit, AfterViewInit {
     this.updateActiveTab((t) => ({ ...t, taxId }), false);
     this.savingTax.set(false);
     this.showTaxEditor.set(false);
-    this.toast.show('Tax applied.', 'success');
+    this.toast.show(this.t('toast.taxApplied'), 'success');
   }
 
   // ================= cancel / clear =================
@@ -1204,7 +1226,7 @@ export class Pos implements OnInit, AfterViewInit {
     if (!currentSale || currentSale.items.length === 0) return;
     if (!confirm('Cancel this sale and clear the cart?')) return;
 
-    this.toast.show('Sale cancelled.', 'success');
+    this.toast.show(this.t('toast.saleCancelled'), 'success');
     this.removeTabLocally(this.activeTabId());
     this.restoreScannerFocus(true);
   }
@@ -1334,7 +1356,7 @@ export class Pos implements OnInit, AfterViewInit {
     }
     const customerId = this.effectiveCustomerId(item);
     if (!customerId) {
-      this.toast.show('Assign a customer to this item before checking it.', 'error');
+      this.toast.show(this.t('toast.assignCustomerItem'), 'error');
       return;
     }
 
@@ -1419,7 +1441,7 @@ export class Pos implements OnInit, AfterViewInit {
       return;
     }
     if (skipped > 0) {
-      this.toast.show(`${skipped} item(s) without a customer were skipped.`, 'error');
+      this.toast.show(this.t('toast.itemsSkipped', { count: skipped }), 'error');
     }
 
     const names: Record<string, string> = {};
@@ -1547,19 +1569,19 @@ export class Pos implements OnInit, AfterViewInit {
         this.payingInProgress.set(false);
         if (res.success && res.data) {
           this.showPaymentModal.set(false);
-          this.toast.show(`Sale ${res.data.invoiceNumber} completed successfully.`, 'success');
+          this.toast.show(this.t('toast.saleCompleted', { invoiceNumber: res.data.invoiceNumber }), 'success');
           // Drop this finished tab and open a fresh empty one in its place.
           const finishedTabId = this.activeTabId();
           this.tabs.update((list) => list.filter((t) => t.tabId !== finishedTabId));
           this.openNewTab();
           this.restoreScannerFocus(true);
         } else {
-          this.toast.show(res.message || 'Payment could not be completed.', 'error');
+          this.toast.show(res.message || this.t('toast.paymentFailed'), 'error');
         }
       },
       error: (err) => {
         this.payingInProgress.set(false);
-        this.toast.show(getErrorMessage(err, 'Payment could not be completed.'), 'error');
+        this.toast.show(getErrorMessage(err, this.t('toast.paymentFailed')), 'error');
       },
     });
   }
