@@ -59,6 +59,7 @@ export class PharmacySettings implements OnInit {
     });
     this.userLanguageService.getLanguage().subscribe((res) => {
       this.selectedLanguage = res.message ?? 'en';
+      this.cdr.detectChanges();
     });
   }
   onSubmit(): void {
@@ -119,6 +120,7 @@ export class PharmacySettings implements OnInit {
 
     reader.onload = () => {
       this.previewUrl = reader.result as string;
+      this.cdr.detectChanges();
     };
 
     reader.readAsDataURL(file);
