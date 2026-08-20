@@ -20,6 +20,8 @@ import { SafetyResultModalComponent } from './Components/safety-result-modal/saf
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { POS_DICT } from './pos.i18n';
 import { TaxesService } from '../../Tax/Services/tax';
 import { AddEditCustomerDialogComponent } from '../../Customer/Components/add-edit-customer-dialog/add-edit-customer-dialog';
 import { CustomersApiService } from '../../Customer/Services/customers-api.service';
@@ -101,6 +103,16 @@ export class Pos implements OnInit {
   private readonly customerApi = inject(CustomersApiService);
   private readonly safetyApi = inject(PatientSafetyService);
   private readonly relativesApi = inject(RelativesService);
+  private readonly i18n = inject(I18nService);
+
+  // ---- i18n (see Core/Services/i18n.service.ts + pos.i18n.ts) ----
+  protected readonly lang = this.i18n.lang;
+  protected readonly dir = this.i18n.dir;
+  protected readonly t = (key: string, params?: Record<string, string | number>) =>
+    this.i18n.t(POS_DICT, key, params);
+  protected toggleLanguage(): void {
+    this.i18n.toggle();
+  }
 
   // ---- tabs (each one is a purely local cart until checkout) ----
   protected readonly tabs = signal<PosTab[]>([]);
@@ -230,6 +242,7 @@ export class Pos implements OnInit {
   protected readonly rowTaxSelection = signal<Record<string, string>>({});
 
   ngOnInit(): void {
+    this.i18n.loadFromServer();
     this.restoreTabsOrOpenNew();
     this.loadCustomers();
     this.loadRelativesForCustomer(this.selectedCustomer()?.id ?? null);
@@ -391,7 +404,7 @@ export class Pos implements OnInit {
         this.customers.set(list);
         this.refreshCustomerSearchResults(list);
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error'),
+      error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.loadCustomersFailed')), 'error'),
     });
   }
 
@@ -413,7 +426,7 @@ export class Pos implements OnInit {
         ]);
         this.refreshCustomerSearchResults(this.customers());
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load relatives.'), 'error'),
+      error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.loadRelativesFailed')), 'error'),
     });
   }
 
@@ -480,7 +493,7 @@ export class Pos implements OnInit {
       },
       error: (err) => {
         this.customerSearchLoading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not search customers.'), 'error');
+        this.toast.show(getErrorMessage(err, this.t('toast.searchCustomersFailed')), 'error');
       },
     });
   }
@@ -526,14 +539,14 @@ export class Pos implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.success) {
-            this.toast.show(`${customer.name ?? 'Customer'} added as a relative.`, 'success');
+            this.toast.show(this.t('toast.relativeAdded', { name: customer.name ?? this.t('toast.customerFallback') }), 'success');
             this.loadRelativesForCustomer(currentCustomer!.id);
           } else {
-            this.toast.show(res.message || 'Could not add relative.', 'error');
+            this.toast.show(res.message || this.t('toast.relativeAddFailed'), 'error');
           }
         },
         error: (err) => {
-          this.toast.show(getErrorMessage(err, 'Could not add relative.'), 'error');
+          this.toast.show(getErrorMessage(err, this.t('toast.relativeAddFailed')), 'error');
         },
       });
   }
@@ -557,6 +570,12 @@ export class Pos implements OnInit {
     if (this.query().trim().length >= 1) this.searchOpen.set(true);
   }
 
+  /** Search-result display name in whichever language is active — the item
+   *  itself always carries both (tradeNameEn/tradeNameAr) from the backend. */
+  protected medicineDisplayName(item: MedicineSearchResult): string {
+    return this.i18n.localizedName({ nameEn: item.tradeNameEn, nameAr: item.tradeNameAr });
+  }
+
   /** Adding an item only ever does a read-only availability/price check
    *  against the backend (see PosService.getAvailability) — the line itself
    *  stays purely local until checkout. */
@@ -567,13 +586,13 @@ export class Pos implements OnInit {
     this.service.getAvailability(item.pharmacyMedicineId).subscribe({
       next: (res) => {
         if (!res.success || !res.data) {
-          this.toast.show(res.message || 'Could not check availability.', 'error');
+          this.toast.show(res.message || this.t('toast.availabilityFailed'), 'error');
           return;
         }
 
         const available = res.data.availableQuantity;
         if (available <= 0) {
-          this.toast.show('No available stock for this medicine.', 'error');
+          this.toast.show(this.t('toast.noStock'), 'error');
           return;
         }
 
@@ -585,7 +604,7 @@ export class Pos implements OnInit {
         const nextQuantity = (existing?.quantity ?? 0) + 1;
 
         if (nextQuantity > available) {
-          this.toast.show(`Only ${available} units available.`, 'error');
+          this.toast.show(this.t('toast.onlyAvailable', { available }), 'error');
           return;
         }
 
@@ -599,7 +618,10 @@ export class Pos implements OnInit {
                 {
                   id: crypto.randomUUID(),
                   pharmacyMedicineId: item.pharmacyMedicineId,
-                  medicineName: item.tradeNameEn,
+                  medicineName: this.i18n.localizedName({
+                    nameEn: item.tradeNameEn,
+                    nameAr: item.tradeNameAr,
+                  }),
                   customerId,
                   customerName: customer?.name ?? '',
                   quantity: 1,
@@ -613,7 +635,7 @@ export class Pos implements OnInit {
         this.query.set('');
         this.searchOpen.set(false);
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not add item to cart.'), 'error'),
+      error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.addItemFailed')), 'error'),
     });
   }
 
@@ -624,7 +646,7 @@ export class Pos implements OnInit {
     if (results.length === 1) {
       this.addToCart(results[0]);
     } else if (results.length === 0) {
-      this.toast.show('No matching product found.', 'error');
+      this.toast.show(this.t('toast.noMatchingProduct'), 'error');
     }
   }
 
@@ -766,11 +788,11 @@ export class Pos implements OnInit {
       this.discountMode() === 'percent' ? Math.round(currentSale.subTotal * raw) / 100 : raw;
 
     if (dollarAmount < 0) {
-      this.toast.show('Discount cannot be negative.', 'error');
+      this.toast.show(this.t('toast.discountNegative'), 'error');
       return;
     }
     if (dollarAmount > currentSale.subTotal) {
-      this.toast.show('Discount cannot exceed the sale subtotal.', 'error');
+      this.toast.show(this.t('toast.discountExceeds'), 'error');
       return;
     }
 
@@ -778,7 +800,7 @@ export class Pos implements OnInit {
     this.updateActiveTab((t) => ({ ...t, discountAmount: dollarAmount }));
     this.savingDiscount.set(false);
     this.showDiscountEditor.set(false);
-    this.toast.show('Discount applied.', 'success');
+    this.toast.show(this.t('toast.discountApplied'), 'success');
   }
 
   // ================= sale-level tax =================
@@ -804,7 +826,7 @@ export class Pos implements OnInit {
     this.updateActiveTab((t) => ({ ...t, taxId }));
     this.savingTax.set(false);
     this.showTaxEditor.set(false);
-    this.toast.show('Tax applied.', 'success');
+    this.toast.show(this.t('toast.taxApplied'), 'success');
   }
 
   // ================= cancel / clear =================
@@ -816,7 +838,7 @@ export class Pos implements OnInit {
     if (!currentSale || currentSale.items.length === 0) return;
     if (!confirm('Cancel this sale and clear the cart?')) return;
 
-    this.toast.show('Sale cancelled.', 'success');
+    this.toast.show(this.t('toast.saleCancelled'), 'success');
     this.removeTabLocally(this.activeTabId());
   }
 
@@ -826,7 +848,7 @@ export class Pos implements OnInit {
     if (!confirm('Remove all items from this cart?')) return;
 
     this.updateActiveTab((t) => ({ ...t, items: [] }));
-    this.toast.show('Cart cleared.', 'success');
+    this.toast.show(this.t('toast.cartCleared'), 'success');
   }
 
   // ================= AI patient safety check =================
@@ -869,7 +891,7 @@ export class Pos implements OnInit {
   checkItem(item: SaleItem): void {
     const customerId = this.effectiveCustomerId(item);
     if (!customerId) {
-      this.toast.show('Assign a customer to this item before checking it.', 'error');
+      this.toast.show(this.t('toast.assignCustomerItem'), 'error');
       return;
     }
 
@@ -935,11 +957,11 @@ export class Pos implements OnInit {
     }
 
     if (groups.size === 0) {
-      this.toast.show('Assign a customer before checking the cart.', 'error');
+      this.toast.show(this.t('toast.assignCustomerCart'), 'error');
       return;
     }
     if (skipped > 0) {
-      this.toast.show(`${skipped} item(s) without a customer were skipped.`, 'error');
+      this.toast.show(this.t('toast.itemsSkipped', { count: skipped }), 'error');
     }
 
     const names: Record<string, string> = {};
@@ -996,7 +1018,7 @@ export class Pos implements OnInit {
     const currentSale = this.sale();
     if (!currentSale || currentSale.items.length === 0) return;
     if (!this.canPay()) {
-      this.toast.show('Run "Check all" on the cart before taking payment.', 'error');
+      this.toast.show(this.t('toast.checkAllFirst'), 'error');
       return;
     }
     this.paymentMethodChoice.set(method);
@@ -1037,18 +1059,18 @@ export class Pos implements OnInit {
         this.payingInProgress.set(false);
         if (res.success && res.data) {
           this.showPaymentModal.set(false);
-          this.toast.show(`Sale ${res.data.invoiceNumber} completed successfully.`, 'success');
+          this.toast.show(this.t('toast.saleCompleted', { invoiceNumber: res.data.invoiceNumber }), 'success');
           // Drop this finished tab and open a fresh empty one in its place.
           const finishedTabId = this.activeTabId();
           this.tabs.update((list) => list.filter((t) => t.tabId !== finishedTabId));
           this.openNewTab();
         } else {
-          this.toast.show(res.message || 'Payment could not be completed.', 'error');
+          this.toast.show(res.message || this.t('toast.paymentFailed'), 'error');
         }
       },
       error: (err) => {
         this.payingInProgress.set(false);
-        this.toast.show(getErrorMessage(err, 'Payment could not be completed.'), 'error');
+        this.toast.show(getErrorMessage(err, this.t('toast.paymentFailed')), 'error');
       },
     });
   }
