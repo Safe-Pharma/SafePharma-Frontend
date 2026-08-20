@@ -1,0 +1,98 @@
+<div class="relative">
+  <button
+    type="button"
+    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative h-9 w-9"
+    aria-label="Notifications"
+    [attr.aria-expanded]="isOpen()"
+    (click)="toggle()"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M10.268 21a2 2 0 0 0 3.464 0"></path>
+      <path
+        d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+      ></path>
+    </svg>
+
+    @if (unreadCount() > 0) {
+      <span
+        class="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-white"
+      >
+        {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+      </span>
+    }
+  </button>
+
+  @if (isOpen()) {
+    <div
+      class="absolute right-0 z-50 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-xl border border-border bg-card shadow-lg sm:w-96"
+    >
+      <div class="flex items-center justify-between border-b border-border px-4 py-3">
+        <p class="text-sm font-semibold text-foreground">Notifications</p>
+        @if (unreadCount() > 0) {
+          <button
+            type="button"
+            class="text-xs font-medium text-primary hover:underline"
+            (click)="onMarkAllAsRead($event)"
+          >
+            Mark all as read
+          </button>
+        }
+      </div>
+
+      <div class="max-h-96 overflow-y-auto">
+        @if (loading()) {
+          <div class="px-4 py-6 text-center text-sm text-muted-foreground">
+            Loading notifications...
+          </div>
+        } @else if (notifications().length === 0) {
+          <div class="px-4 py-6 text-center text-sm text-muted-foreground">
+            No notifications yet
+          </div>
+        } @else {
+          @for (notification of notifications(); track notification.id) {
+            <button
+              type="button"
+              class="flex w-full items-start gap-3 border-b border-border px-4 py-3 text-start transition-colors last:border-b-0 hover:bg-accent"
+              [class.bg-primary-soft]="!notification.isRead"
+              (click)="onNotificationClick(notification)"
+            >
+              <span
+                class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                [ngClass]="priorityDotClass(notification.priority)"
+              ></span>
+
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center justify-between gap-2">
+                  <span class="truncate text-sm font-semibold text-foreground">
+                    {{ notification.title }}
+                  </span>
+                  @if (!notification.isRead) {
+                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
+                  }
+                </span>
+                <span class="mt-0.5 block text-xs text-muted-foreground">
+                  {{ notification.message }}
+                </span>
+                <span class="mt-1 block text-[11px] text-muted-foreground">
+                  {{ typeLabel(notification.type) }} · {{ notification.createdAt | timeAgo }}
+                </span>
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

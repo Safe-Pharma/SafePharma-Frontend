@@ -8,6 +8,10 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthSessionService } from '../../../../../Core/Services/auth-session.service';
+// ASSUMPTION: Features/ sits at the same depth as Core/ from this file.
+// Adjust the relative path if your actual folder layout differs.
+// Import from the feature's barrel (index.ts), not its internal files.
+import { NotificationBell } from '../../../../Notifications/Index';
 
 export interface Breadcrumb {
   label: string;
@@ -17,7 +21,7 @@ export interface Breadcrumb {
 @Component({
   selector: 'app-Private-Header',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, NotificationBell],
   templateUrl: './private-header.html',
 })
 export class PrivateHeader {
@@ -29,7 +33,6 @@ export class PrivateHeader {
     this.authSession.user()?.pharmacyName ?? 'Pharmacy Name';
 
   readonly lang: 'EN' | 'AR' = 'EN';
-  readonly hasUnreadNotifications = true;
   readonly userMenuOpen = signal(false);
   readonly user = this.authSession.user;
 
