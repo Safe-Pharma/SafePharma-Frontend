@@ -33,7 +33,6 @@ export class AuditPage implements OnInit {
   loading = signal(true);
   errorMessage = signal<string | null>(null);
   selectedLog = signal<AuditLog | null>(null);
-  loading = signal(true);
 
   constructor(private auditService: AuditService) {}
 
