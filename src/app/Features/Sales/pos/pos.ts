@@ -14,6 +14,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { PosService } from './Services/pos-service';
 import { PatientSafetyService } from './Services/patient-safety-service';
+import { RelativesService } from './Services/relatives';
 import { PaymentModalComponent } from './Components/payment-modal/payment-modal';
 import { SafetyResultModalComponent } from './Components/safety-result-modal/safety-result-modal';
 import { Toast } from '../../../Shared/Toasts/toast';
@@ -29,12 +30,12 @@ import {
   MedicineSearchResult,
   PaymentMethodChoice,
   PaySaleDto,
+  RelativeListItem,
   Sale,
   SaleItem,
   SaleStatus,
 } from './Model/pos.models';
 import { PatientSafetyResult } from './Model/patient-safety.models';
-import { RelativeDropDown } from './Components/relative-drop-down/relative-drop-down';
 
 /** One line of a cart that only exists in the browser — no PharmacyMedicine
  *  batch/price is "locked in" server-side until checkout; `unitPrice` here is
@@ -87,7 +88,6 @@ interface StoredPosTabs {
     CommonModule,
     PaymentModalComponent,
     SafetyResultModalComponent,
-    RelativeDropDown,
     AddEditCustomerDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,6 +100,7 @@ export class Pos implements OnInit {
   protected readonly auth = inject(AuthSessionService);
   private readonly customerApi = inject(CustomersApiService);
   private readonly safetyApi = inject(PatientSafetyService);
+  private readonly relativesApi = inject(RelativesService);
 
   // ---- tabs (each one is a purely local cart until checkout) ----
   protected readonly tabs = signal<PosTab[]>([]);
@@ -199,8 +200,10 @@ export class Pos implements OnInit {
   protected readonly customerSearchQuery = signal('');
   protected readonly customerSearchResults = signal<Customer[]>([]);
   protected readonly customerSearchLoading = signal(false);
-  protected readonly relatives = signal<Array<{ relativeId: string; relativeName: string }>>([]);
   protected readonly excludedCustomerIds = signal<string[]>([]);
+
+  // ---- relatives of the sale's customer — power the per-row "Relative" dropdown ----
+  protected readonly relatives = signal<RelativeListItem[]>([]);
 
   // ---- per-line customer picker ----
   protected readonly openItemCustomerPickerId = signal<string | null>(null);
@@ -229,6 +232,7 @@ export class Pos implements OnInit {
   ngOnInit(): void {
     this.restoreTabsOrOpenNew();
     this.loadCustomers();
+    this.loadRelativesForCustomer(this.selectedCustomer()?.id ?? null);
     this.taxesApi.getAll().subscribe({
       next: (list) => this.taxes.set(list.filter((t) => t.status === 'Active')),
       error: () => {},
@@ -329,11 +333,13 @@ export class Pos implements OnInit {
     };
     this.tabs.update((list) => [...list, tab]);
     this.activeTabId.set(tab.tabId);
+    this.loadRelativesForCustomer(null);
   }
 
   switchTab(tabId: string): void {
     this.activeTabId.set(tabId);
-    this.syncExcludedCustomerIds(this.selectedCustomer());
+    const tab = this.tabs().find((t) => t.tabId === tabId);
+    this.loadRelativesForCustomer(tab?.selectedCustomer?.id ?? null);
   }
 
   /** The X button on a tab. Since nothing about an in-progress cart is ever
@@ -357,7 +363,9 @@ export class Pos implements OnInit {
     this.tabs.set(remaining);
     if (this.activeTabId() === tabId) {
       if (remaining.length > 0) {
-        this.activeTabId.set(remaining[remaining.length - 1].tabId);
+        const next = remaining[remaining.length - 1];
+        this.activeTabId.set(next.tabId);
+        this.loadRelativesForCustomer(next.selectedCustomer?.id ?? null);
       } else {
         this.openNewTab();
       }
@@ -376,30 +384,6 @@ export class Pos implements OnInit {
     );
   }
 
-  private updateExcludedCustomerIds(customer: Customer | null): void {
-    this.syncExcludedCustomerIds(customer);
-  }
-
-  private syncExcludedCustomerIds(
-    customer: Customer | null,
-    relatives: Array<{ relativeId: string; relativeName?: string }> | null | undefined = [],
-  ): void {
-    const next = new Set<string>();
-
-    if (customer?.id) {
-      next.add(customer.id);
-    }
-
-    const relativeIds = (relatives ?? [])
-      .map((relative) => relative.relativeId)
-      .filter((id): id is string => Boolean(id));
-
-    relativeIds.forEach((id) => next.add(id));
-
-    this.excludedCustomerIds.set(Array.from(next));
-    this.refreshCustomerSearchResults(this.customers());
-  }
-
   private loadCustomers(): void {
     this.service.getAllCustomers().subscribe({
       next: (res) => {
@@ -408,6 +392,28 @@ export class Pos implements OnInit {
         this.refreshCustomerSearchResults(list);
       },
       error: (err) => this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error'),
+    });
+  }
+
+  /** Loads the relatives of the given customer for the per-row "Relative"
+   *  dropdown. Clears the list when there's no sale-level customer yet. */
+  private loadRelativesForCustomer(customerId: string | null): void {
+    if (!customerId) {
+      this.relatives.set([]);
+      this.excludedCustomerIds.set([]);
+      return;
+    }
+
+    this.relativesApi.getAllRelatives(customerId).subscribe({
+      next: (list) => {
+        this.relatives.set(list ?? []);
+        this.excludedCustomerIds.set([
+          customerId,
+          ...(list ?? []).map((r) => r.relativeId).filter(Boolean),
+        ]);
+        this.refreshCustomerSearchResults(this.customers());
+      },
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load relatives.'), 'error'),
     });
   }
 
@@ -495,25 +501,6 @@ export class Pos implements OnInit {
     this.loadCustomers();
   }
 
-  onRelativesLoaded(payload: {
-    customerId: string;
-    relatives: Array<{ relativeId: string; relativeName?: string }> | null | undefined;
-  }): void {
-    if (payload.customerId && this.selectedCustomer()?.id !== payload.customerId) {
-      return;
-    }
-
-    this.relatives.set(
-      (payload.relatives ?? [])
-        .filter((relative) => Boolean(relative.relativeId))
-        .map((relative) => ({
-          relativeId: relative.relativeId,
-          relativeName: relative.relativeName ?? 'Customer',
-        })),
-    );
-    this.syncExcludedCustomerIds(this.selectedCustomer(), this.relatives());
-  }
-
   selectCustomerFromModal(customer: Customer | null): void {
     this.closeCustomerSearchModal();
 
@@ -539,17 +526,8 @@ export class Pos implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.success) {
-            this.relatives.update((current) => {
-              if (current.some((relative) => relative.relativeId === customer.id)) {
-                return current;
-              }
-              return [
-                ...current,
-                { relativeId: customer.id, relativeName: customer.name ?? 'Customer' },
-              ];
-            });
-            this.syncExcludedCustomerIds(this.selectedCustomer(), this.relatives());
             this.toast.show(`${customer.name ?? 'Customer'} added as a relative.`, 'success');
+            this.loadRelativesForCustomer(currentCustomer!.id);
           } else {
             this.toast.show(res.message || 'Could not add relative.', 'error');
           }
@@ -565,7 +543,7 @@ export class Pos implements OnInit {
   selectCustomer(customer: Customer | null): void {
     this.showCustomerDropdown.set(false);
     this.updateActiveTab((t) => ({ ...t, selectedCustomer: customer }));
-    this.updateExcludedCustomerIds(customer);
+    this.loadRelativesForCustomer(customer?.id ?? null);
   }
 
   // ================= product search =================
@@ -690,13 +668,15 @@ export class Pos implements OnInit {
     this.openItemCustomerPickerId.update((v) => (v === itemId ? null : itemId));
   }
 
-  selectCartItemCustomer(item: SaleItem, customer: Customer | null): void {
+  /** Per-row "Relative" dropdown — assigns one of the sale customer's relatives
+   *  (or clears back to no relative) to this specific cart line. */
+  selectCartItemRelative(item: SaleItem, relative: RelativeListItem | null): void {
     this.openItemCustomerPickerId.set(null);
     this.updateActiveTab((t) => ({
       ...t,
       items: t.items.map((i) =>
         i.id === item.id
-          ? { ...i, customerId: customer?.id ?? null, customerName: customer?.name ?? '' }
+          ? { ...i, customerId: relative?.relativeId ?? null, customerName: relative?.relativeName ?? '' }
           : i,
       ),
     }));
@@ -1071,10 +1051,5 @@ export class Pos implements OnInit {
         this.toast.show(getErrorMessage(err, 'Payment could not be completed.'), 'error');
       },
     });
-  }
-
-  onRelativeSelected(relative: any) {
-    console.log('Selected relative:', relative);
-    // اعمل اللي انت عايزه بالبيانات دي
   }
 }
