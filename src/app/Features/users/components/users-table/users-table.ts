@@ -15,6 +15,7 @@ import { StatusBadgeComponent } from '../status-badge/status-badge';
 })
 export class UsersTableComponent {
   users = input.required<User[]>();
+  loading = input(false);
  
   view         = output<User>();
   edit         = output<User>();

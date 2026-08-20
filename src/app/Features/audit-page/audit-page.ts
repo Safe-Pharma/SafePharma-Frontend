@@ -30,6 +30,8 @@ export class AuditPage implements OnInit {
   selectedDate: string = '';
 
   isModalOpen = signal(false);
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
   selectedLog = signal<AuditLog | null>(null);
   loading = signal(true);
 
@@ -39,16 +41,18 @@ export class AuditPage implements OnInit {
   filteredLogs = signal([] as AuditLog[]);
   ngOnInit() {
     this.loading.set(true);
-    this.auditService
-      .getAllAudits()
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (data) => {
-          this.audits.set(data);
-          this.filteredLogs.set(data);
-        },
-        error: (error) => console.error('Failed to load audit logs:', error),
-      });
+    this.auditService.getAllAudits().subscribe({
+      next: (data) => {
+        this.audits.set(data);
+        this.filteredLogs.set(data);
+        this.loading.set(false);
+        console.log(this.audits());
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('Could not load audit history.');
+      },
+    });
   }
   onFilterChange() {
     let res = [...this.audits()]; // Get current signal value
@@ -62,7 +66,7 @@ export class AuditPage implements OnInit {
       const matchUser = !this.selectedUser || log.userFullName === this.selectedUser;
       const matchAction = !this.selectedAction || log.action === this.selectedAction;
       const matchEntity = !this.selectedEntity || log.entity === this.selectedEntity;
-      const matchDate = !this.selectedDate || log.date.slice(0, 10) === this.selectedDate;
+      const matchDate = !this.selectedDate || log.date.startsWith(this.selectedDate);
 
       return matchSearch && matchUser && matchAction && matchEntity && matchDate;
     });
@@ -118,5 +122,14 @@ export class AuditPage implements OnInit {
       Login: 'bg-purple-500',
     };
     return colors[action] || 'bg-gray-500';
+  }
+
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedUser = '';
+    this.selectedAction = '';
+    this.selectedEntity = '';
+    this.selectedDate = '';
+    this.filteredLogs.set(this.audits());
   }
 }

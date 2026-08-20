@@ -1,14 +1,14 @@
 <!-- Backdrop -->
 <div
   *ngIf="isOpen()"
-  class="fixed inset-0 bg-black/30 z-40 transition-opacity duration-200"
+  appModalOverlay class="fixed inset-0 bg-black/30 z-40 transition-opacity duration-200"
   (click)="onClose()"
 ></div>
 
 <!-- Modal -->
 <div
   *ngIf="isOpen()"
-  class="fixed right-0 top-0 h-full w-full sm:w-[500px] lg:w-[600px] bg-white shadow-2xl z-50 overflow-y-auto animate-in slide-in-from-right duration-300"
+  appModalOverlay class="fixed right-0 top-0 h-full w-full sm:w-[500px] lg:w-[600px] bg-white shadow-2xl z-50 overflow-y-auto animate-in slide-in-from-right duration-300"
 >
   <div *ngIf="auditLog()" class="h-full flex flex-col">
     <!-- Header -->

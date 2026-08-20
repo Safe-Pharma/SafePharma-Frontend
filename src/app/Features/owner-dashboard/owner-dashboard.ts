@@ -7,6 +7,7 @@ import { PharmacyReadDto } from './Models/pharmacy-read.dto';
 import { Router } from '@angular/router';
 import { AuthSessionService } from '../../Core/Services/auth-session.service';
 import { Spinner } from '../../Shared/Components/spinner/spinner';
+import { formatCurrency } from '../../Shared/utils/currency.util';
 
 interface Pharmacy {
   id: string;
@@ -227,7 +228,7 @@ export class PharmaciesDashboardComponent implements OnInit {
   }
 
   formatMRR(value: number): string {
-    return `SAR ${value.toLocaleString()}`;
+    return formatCurrency(value);
   }
 
   formatDate(dateString: string): string {

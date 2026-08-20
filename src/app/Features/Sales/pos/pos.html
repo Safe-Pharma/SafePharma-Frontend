@@ -1,4 +1,4 @@
-<div class="flex flex-col h-full bg-slate-50">
+<div data-pos-root class="flex h-full min-w-0 flex-col overflow-hidden bg-slate-50">
   <!-- Tab bar -->
   <div
     class="h-11 shrink-0 bg-white border-b border-slate-200 flex items-center px-3 sm:px-6 gap-1 overflow-x-auto"
@@ -25,7 +25,9 @@
           <line x1="10" y1="3" x2="8" y2="21" />
           <line x1="16" y1="3" x2="14" y2="21" />
         </svg>
-        <span class="whitespace-nowrap">{{ tab.sale.invoiceNumber }}</span>
+        <span class="whitespace-nowrap">{{
+          tab.selectedCustomer?.name || (tab.items.length > 0 ? tab.items.length + ' item(s)' : 'New Sale')
+        }}</span>
         <span
           (click)="closeTab(tab.tabId, $event)"
           class="ml-1 text-current opacity-60 hover:opacity-100"
@@ -83,14 +85,25 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
+          #scannerInput
           [ngModel]="query()"
           (ngModelChange)="onQueryInput($event)"
           (focus)="onSearchFocus()"
           (keydown.enter)="onSearchEnter()"
           type="text"
-          placeholder="Search by product name, barcode or SKU…"
-          class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Scan barcode or search by product name…"
+          class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-11 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
         />
+        @if (barcodeLoading()) {
+          <span
+            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-blue-500"
+            aria-label="Resolving barcode"
+          >
+            <span class="block h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600"></span>
+          </span>
+        }
 
         @if (searchOpen() && query().trim().length >= 1) {
           <div
@@ -122,7 +135,7 @@
                     </p>
                   </div>
                   <p class="text-sm font-semibold text-blue-600 shrink-0 ms-3">
-                    ${{ item.sellingPrice }}
+                    {{ item.sellingPrice | egpCurrency }}
                   </p>
                 </button>
               }
@@ -170,15 +183,59 @@
 
           @if (showCustomerDropdown()) {
             <div
-              class="absolute z-20 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg max-h-72 overflow-y-auto"
+              class="absolute z-20 mt-1 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
             >
+              <div class="border-b border-slate-100 bg-slate-50 p-2">
+                <div class="relative">
+                  <svg
+                    class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                  <input
+                    #customerSearchInput
+                    type="search"
+                    autocomplete="off"
+                    placeholder="Search customers…"
+                    [ngModel]="customerSearchQuery()"
+                    (ngModelChange)="onCustomerSearchInput($event)"
+                    class="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-8 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                  @if (customerSearchQuery()) {
+                    <button
+                      type="button"
+                      aria-label="Clear customer search"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      (click)="clearCustomerSearch()"
+                    >
+                      ×
+                    </button>
+                  }
+                </div>
+              </div>
+              <div class="max-h-64 overflow-y-auto">
               <div
                 (click)="selectCustomer(null)"
                 class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100"
               >
                 Walk-in customer
               </div>
-              @for (c of customers(); track c.id) {
+              @if (customerSearchLoading()) {
+                <div class="flex items-center gap-2 px-4 py-4 text-sm text-slate-400">
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-blue-500"></span>
+                  Searching customers…
+                </div>
+              } @else if (customerSearchError(); as error) {
+                <div class="px-4 py-4 text-sm text-red-600">{{ error }}</div>
+              } @else if (customerSearchResults().length === 0) {
+                <div class="px-4 py-4 text-sm text-slate-400">No customers found.</div>
+              } @else {
+              @for (c of customerSearchResults(); track c.id) {
                 <div
                   (click)="selectCustomer(c)"
                   class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
@@ -187,6 +244,8 @@
                   <p class="text-xs text-slate-400">{{ c.phone }}</p>
                 </div>
               }
+              }
+              </div>
             </div>
           }
         </div>
@@ -260,8 +319,14 @@
         } @else {
           <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
             @for (item of sale()!.items; track item.id) {
-              <div class="px-5 py-3.5">
-                <div class="flex items-center gap-3">
+              <div
+                class="pos-cart-row cursor-pointer px-5 py-3.5"
+                [class.animate-cart-row]="recentlyAddedItemId() === item.id"
+                [class.pos-cart-row-active]="activeCartItemId() === item.id"
+                [class.pos-cart-row-removing]="removingItemId() === item.id"
+                (click)="selectCartItem(item, $event)"
+              >
+                <div class="pos-cart-main flex items-center gap-3">
                   <div
                     class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"
                   >
@@ -283,7 +348,7 @@
                       {{ item.medicineName }}
                     </p>
                     <p class="text-xs text-slate-400">
-                      {{ item.batchNumber }} · ${{ item.unitPrice }}
+                      {{ item.unitPrice | egpCurrency }}
                     </p>
                   </div>
 
@@ -334,12 +399,13 @@
                     }
                   </button>
 
+                  <!-- Relative picker for this line item -->
                   <div class="relative shrink-0" (click)="stop($event)">
                     <button
                       (click)="toggleItemCustomerPicker(item.id)"
                       class="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
                     >
-                      {{ item.customerName || 'Customer' }}
+                      {{ item.customerName || 'Relative' }}
                     </button>
 
                     @if (openItemCustomerPickerId() === item.id) {
@@ -347,19 +413,24 @@
                         class="absolute z-30 right-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto"
                       >
                         <div
-                          (click)="selectCartItemCustomer(item, null)"
+                          (click)="selectCartItemRelative(item, null)"
                           class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 border-b border-slate-100"
                         >
-                          Walk-in customer
+                          No relative
                         </div>
-                        @for (c of customers(); track c.id) {
-                          <div
-                            (click)="selectCartItemCustomer(item, c)"
-                            class="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
-                          >
-                            <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
-                            <p class="text-xs text-slate-400">{{ c.phone }}</p>
+                        @if (relatives().length === 0) {
+                          <div class="px-4 py-2 text-xs text-slate-400">
+                            No relatives — pick a customer first.
                           </div>
+                        } @else {
+                          @for (r of relatives(); track r.relativeId) {
+                            <div
+                              (click)="selectCartItemRelative(item, r)"
+                              class="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                            >
+                              <p class="text-sm font-semibold text-slate-800">{{ r.relativeName }}</p>
+                            </div>
+                          }
                         }
                       </div>
                     }
@@ -403,7 +474,7 @@
                   </div>
 
                   <p class="w-16 text-right text-sm font-semibold text-slate-800 shrink-0">
-                    ${{ item.lineTotal }}
+                    {{ item.lineTotal | egpCurrency }}
                   </p>
 
                   <button
@@ -439,7 +510,7 @@
                         [class.text-white]="getRowDiscountMode(item.id) === 'amount'"
                         class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer"
                       >
-                        $
+                        EGP
                       </button>
                       <button
                         type="button"
@@ -464,45 +535,26 @@
                   <!-- Tax: pick a configured tax -->
                   <label class="flex items-center gap-1.5">
                     Tax
-                    <select
-                      [ngModel]="getRowTaxSelection(item.id)"
-                      (ngModelChange)="onRowTaxSelect(item, $event)"
-                      class="rounded-md border border-slate-200 px-2 py-1 text-xs outline-none focus:border-blue-500"
-                    >
-                      <option value="">No tax</option>
-                      @for (t of taxes(); track t.id) {
-                        <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+                    <div class="relative" (click)="stop($event)">
+                      <button type="button" (click)="toggleRowTaxEditor(item.id)" class="min-w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-left text-xs outline-none transition hover:border-slate-300 focus:border-blue-500">
+                        {{ taxLabel(getRowTaxSelection(item.id)) }}
+                      </button>
+                      @if (openRowTaxId() === item.id) {
+                        <div class="absolute right-0 z-30 mt-1 max-h-48 min-w-40 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-xs shadow-lg">
+                          @if (taxesLoading()) {
+                            <div class="flex items-center gap-2 px-3 py-3 text-slate-400"><span class="h-3 w-3 animate-spin rounded-full border-2 border-slate-200 border-t-blue-500"></span> Loading taxes…</div>
+                          } @else if (taxesError(); as error) {
+                            <button type="button" (click)="loadTaxes()" class="block w-full px-3 py-3 text-left text-red-600 hover:bg-red-50">{{ error }} Retry</button>
+                          } @else {
+                            <button type="button" (click)="onRowTaxSelect(item, '')" class="block w-full px-3 py-2 text-left hover:bg-slate-50">No tax</button>
+                            @for (t of taxes(); track t.id) {
+                              <button type="button" (click)="onRowTaxSelect(item, t.id)" class="block w-full px-3 py-2 text-left hover:bg-slate-50">{{ t.name }} ({{ t.rate }}%)</button>
+                            }
+                          }
+                        </div>
                       }
-                    </select>
+                    </div>
                   </label>
-
-                  <!-- Relative selector -->
-                  <app-relative-drop-down
-                    [customerId]="selectedCustomer()?.id!"
-                    [parentRelatives]="relatives()"
-                    (relativeSelected)="onRelativeSelected($event)"
-                    (relativesLoaded)="onRelativesLoaded($event)"
-                  ></app-relative-drop-down>
-                  <!-- search icon -->
-                  <button
-                    type="button"
-                    (click)="openCustomerSearchModal($event)"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 cursor-pointer"
-                    aria-label="Search customers"
-                  >
-                    <svg
-                      class="w-4 h-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                  </button>
                 </div>
               </div>
             }
@@ -522,40 +574,91 @@
             <div class="flex justify-between">
               <span class="text-slate-500">Subtotal</span>
               <span class="font-medium text-slate-800"
-                >${{ (sale()?.subTotal ?? 0).toFixed(2) }}</span
+                >{{ (sale()?.subTotal ?? 0) | egpCurrency }}</span
               >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Discount</span>
               <span class="font-medium text-amber-500"
-                >- ${{ (sale()?.discount ?? 0).toFixed(2) }}</span
+                >− {{ (sale()?.discount ?? 0) | egpCurrency }}</span
               >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Tax</span>
-              <span class="font-medium text-slate-800">${{ (sale()?.tax ?? 0).toFixed(2) }}</span>
+              <span class="font-medium text-slate-800">{{ (sale()?.tax ?? 0) | egpCurrency }}</span>
             </div>
           </div>
 
           <div class="mt-4 rounded-xl bg-blue-50 px-4 py-3.5">
             <p class="text-[11px] font-semibold tracking-wide text-blue-600">GRAND TOTAL</p>
             <p class="text-2xl font-bold text-blue-700">
-              ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+              {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
             </p>
           </div>
 
-          <!-- AI safety check for the whole cart — required before Pay unlocks -->
+          @if (safetyState() === 'walk-in') {
+            <div class="mt-3 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2.5 text-xs text-sky-700">
+              <p class="font-semibold">ⓘ Walk-in sale</p>
+              <p class="mt-1">Select or add a customer to enable patient-specific medication safety checks.</p>
+            </div>
+          } @else if (safetyState() === 'running') {
+            <button type="button" class="mt-3 flex w-full items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-left text-xs text-blue-700 transition hover:bg-blue-100" (click)="openSafetyModal()">
+              <span class="flex items-center gap-2 font-semibold"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600"></span>Patient safety check running…</span>
+              <span class="font-medium underline underline-offset-2">View progress</span>
+            </button>
+          } @else if (safetyState() === 'stale') {
+            <div class="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+              <div>
+                <p class="font-semibold">⚠ Safety check needs updating</p>
+                <p class="mt-1">The customer or medicines changed after the last check.</p>
+              </div>
+              <button type="button" class="shrink-0 rounded-md border border-amber-200 bg-white px-2 py-1 font-semibold hover:bg-amber-100" (click)="checkAll()">Run check</button>
+            </div>
+          } @else if (safetyState() === 'pending') {
+            <div class="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+              <div>
+                <p class="font-semibold">Patient safety · Not checked</p>
+                <p class="mt-1">You can continue, or run a check for this customer.</p>
+              </div>
+              <button type="button" class="shrink-0 rounded-md border border-amber-200 bg-white px-2 py-1 font-semibold hover:bg-amber-100" (click)="checkAll()">Run check</button>
+            </div>
+          } @else if (safetyState() === 'checked') {
+            @if (safetySummary(); as summary) {
+              <button type="button" class="mt-3 flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left text-xs font-semibold transition" [class.border-emerald-100]="summary.tone === 'ok'" [class.bg-emerald-50]="summary.tone === 'ok'" [class.text-emerald-700]="summary.tone === 'ok'" [class.border-amber-100]="summary.tone === 'warn'" [class.bg-amber-50]="summary.tone === 'warn'" [class.text-amber-700]="summary.tone === 'warn'" [class.border-red-100]="summary.tone === 'danger'" [class.bg-red-50]="summary.tone === 'danger'" [class.text-red-700]="summary.tone === 'danger'" (click)="safetyDetailsExpanded.update((value) => !value)" [attr.aria-expanded]="safetyDetailsExpanded()">
+                <span>@if (summary.tone === 'ok') { ✓ } @else if (summary.tone === 'warn') { ⚠ } @else { ! } Safety check completed — {{ summary.label }}</span>
+                <svg class="h-4 w-4 transition-transform" [class.rotate-180]="safetyDetailsExpanded()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+              @if (safetyDetailsExpanded()) {
+                <div class="mt-2 grid gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2.5 animate-fade-in-up">
+                  <p class="px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Safety result</p>
+                  @for (medicine of inlineSafetyMedicines(); track medicine.id) {
+                    <div class="rounded-md border border-slate-100 bg-white px-3 py-2">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="truncate text-xs font-semibold text-slate-800">{{ medicine.medicineName }}</span>
+                        <span class="shrink-0 text-[11px] font-semibold" [class.text-emerald-700]="medicine.tone === 'ok'" [class.text-amber-700]="medicine.tone === 'warn'" [class.text-red-700]="medicine.tone === 'danger'">@if (medicine.tone === 'ok') { ✓ } @else if (medicine.tone === 'warn') { ⚠ } @else { ! } {{ medicine.label }}</span>
+                      </div>
+                      <p class="mt-1 text-[11px] leading-4 text-slate-500">{{ medicine.conclusion }}</p>
+                    </div>
+                  }
+                  <button type="button" class="mt-1 text-start text-[11px] font-semibold text-blue-700 underline underline-offset-2" (click)="openSafetyModal()">View full details</button>
+                </div>
+              }
+            }
+          }
+
+          <!-- AI safety check for the whole cart -->
+          @if (selectedCustomer()) {
           <button
             type="button"
             [disabled]="!sale() || sale()!.items.length === 0 || checkingAll()"
             (click)="checkAll()"
             class="mt-4 w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            [class.border-emerald-200]="activeTab()?.safetyChecked"
-            [class.bg-emerald-50]="activeTab()?.safetyChecked"
-            [class.text-emerald-700]="activeTab()?.safetyChecked"
-            [class.border-blue-200]="!activeTab()?.safetyChecked"
-            [class.bg-blue-50]="!activeTab()?.safetyChecked"
-            [class.text-blue-700]="!activeTab()?.safetyChecked"
+            [class.border-emerald-200]="safetyState() === 'checked'"
+            [class.bg-emerald-50]="safetyState() === 'checked'"
+            [class.text-emerald-700]="safetyState() === 'checked'"
+            [class.border-blue-200]="safetyState() !== 'checked'"
+            [class.bg-blue-50]="safetyState() !== 'checked'"
+            [class.text-blue-700]="safetyState() !== 'checked'"
           >
             @if (checkingAll()) {
               <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -574,7 +677,7 @@
                 ></path>
               </svg>
               Checking cart…
-            } @else if (activeTab()?.safetyChecked) {
+            } @else if (safetyState() === 'checked') {
               <svg
                 class="h-4 w-4"
                 viewBox="0 0 24 24"
@@ -600,23 +703,22 @@
               >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
               </svg>
-              Check all before payment
+              Run safety check
             }
           </button>
+          }
 
           <button
             [disabled]="!canPay()"
-            [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
             (click)="openPaymentModal('Cash')"
             class="mt-2 w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors cursor-pointer"
           >
-            Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+            Pay {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
           </button>
 
           <div class="grid grid-cols-3 gap-2 mt-2">
             <button
               [disabled]="!canPay()"
-              [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
               (click)="openPaymentModal('Cash')"
               class="flex items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
@@ -624,7 +726,6 @@
             </button>
             <button
               [disabled]="!canPay()"
-              [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
               (click)="openPaymentModal('Card')"
               class="flex items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
@@ -632,7 +733,6 @@
             </button>
             <button
               [disabled]="!canPay()"
-              [title]="!canPay() ? 'Run ‘Check all’ first' : ''"
               (click)="openPaymentModal('Mixed')"
               class="flex items-center justify-center gap-1.5 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
@@ -656,7 +756,7 @@
                     [class.text-primary-foreground]="discountMode() === 'amount'"
                     class="px-2 py-1 text-xs font-medium cursor-pointer"
                   >
-                    $
+                    EGP
                   </button>
                   <button
                     type="button"
@@ -702,20 +802,27 @@
               (click)="stop($event)"
             >
               <p class="text-sm font-semibold mb-2">Sale tax</p>
-              @if (taxes().length === 0) {
+              @if (taxesLoading()) {
+                <div class="flex items-center gap-2 text-xs text-muted-foreground"><span class="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-primary"></span> Loading taxes…</div>
+              } @else if (taxesError(); as error) {
+                <button type="button" (click)="loadTaxes()" class="text-xs text-destructive underline">{{ error }} Retry</button>
+              } @else if (taxes().length === 0) {
                 <p class="text-xs text-muted-foreground">
                   No active taxes configured for this pharmacy.
                 </p>
               } @else {
-                <select
-                  [ngModel]="taxInput()"
-                  (ngModelChange)="taxInput.set($event)"
-                  class="w-full rounded-md border border-input px-3 py-2 text-sm outline-none focus:border-primary"
-                >
-                  @for (t of taxes(); track t.id) {
-                    <option [value]="t.id">{{ t.name }} ({{ t.rate }}%)</option>
+                <div class="relative">
+                  <button type="button" (click)="toggleSaleTaxMenu(); stop($event)" class="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-left text-sm outline-none transition hover:border-primary focus:border-primary">
+                    <span>{{ taxLabel(taxInput()) }}</span><span class="text-muted-foreground">⌄</span>
+                  </button>
+                  @if (showSaleTaxMenu()) {
+                    <div class="absolute inset-x-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-background py-1 shadow-lg">
+                      @for (t of taxes(); track t.id) {
+                        <button type="button" (click)="taxInput.set(t.id); showSaleTaxMenu.set(false)" class="block w-full px-3 py-2 text-left text-sm hover:bg-accent">{{ t.name }} ({{ t.rate }}%)</button>
+                      }
+                    </div>
                   }
-                </select>
+                </div>
               }
               <div class="mt-3 flex justify-end gap-2">
                 <button
@@ -829,10 +936,10 @@
     <div class="flex-1">
       <p class="text-[11px] text-slate-400 leading-tight">Grand total</p>
       <p class="text-lg font-bold text-blue-700 leading-tight">
-        ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+        {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
       </p>
     </div>
-    @if (!activeTab()?.safetyChecked) {
+    @if (selectedCustomer() && !activeTab()?.safetyChecked) {
       <button
         type="button"
         [disabled]="!sale() || sale()!.items.length === 0 || checkingAll()"
@@ -847,7 +954,7 @@
         (click)="openPaymentModal('Cash')"
         class="flex-1 bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
       >
-        Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+        Pay {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
       </button>
     }
   </div>
@@ -862,103 +969,21 @@
     (confirmed)="confirmPayment($event)"
   />
 }
-@if (showCustomerSearchModal()) {
-  <div
-    class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4"
-    (click)="closeCustomerSearchModal()"
-  >
-    <div class="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl" (click)="stop($event)">
-      <div class="flex items-start justify-between gap-3">
+
+@if (showSafetyReminder()) {
+  <div appModalOverlay class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/30 p-3 pt-20 backdrop-blur-[1px] sm:p-4 sm:pt-20" (click)="closeSafetyReminder()">
+    <div class="w-full max-w-md rounded-xl border border-amber-200 bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <div class="flex items-start gap-3">
+        <div class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700">!</div>
         <div>
-          <h3 class="text-sm font-semibold text-slate-900">Search customer</h3>
-          <p class="mt-1 text-sm text-slate-500">
-            Pick a saved customer as relative or add a new one.
-          </p>
+          <h2 class="text-lg font-semibold text-slate-900">Patient Safety Check Not Completed</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">This customer has been selected, but the current medicines have not been checked against the patient's safety information.</p>
         </div>
-        <button
-          type="button"
-          (click)="closeCustomerSearchModal()"
-          class="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-          aria-label="Close customer search"
-        >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
       </div>
-
-      <div
-        class="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-      >
-        <svg
-          class="w-4 h-4 text-slate-400"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          [ngModel]="customerSearchQuery()"
-          (ngModelChange)="onCustomerSearchInput($event)"
-          type="text"
-          placeholder="Search by name or phone…"
-          class="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-        />
-        <button
-          type="button"
-          (click)="openCreateCustomerModal($event)"
-          class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 cursor-pointer"
-          aria-label="Add new customer"
-        >
-          <svg
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="mt-3 max-h-72 overflow-y-auto rounded-xl border border-slate-100">
-        @if (customerSearchLoading()) {
-          <div class="px-4 py-3 text-sm text-slate-400">Searching…</div>
-        } @else if (customerSearchResults().length === 0) {
-          <div class="px-4 py-3 text-sm text-slate-400">No customers found.</div>
-        } @else {
-          @for (customer of customerSearchResults(); track customer.id) {
-            <button
-              type="button"
-              (click)="selectCustomerFromModal(customer)"
-              class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50"
-            >
-              <div>
-                <p class="text-sm font-semibold text-slate-800">{{ customer.name }}</p>
-                <p class="text-xs text-slate-400">{{ customer.phone }}</p>
-              </div>
-              <span class="text-xs font-medium text-blue-600">Select</span>
-            </button>
-          }
-        }
+      <div class="mt-5 flex flex-wrap justify-end gap-2">
+        <button type="button" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" (click)="closeSafetyReminder()">Cancel</button>
+        <button type="button" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100" (click)="runSafetyCheckFromReminder()">Run Safety Check</button>
+        <button type="button" class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700" (click)="continueWithoutSafetyCheck()">Continue Without Check</button>
       </div>
     </div>
   </div>
@@ -976,6 +1001,7 @@
   <app-safety-result-modal
     [results]="safetyResults()"
     [patientNames]="safetyPatientNames()"
+    [medicines]="modalSafetyMedicines()"
     [loading]="safetyLoading()"
     [errorMessage]="safetyError()"
     (closed)="closeSafetyModal()"

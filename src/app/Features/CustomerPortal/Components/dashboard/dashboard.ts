@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PortalApiService } from '../../Services/portal-api.service';
@@ -27,7 +28,7 @@ const ICONS = {
 @Component({
   selector: 'app-portal-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, PortalStatCard, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge],
+  imports: [RouterLink, DatePipe, EgpCurrencyPipe, PortalStatCard, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge],
   templateUrl: './dashboard.html',
     animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 

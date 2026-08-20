@@ -1,8 +1,12 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  ElementRef,
   HostListener,
   OnInit,
+  ViewChild,
   computed,
   effect,
   inject,
@@ -10,20 +14,11 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import {
-  catchError,
-  concatMap,
-  debounceTime,
-  distinctUntilChanged,
-  forkJoin,
-  from,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, of, switchMap } from 'rxjs';
 import { PosService } from './Services/pos-service';
 import { PatientSafetyService } from './Services/patient-safety-service';
+import { RelativesService } from './Services/relatives';
 import { PaymentModalComponent } from './Components/payment-modal/payment-modal';
 import { SafetyResultModalComponent } from './Components/safety-result-modal/safety-result-modal';
 import { Toast } from '../../../Shared/Toasts/toast';
@@ -34,37 +29,75 @@ import { AddEditCustomerDialogComponent } from '../../Customer/Components/add-ed
 import { CustomersApiService } from '../../Customer/Services/customers-api.service';
 import { Tax } from '../../Tax/Models/tax';
 import {
+  CheckoutDto,
+  BarcodeScanData,
   Customer,
-  EMPTY_GUID,
   MedicineSearchResult,
   PaymentMethodChoice,
   PaySaleDto,
+  RelativeListItem,
   Sale,
   SaleItem,
   SaleStatus,
+  StockAvailability,
 } from './Model/pos.models';
-import { PatientSafetyResult } from './Model/patient-safety.models';
-import { RelativeDropDown } from './Components/relative-drop-down/relative-drop-down';
+import { PatientSafetyResult, SafetyCheckedMedicine } from './Model/patient-safety.models';
+import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
+
+/** One line of a cart that only exists in the browser — no PharmacyMedicine
+ *  batch/price is "locked in" server-side until checkout; `unitPrice` here is
+ *  just the last price we previewed via getAvailability(). */
+interface LocalCartItem {
+  /** Client-generated — used purely as a correlation id for the AI safety
+   *  check (relatedDrugRefs) and for row identity in the UI. Means nothing
+   *  to the backend, since this line has never been persisted. */
+  id: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  customerId: string | null;
+  customerName: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  taxAmount: number;
+}
 
 interface PosTab {
   tabId: string;
-  sale: Sale;
+  items: LocalCartItem[];
+  activeItemId: string | null;
   selectedCustomer: Customer | null;
+  discountAmount: number;
+  taxId: string | null;
   /** True once "Check all" has succeeded for the cart's current contents.
-   *  Reset to false any time the cart/customer changes (see patchActiveSale). */
+   *  Reset to false any time the cart/customer changes (see updateActiveTab). */
   safetyChecked: boolean;
   /** Per-line-item highest-severity outcome from the last check, for the small
    *  status dot on each row. Cleared together with safetyChecked. */
   itemCheckStatus: Record<string, 'ok' | 'warn' | 'danger'>;
 }
 
+type PosSafetyState = 'walk-in' | 'pending' | 'checked' | 'stale' | 'running';
+
+interface SafetySnapshot {
+  tabId: string;
+  key: string;
+  customerId: string;
+  items: SafetyCheckedMedicine[];
+  results: PatientSafetyResult[];
+  patientNames: Record<string, string>;
+  stale: boolean;
+}
+
 type DiscountMode = 'amount' | 'percent';
 
-/** localStorage key for restoring open POS tabs across page reloads. */
-const POS_TABS_STORAGE_KEY = 'safepharma_pos_open_tabs';
+/** localStorage key the whole local cart lives under — the source of truth
+ *  is the browser, not the database, until the pharmacist actually pays. */
+const POS_TABS_STORAGE_KEY = 'safepharma_pos_local_tabs';
 
 interface StoredPosTabs {
-  tabIds: string[];
+  tabs: PosTab[];
   activeTabId: string;
 }
 
@@ -74,42 +107,65 @@ interface StoredPosTabs {
   imports: [
     FormsModule,
     CommonModule,
+    EgpCurrencyPipe,
     PaymentModalComponent,
     SafetyResultModalComponent,
-    RelativeDropDown,
     AddEditCustomerDialogComponent,
+    ModalOverlayDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pos.html',
+  styleUrl: './pos.css',
 })
-export class Pos implements OnInit {
+export class Pos implements OnInit, AfterViewInit {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly service = inject(PosService);
   private readonly taxesApi = inject(TaxesService);
   private readonly toast = inject(Toast);
   protected readonly auth = inject(AuthSessionService);
   private readonly customerApi = inject(CustomersApiService);
   private readonly safetyApi = inject(PatientSafetyService);
+  private readonly relativesApi = inject(RelativesService);
 
-  // ---- tabs ----
+  // ---- tabs (each one is a purely local cart until checkout) ----
   protected readonly tabs = signal<PosTab[]>([]);
   protected readonly activeTabId = signal<string>('');
   protected readonly activeTab = computed(
     () => this.tabs().find((t) => t.tabId === this.activeTabId()) ?? null,
   );
-  protected readonly sale = computed(() => this.activeTab()?.sale ?? null);
-  protected readonly selectedCustomer = computed(() => this.activeTab()?.selectedCustomer ?? null);
-  protected readonly itemCheckStatus = computed(() => this.activeTab()?.itemCheckStatus ?? {});
 
-  /** Keeps the tab bar in sync with localStorage so a page reload can restore it
-   *  (requirement: tabs persist until the user explicitly closes them). */
+  /** A Sale-shaped read model built from the active tab's local cart, purely
+   *  so the rest of this component/template can keep reading `sale()` like
+   *  it always has. `id`/`invoiceNumber` are placeholders — nothing real
+   *  exists until checkout() succeeds. */
+  protected readonly sale = computed<Sale | null>(() => {
+    const tab = this.activeTab();
+    if (!tab) return null;
+    return this.buildVirtualSale(tab);
+  });
+  protected readonly selectedCustomer = computed(() => this.activeTab()?.selectedCustomer ?? null);
+  protected readonly activeCartItemId = computed(
+    () => this.activeTab()?.activeItemId ?? this.activeTab()?.items.at(-1)?.id ?? null,
+  );
+  protected readonly itemCheckStatus = computed(() => this.activeTab()?.itemCheckStatus ?? {});
+  protected readonly safetyState = computed<PosSafetyState>(() => {
+    if (!this.selectedCustomer()) return 'walk-in';
+    const snapshot = this.currentSafetySnapshot();
+    if (this.safetyLoading()) return 'running';
+    if (snapshot?.stale) return 'stale';
+    return this.activeTab()?.safetyChecked && snapshot && !snapshot.stale ? 'checked' : 'pending';
+  });
+
+  /** Persists the whole cart (not just an id) to localStorage — a reload
+   *  restores tabs directly from here, with no backend round trip, since
+   *  nothing about an in-progress cart exists in the database yet. */
   private readonly persistTabsEffect = effect(() => {
-    const tabIds = this.tabs().map((t) => t.tabId);
-    const active = this.activeTabId();
-    if (tabIds.length === 0) {
+    const tabs = this.tabs();
+    if (tabs.length === 0) {
       localStorage.removeItem(POS_TABS_STORAGE_KEY);
       return;
     }
-    const payload: StoredPosTabs = { tabIds, activeTabId: active };
+    const payload: StoredPosTabs = { tabs, activeTabId: this.activeTabId() };
     localStorage.setItem(POS_TABS_STORAGE_KEY, JSON.stringify(payload));
   });
 
@@ -121,11 +177,54 @@ export class Pos implements OnInit {
   protected readonly safetyPatientNames = signal<Record<string, string>>({});
   protected readonly checkingAll = signal(false);
   protected readonly checkingItemId = signal<string | null>(null);
+  protected readonly safetyDetailsExpanded = signal(false);
+  private readonly safetySnapshots = signal<Record<string, SafetySnapshot>>({});
+  protected readonly currentSafetySnapshot = computed(
+    () => this.safetySnapshots()[this.activeTabId()] ?? null,
+  );
+  protected readonly modalSafetyMedicines = computed(
+    () => this.currentSafetySnapshot()?.items ?? [],
+  );
+  private safetyRequestId = 0;
+  private safetyRequestKey: string | null = null;
 
-  /** Pay is blocked until "Check all" has run at least once for the current cart. */
+  protected readonly safetySummary = computed(() => {
+    const snapshot = this.currentSafetySnapshot();
+    if (!snapshot || snapshot.stale) return null;
+    if (snapshot.results.length === 0) {
+      return { tone: 'warn', label: 'No result returned' } as const;
+    }
+    const tones = [
+      ...snapshot.results.map((result) => this.toneFor(result)),
+      ...this.inlineSafetyMedicines().map((medicine) => medicine.tone),
+    ];
+    const tone = tones.includes('danger') ? 'danger' : tones.includes('warn') ? 'warn' : 'ok';
+    return {
+      tone,
+      label: tone === 'ok' ? 'Safe' : tone === 'warn' ? 'Warnings found' : 'High-risk issue',
+    } as const;
+  });
+
+  protected readonly inlineSafetyMedicines = computed(() => {
+    const snapshot = this.currentSafetySnapshot();
+    if (!snapshot || snapshot.stale) return [];
+    return snapshot.items.map((item) => {
+      const result = snapshot.results.find((candidate) => candidate.patientRef === item.customerId) ?? snapshot.results[0];
+      const issues = result?.issues.filter((issue) => issue.relatedDrugRefs?.includes(item.pharmacyMedicineId) || issue.relatedDrugRefs?.includes(item.id)) ?? [];
+      const tone = result ? (issues.length ? this.toneForIssues(result, issues) : this.toneFor(result)) : 'warn';
+      return {
+        ...item,
+        tone,
+        label: tone === 'ok' ? 'Safe' : tone === 'warn' ? 'Warning' : 'High Risk',
+        conclusion: issues[0]?.reason || 'No patient-specific issues detected.',
+      };
+    });
+  });
+
+  /** Payment remains available; an unchecked selected customer gets a reminder. */
   protected readonly canPay = computed(() => {
     const currentSale = this.sale();
-    return !!currentSale && currentSale.items.length > 0 && !!this.activeTab()?.safetyChecked;
+    return !!currentSale && currentSale.items.length > 0;
   });
 
   // ---- product search ----
@@ -133,6 +232,13 @@ export class Pos implements OnInit {
   protected readonly searchOpen = signal(false);
   protected readonly searching = signal(false);
   protected readonly searchError = signal<string | null>(null);
+  protected readonly barcodeLoading = signal(false);
+  protected readonly recentlyAddedItemId = signal<string | null>(null);
+  protected readonly removingItemId = signal<string | null>(null);
+  @ViewChild('scannerInput') private scannerInput?: ElementRef<HTMLInputElement>;
+  private readonly barcodeQueue: string[] = [];
+  private barcodeResolving = false;
+  private scannerFocusSuspended = false;
   private readonly query$ = toObservable(this.query).pipe(
     debounceTime(150),
     distinctUntilChanged(),
@@ -173,20 +279,30 @@ export class Pos implements OnInit {
 
   // ---- customer picker (sale-level) ----
   protected readonly customers = signal<Customer[]>([]);
+  protected readonly customersLoading = signal(false);
   protected readonly showCustomerDropdown = signal(false);
   protected readonly showCustomerSearchModal = signal(false);
   protected readonly showCreateCustomerModal = signal(false);
   protected readonly customerSearchQuery = signal('');
   protected readonly customerSearchResults = signal<Customer[]>([]);
   protected readonly customerSearchLoading = signal(false);
-  protected readonly relatives = signal<Array<{ relativeId: string; relativeName: string }>>([]);
+  protected readonly customerSearchError = signal<string | null>(null);
   protected readonly excludedCustomerIds = signal<string[]>([]);
+  @ViewChild('customerSearchInput') private customerSearchInput?: ElementRef<HTMLInputElement>;
+  private customerSearchDebounce?: ReturnType<typeof setTimeout>;
+  private customerSearchRequestId = 0;
+
+  // ---- relatives of the sale's customer — power the per-row "Relative" dropdown ----
+  protected readonly relatives = signal<RelativeListItem[]>([]);
 
   // ---- per-line customer picker ----
   protected readonly openItemCustomerPickerId = signal<string | null>(null);
+  protected readonly openRowTaxId = signal<string | null>(null);
 
   // ---- payment modal ----
   protected readonly showPaymentModal = signal(false);
+  protected readonly showSafetyReminder = signal(false);
+  protected readonly pendingPaymentMethod = signal<PaymentMethodChoice>('Cash');
   protected readonly paymentMethodChoice = signal<PaymentMethodChoice>('Cash');
   protected readonly payingInProgress = signal(false);
 
@@ -198,7 +314,10 @@ export class Pos implements OnInit {
 
   // ---- sale-level tax editor (pick a configured tax) ----
   protected readonly taxes = signal<Tax[]>([]);
+  protected readonly taxesLoading = signal(true);
+  protected readonly taxesError = signal<string | null>(null);
   protected readonly showTaxEditor = signal(false);
+  protected readonly showSaleTaxMenu = signal(false);
   protected readonly taxInput = signal('');
   protected readonly savingTax = signal(false);
 
@@ -209,62 +328,163 @@ export class Pos implements OnInit {
   ngOnInit(): void {
     this.restoreTabsOrOpenNew();
     this.loadCustomers();
-    this.taxesApi.getAll().subscribe({
-      next: (list) => this.taxes.set(list.filter((t) => t.status === 'Active')),
-      error: () => {},
-    });
+    this.loadRelativesForCustomer(this.selectedCustomer()?.id ?? null);
+    this.loadTaxes();
   }
 
-  /** Reopens whatever tabs were left open before the last reload (each tab is
-   *  just a draft Sale id, so we re-fetch the live state from the backend).
-   *  Falls back to a single new tab if nothing was stored or every stored
-   *  sale turned out to be gone/finalized already. */
+  ngAfterViewInit(): void {
+    this.restoreScannerFocus(true);
+  }
+
+  /** Reopens whatever tabs were left open before the last reload. Everything
+   *  needed is already in localStorage — there is nothing to fetch from the
+   *  backend, since an in-progress cart was never sent there in the first
+   *  place. Falls back to a single new tab if nothing was stored. */
   private restoreTabsOrOpenNew(): void {
     const raw = localStorage.getItem(POS_TABS_STORAGE_KEY);
     const stored: StoredPosTabs | null = raw ? JSON.parse(raw) : null;
 
-    if (!stored || stored.tabIds.length === 0) {
+    if (!stored || stored.tabs.length === 0) {
       this.openNewTab();
       return;
     }
 
-    forkJoin(stored.tabIds.map((id) => this.service.getSaleById(id).pipe(catchError(() => of(null)))))
-      .subscribe((responses) => {
-        const restored: PosTab[] = [];
-        responses.forEach((res) => {
-          const openSale = res?.success && res.data && res.data.status === SaleStatus.Open ? res.data : null;
-          if (!openSale) return;
-          restored.push({
-            tabId: openSale.id,
-            sale: openSale,
-            selectedCustomer: openSale.customerId
-              ? { id: openSale.customerId, name: openSale.customerName, phone: '' }
-              : null,
-            safetyChecked: false,
-            itemCheckStatus: {},
-          });
-        });
+    this.tabs.set(stored.tabs);
+    const stillActive = stored.tabs.find((t) => t.tabId === stored.activeTabId);
+    this.activeTabId.set(stillActive ? stillActive.tabId : stored.tabs[0].tabId);
+  }
 
-        if (restored.length === 0) {
-          this.openNewTab();
-          return;
-        }
+  /** Builds the read-only Sale-shaped view the rest of the component/template
+   *  works off of, from the active tab's local cart. */
+  private buildVirtualSale(tab: PosTab): Sale {
+    const items: SaleItem[] = tab.items.map((i) => ({
+      id: i.id,
+      pharmacyMedicineId: i.pharmacyMedicineId,
+      medicineName: i.medicineName,
+      customerId: i.customerId,
+      customerName: i.customerName,
+      batchId: '',
+      batchNumber: '',
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      discount: i.discount,
+      taxAmount: i.taxAmount,
+      lineTotal: i.unitPrice * i.quantity - i.discount + i.taxAmount,
+    }));
 
-        this.tabs.set(restored);
-        const stillActive = restored.find((t) => t.tabId === stored.activeTabId);
-        this.activeTabId.set(stillActive ? stillActive.tabId : restored[0].tabId);
-      });
+    const subTotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
+    const taxRate = tab.taxId ? (this.taxes().find((t) => t.id === tab.taxId)?.rate ?? 0) : 0;
+    const taxAmount = Math.round(subTotal * (taxRate / 100) * 100) / 100;
+    const grandTotal = subTotal - tab.discountAmount + taxAmount;
+
+    return {
+      id: '',
+      invoiceNumber: 'Draft',
+      customerId: tab.selectedCustomer?.id ?? null,
+      customerName: tab.selectedCustomer?.name ?? '',
+      paymentMethod: 'Cash',
+      subTotal,
+      discount: tab.discountAmount,
+      tax: taxAmount,
+      grandTotal,
+      amountPaidByCash: 0,
+      amountPaidByCard: 0,
+      amountPaid: 0,
+      change: 0,
+      status: SaleStatus.Open,
+      items,
+      createdAt: '',
+    };
   }
 
   // ================= click-outside-to-close =================
 
-  @HostListener('document:click')
-  onDocumentClick(): void {
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
     this.showCustomerDropdown.set(false);
     this.openItemCustomerPickerId.set(null);
     this.showDiscountEditor.set(false);
     this.showTaxEditor.set(false);
+    this.showSaleTaxMenu.set(false);
+    this.openRowTaxId.set(null);
     this.searchOpen.set(false);
+
+    const target = event.target as HTMLElement | null;
+    if (target && this.isInsidePos(target) && !this.isTextEntry(target)) {
+      this.restoreScannerFocus();
+    }
+  }
+
+  @HostListener('document:focusin', ['$event'])
+  onDocumentFocusIn(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target || !this.isInsidePos(target)) return;
+
+    if (target === this.scannerInput?.nativeElement) {
+      this.scannerFocusSuspended = false;
+    } else if (this.isTextEntry(target)) {
+      this.scannerFocusSuspended = true;
+    }
+  }
+
+  @HostListener('document:focusout', ['$event'])
+  onDocumentFocusOut(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    const next = event.relatedTarget as HTMLElement | null;
+    if (!target || !this.isInsidePos(target) || !this.isTextEntry(target)) return;
+
+    if (!next || !this.isInsidePos(next) || !this.isTextEntry(next)) {
+      this.restoreScannerFocus();
+    }
+  }
+
+  private isInsidePos(target: HTMLElement): boolean {
+    return Boolean(target.closest('[data-pos-root]'));
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onPosKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target || !this.isInsidePos(target)) return;
+    if (this.isTextEntry(target)) return;
+    if (
+      this.showCustomerDropdown() ||
+      this.searchOpen() ||
+      this.showDiscountEditor() ||
+      this.showTaxEditor() ||
+      this.showPaymentModal() ||
+      this.showSafetyModal() ||
+      this.showCreateCustomerModal() ||
+      this.showCustomerSearchModal() ||
+      this.openItemCustomerPickerId() ||
+      this.openRowTaxId() ||
+      this.showSaleTaxMenu()
+    ) return;
+
+    if (event.key !== 'Delete' && event.key !== 'Escape') return;
+    const itemId = this.activeCartItemId();
+    if (!itemId) return;
+    event.preventDefault();
+    this.removeItemById(itemId);
+  }
+
+  private isTextEntry(target: HTMLElement): boolean {
+    return (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target.isContentEditable
+    );
+  }
+
+  /** Focus the scanner without stealing focus from an intentionally edited
+   * control. Forced recovery is used only after a scan or a completed POS
+   * action, when the workflow is explicitly returning to scanning. */
+  private restoreScannerFocus(force = false): void {
+    if (!force && this.scannerFocusSuspended) return;
+    const input = this.scannerInput?.nativeElement;
+    if (!input || document.activeElement === input) return;
+    input.focus({ preventScroll: true });
   }
 
   /** Stops a click inside an open panel/dropdown from bubbling to the
@@ -275,122 +495,139 @@ export class Pos implements OnInit {
 
   // ================= tabs =================
 
+  /** Opens a purely local, empty cart. Nothing is created on the backend —
+   *  a tab only ever touches the database once, at checkout. */
   openNewTab(): void {
-    this.service.createDraftSale().subscribe({
-      next: (res) => {
-        if (res.success && res.data) {
-          const tab: PosTab = {
-            tabId: res.data.id,
-            sale: res.data,
-            selectedCustomer: null,
-            safetyChecked: false,
-            itemCheckStatus: {},
-          };
-          this.tabs.update((list) => [...list, tab]);
-          this.activeTabId.set(tab.tabId);
-        } else {
-          this.toast.show(res.message || 'Could not start a new sale.', 'error');
-        }
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not start a new sale.'), 'error'),
-    });
+    const tab: PosTab = {
+      tabId: crypto.randomUUID(),
+      items: [],
+      activeItemId: null,
+      selectedCustomer: null,
+      discountAmount: 0,
+      taxId: null,
+      safetyChecked: false,
+      itemCheckStatus: {},
+    };
+    this.tabs.update((list) => [...list, tab]);
+    this.activeTabId.set(tab.tabId);
+    this.loadRelativesForCustomer(null);
   }
 
   switchTab(tabId: string): void {
+    if (tabId !== this.activeTabId() && this.safetyLoading()) {
+      this.safetyRequestId++;
+      this.safetyRequestKey = null;
+      this.safetyLoading.set(false);
+      this.checkingAll.set(false);
+      this.checkingItemId.set(null);
+      this.showSafetyModal.set(false);
+    }
+    this.safetyDetailsExpanded.set(false);
     this.activeTabId.set(tabId);
-    this.syncExcludedCustomerIds(this.selectedCustomer());
+    const tab = this.tabs().find((t) => t.tabId === tabId);
+    this.loadRelativesForCustomer(tab?.selectedCustomer?.id ?? null);
   }
 
+  /** The X button on a tab. Since nothing about an in-progress cart is ever
+   *  persisted, there's nothing to cancel/delete on the backend — closing a
+   *  tab just discards the local cart. */
   closeTab(tabId: string, event: Event): void {
     event.stopPropagation();
     const tab = this.tabs().find((t) => t.tabId === tabId);
     if (!tab) return;
 
-    if (tab.sale.status !== SaleStatus.Open) {
-      this.removeTabLocally(tabId);
-      return;
-    }
-    if (
-      tab.sale.items.length > 0 &&
-      !confirm(`Close ${tab.sale.invoiceNumber}? This will cancel the draft sale.`)
-    ) {
+    if (tab.items.length > 0 && !confirm('Close this tab? The cart will be discarded.')) {
       return;
     }
 
-    this.service.cancelSale(tab.tabId).subscribe({
-      next: () => this.removeTabLocally(tabId),
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not close this tab.'), 'error'),
-    });
+    this.removeTabLocally(tabId);
   }
 
-  /** Removes a tab from local state only (assumes the backend sale is already
-   *  in its final state — cancelled or completed). Opens a fresh tab if none remain. */
+  /** Removes a tab from local state. Opens a fresh tab if none remain. */
   private removeTabLocally(tabId: string): void {
     const remaining = this.tabs().filter((t) => t.tabId !== tabId);
     this.tabs.set(remaining);
     if (this.activeTabId() === tabId) {
+      this.safetyDetailsExpanded.set(false);
       if (remaining.length > 0) {
-        this.activeTabId.set(remaining[remaining.length - 1].tabId);
+        const next = remaining[remaining.length - 1];
+        this.activeTabId.set(next.tabId);
+        this.loadRelativesForCustomer(next.selectedCustomer?.id ?? null);
       } else {
         this.openNewTab();
       }
     }
   }
 
-  /** Replace the active tab's sale snapshot with a fresh one from the API.
-   *  Any cart-affecting change invalidates the previous safety check — the
-   *  pharmacist must run "Check all" again before Pay unlocks. */
-  private patchActiveSale(updated: Sale): void {
+  /** Applies a local mutation to the active tab's cart. Medical changes make
+   * the previous result stale; purely financial edits do not. */
+  private updateActiveTab(patch: (tab: PosTab) => PosTab, safetyRelevant = true): void {
+    if (safetyRelevant) this.invalidateSafetyState();
     const id = this.activeTabId();
     this.tabs.update((list) =>
       list.map((t) =>
-        t.tabId === id
-          ? { ...t, sale: updated, safetyChecked: false, itemCheckStatus: {} }
-          : t,
+        t.tabId === id ? { ...patch(t), safetyChecked: false, itemCheckStatus: {} } : t,
       ),
     );
   }
 
-  private patchActiveCustomer(customer: Customer | null): void {
-    const id = this.activeTabId();
-    this.tabs.update((list) =>
-      list.map((t) => (t.tabId === id ? { ...t, selectedCustomer: customer } : t)),
-    );
-    this.updateExcludedCustomerIds(customer);
-  }
-
-  private updateExcludedCustomerIds(customer: Customer | null): void {
-    this.syncExcludedCustomerIds(customer);
-  }
-
-  private syncExcludedCustomerIds(
-    customer: Customer | null,
-    relatives: Array<{ relativeId: string; relativeName?: string }> | null | undefined = [],
-  ): void {
-    const next = new Set<string>();
-
-    if (customer?.id) {
-      next.add(customer.id);
+  private invalidateSafetyState(): void {
+    const tabId = this.activeTabId();
+    const snapshot = this.safetySnapshots()[tabId];
+    if (snapshot && !snapshot.stale) {
+      this.safetySnapshots.update((all) => ({
+        ...all,
+        [tabId]: { ...snapshot, stale: true },
+      }));
     }
-
-    const relativeIds = (relatives ?? [])
-      .map((relative) => relative.relativeId)
-      .filter((id): id is string => Boolean(id));
-
-    relativeIds.forEach((id) => next.add(id));
-
-    this.excludedCustomerIds.set(Array.from(next));
-    this.refreshCustomerSearchResults(this.customers());
+    this.safetyRequestId++;
+    this.safetyRequestKey = null;
+    this.safetyDetailsExpanded.set(false);
+    this.safetyLoading.set(false);
+    this.checkingAll.set(false);
+    this.checkingItemId.set(null);
+    this.showSafetyModal.set(false);
   }
 
   private loadCustomers(): void {
+    this.customersLoading.set(true);
     this.service.getAllCustomers().subscribe({
       next: (res) => {
-        const list = res ?? [];
+        const list = this.unwrapCustomers(res);
         this.customers.set(list);
         this.refreshCustomerSearchResults(list);
+        this.customersLoading.set(false);
+        if (this.showCustomerDropdown() && !this.customerSearchQuery().trim()) {
+          this.customerSearchLoading.set(false);
+        }
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error'),
+      error: (err) => {
+        this.customersLoading.set(false);
+        this.customerSearchLoading.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error');
+      },
+    });
+  }
+
+  /** Loads the relatives of the given customer for the per-row "Relative"
+   *  dropdown. Clears the list when there's no sale-level customer yet. */
+  private loadRelativesForCustomer(customerId: string | null): void {
+    if (!customerId) {
+      this.relatives.set([]);
+      this.excludedCustomerIds.set([]);
+      return;
+    }
+
+    this.relativesApi.getAllRelatives(customerId).subscribe({
+      next: (list) => {
+        this.relatives.set(list ?? []);
+        this.excludedCustomerIds.set([
+          customerId,
+          ...(list ?? []).map((r) => r.relativeId).filter(Boolean),
+        ]);
+        this.refreshCustomerSearchResults(this.customers());
+      },
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load relatives.'), 'error'),
     });
   }
 
@@ -410,7 +647,30 @@ export class Pos implements OnInit {
 
   private filterCustomerSearchResults(list: Customer[]): Customer[] {
     const excluded = new Set(this.excludedCustomerIds());
-    return list.filter((customer) => !excluded.has(customer.id));
+    return list.filter((customer) => {
+      const record = customer as Customer & { isActive?: boolean };
+      return record.status !== 'Inactive' && record.isActive !== false && !excluded.has(customer.id);
+    });
+  }
+
+  private unwrapCustomers(response: Customer[] | { data?: Customer[] } | null | undefined): Customer[] {
+    return Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
+  }
+
+  protected loadTaxes(): void {
+    this.taxesLoading.set(true);
+    this.taxesError.set(null);
+    this.taxesApi.getAll().subscribe({
+      next: (list) => {
+        this.taxes.set(list.filter((tax) => tax.status === 'Active'));
+        this.taxesLoading.set(false);
+      },
+      error: () => {
+        this.taxes.set([]);
+        this.taxesLoading.set(false);
+        this.taxesError.set('Could not load active taxes.');
+      },
+    });
   }
 
   // ================= customer (sale-level) =================
@@ -422,6 +682,11 @@ export class Pos implements OnInit {
     if (!isOpen) {
       this.openItemCustomerPickerId.set(null);
       this.showCreateCustomerModal.set(false);
+      this.customerSearchQuery.set('');
+      this.customerSearchError.set(null);
+      this.customerSearchLoading.set(this.customersLoading());
+      this.refreshCustomerSearchResults(this.customers());
+      setTimeout(() => this.customerSearchInput?.nativeElement.focus());
     }
   }
 
@@ -437,29 +702,42 @@ export class Pos implements OnInit {
     this.showCustomerSearchModal.set(false);
     this.customerSearchQuery.set('');
     this.customerSearchLoading.set(false);
+    this.restoreScannerFocus(true);
   }
 
   onCustomerSearchInput(value: string): void {
     this.customerSearchQuery.set(value);
     const term = value.trim();
+    this.customerSearchError.set(null);
+    clearTimeout(this.customerSearchDebounce);
 
     if (!term) {
       this.refreshCustomerSearchResults(this.customers());
-      this.customerSearchLoading.set(false);
+      this.customerSearchLoading.set(this.customersLoading());
       return;
     }
 
     this.customerSearchLoading.set(true);
-    this.service.getAllCustomers(term).subscribe({
-      next: (res) => {
-        this.customerSearchResults.set(this.filterCustomerSearchResults(res ?? []));
-        this.customerSearchLoading.set(false);
-      },
-      error: (err) => {
-        this.customerSearchLoading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not search customers.'), 'error');
-      },
-    });
+    const requestId = ++this.customerSearchRequestId;
+    this.customerSearchDebounce = setTimeout(() => {
+      this.service.getAllCustomers(term).subscribe({
+        next: (res) => {
+          if (requestId !== this.customerSearchRequestId) return;
+          this.customerSearchResults.set(this.filterCustomerSearchResults(this.unwrapCustomers(res)));
+          this.customerSearchLoading.set(false);
+        },
+        error: (err) => {
+          if (requestId !== this.customerSearchRequestId) return;
+          this.customerSearchLoading.set(false);
+          this.customerSearchError.set(getErrorMessage(err, 'Could not search customers.'));
+        },
+      });
+    }, 250);
+  }
+
+  clearCustomerSearch(): void {
+    this.onCustomerSearchInput('');
+    setTimeout(() => this.customerSearchInput?.nativeElement.focus());
   }
 
   openCreateCustomerModal(event?: Event): void {
@@ -470,31 +748,13 @@ export class Pos implements OnInit {
 
   closeCreateCustomerModal(): void {
     this.showCreateCustomerModal.set(false);
+    this.restoreScannerFocus(true);
   }
 
   onCustomerCreated(): void {
     this.showCreateCustomerModal.set(false);
     this.showCustomerSearchModal.set(false);
     this.loadCustomers();
-  }
-
-  onRelativesLoaded(payload: {
-    customerId: string;
-    relatives: Array<{ relativeId: string; relativeName?: string }> | null | undefined;
-  }): void {
-    if (payload.customerId && this.selectedCustomer()?.id !== payload.customerId) {
-      return;
-    }
-
-    this.relatives.set(
-      (payload.relatives ?? [])
-        .filter((relative) => Boolean(relative.relativeId))
-        .map((relative) => ({
-          relativeId: relative.relativeId,
-          relativeName: relative.relativeName ?? 'Customer',
-        })),
-    );
-    this.syncExcludedCustomerIds(this.selectedCustomer(), this.relatives());
   }
 
   selectCustomerFromModal(customer: Customer | null): void {
@@ -522,17 +782,8 @@ export class Pos implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.success) {
-            this.relatives.update((current) => {
-              if (current.some((relative) => relative.relativeId === customer.id)) {
-                return current;
-              }
-              return [
-                ...current,
-                { relativeId: customer.id, relativeName: customer.name ?? 'Customer' },
-              ];
-            });
-            this.syncExcludedCustomerIds(this.selectedCustomer(), this.relatives());
             this.toast.show(`${customer.name ?? 'Customer'} added as a relative.`, 'success');
+            this.loadRelativesForCustomer(currentCustomer!.id);
           } else {
             this.toast.show(res.message || 'Could not add relative.', 'error');
           }
@@ -543,20 +794,12 @@ export class Pos implements OnInit {
       });
   }
 
+  /** Purely local — there's no backend Sale to sync a customer onto until
+   *  checkout, so this just updates the active tab's cart state. */
   selectCustomer(customer: Customer | null): void {
     this.showCustomerDropdown.set(false);
-    const currentSale = this.sale();
-    if (!currentSale) return;
-
-    this.patchActiveCustomer(customer);
-    this.service
-      .setSaleCustomer(currentSale.id, { customerId: customer ? customer.id : EMPTY_GUID })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error'),
-      });
+    this.updateActiveTab((t) => ({ ...t, selectedCustomer: customer }));
+    this.loadRelativesForCustomer(customer?.id ?? null);
   }
 
   // ================= product search =================
@@ -567,46 +810,185 @@ export class Pos implements OnInit {
   }
 
   onSearchFocus(): void {
+    this.scannerFocusSuspended = false;
     if (this.query().trim().length >= 1) this.searchOpen.set(true);
   }
 
+  /** Adding an item only ever does a read-only availability/price check
+   *  against the backend (see PosService.getAvailability) — the line itself
+   *  stays purely local until checkout. */
   addToCart(item: MedicineSearchResult): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    const tab = this.activeTab();
+    if (!tab) return;
 
-    const customer = this.selectedCustomer();
+    this.service.getAvailability(item.pharmacyMedicineId).subscribe({
+      next: (res) => {
+        if (!res.success || !res.data) {
+          this.toast.show(res.message || 'Could not check availability.', 'error');
+          return;
+        }
+
+        const available = res.data.availableQuantity;
+        if (available <= 0) {
+          this.toast.show('No available stock for this medicine.', 'error');
+          return;
+        }
+
+        const customer = this.selectedCustomer();
+        const customerId = customer?.id ?? null;
+        const existing = tab.items.find(
+          (i) => i.pharmacyMedicineId === item.pharmacyMedicineId && i.customerId === customerId,
+        );
+        const nextQuantity = (existing?.quantity ?? 0) + 1;
+        const itemId = existing?.id ?? crypto.randomUUID();
+
+        if (nextQuantity > available) {
+          this.toast.show(`Only ${available} units available.`, 'error');
+          return;
+        }
+
+        const unitPrice = res.data.unitPrice;
+        this.updateActiveTab((t) => ({
+          ...t,
+          items: existing
+            ? t.items.map((i) => (i.id === existing.id ? { ...i, quantity: nextQuantity } : i))
+            : [
+                ...t.items,
+                {
+                  id: itemId,
+                  pharmacyMedicineId: item.pharmacyMedicineId,
+                  medicineName: item.tradeNameEn,
+                  customerId,
+                  customerName: customer?.name ?? '',
+                  quantity: 1,
+                  unitPrice,
+                  discount: 0,
+                  taxAmount: 0,
+                },
+              ],
+          activeItemId: itemId,
+        }));
+
+        this.query.set('');
+        this.searchOpen.set(false);
+        this.recentlyAddedItemId.set(itemId);
+        this.restoreScannerFocus();
+      },
+      error: (err) => this.toast.show(getErrorMessage(err, 'Could not add item to cart.'), 'error'),
+    });
+  }
+
+  /** A scanner sends the complete value followed by Enter. Values are queued
+   *  so rapid A → B → C scans are handled in order without overlapping cart
+   *  mutations or dropping a barcode while the previous request resolves. */
+  onSearchEnter(): void {
+    const barcode = this.query().trim();
+    if (!barcode) return;
+
+    const results = this.searchResults();
+    const exactBarcodeResult = results.some((item) => item.barcode?.trim() === barcode);
+    if (!this.searching() && results.length === 1 && !exactBarcodeResult) {
+      this.addToCart(results[0]);
+      return;
+    }
+
+    this.query.set('');
+    this.searchOpen.set(false);
+    this.barcodeQueue.push(barcode);
+    this.processNextBarcode();
+  }
+
+  private processNextBarcode(): void {
+    if (this.barcodeResolving || this.barcodeQueue.length === 0) return;
+
+    const barcode = this.barcodeQueue.shift()!;
+    this.barcodeResolving = true;
+    this.barcodeLoading.set(true);
+
     this.service
-      .addItemToSale(currentSale.id, {
-        pharmacyMedicineId: item.pharmacyMedicineId,
-        customerId: customer ? customer.id : undefined,
-        quantity: 1,
-        discount: 0,
-        taxAmount: 0,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) {
-            this.patchActiveSale(res.data);
-            this.query.set('');
-            this.searchOpen.set(false);
-          } else {
-            this.toast.show(res.message || 'Could not add item.', 'error');
+      .scanBarcode(barcode)
+      .pipe(
+        switchMap((res) => {
+          if (!res.success || !res.data || !this.isValidBarcodeResult(res.data)) {
+            return of({ res, availability: null as null | { success: boolean; data?: StockAvailability; message?: string } });
           }
+          return this.service
+            .getAvailability(res.data.pharmacyMedicineId)
+            .pipe(map((availability) => ({ res, availability })));
+        }),
+        finalize(() => {
+          this.barcodeResolving = false;
+          this.barcodeLoading.set(false);
+          this.restoreScannerFocus(true);
+          this.processNextBarcode();
+        }),
+      )
+      .subscribe({
+        next: ({ res, availability }) => {
+          const data = res.data;
+          if (!res.success || !data || !this.isValidBarcodeResult(data)) {
+            this.toast.show(res.message || 'Barcode not found.', 'error');
+            return;
+          }
+          if (!availability?.success || !availability.data) {
+            this.toast.show(availability?.message || 'Could not check availability.', 'error');
+            return;
+          }
+          const customerId = this.selectedCustomer()?.id ?? null;
+          const existingQuantity = this.activeTab()?.items.find(
+            (item) =>
+              item.pharmacyMedicineId === data.pharmacyMedicineId && item.customerId === customerId,
+          )?.quantity ?? 0;
+          if (availability.data.availableQuantity <= existingQuantity) {
+            this.toast.show(`Only ${availability.data.availableQuantity} units available.`, 'error');
+            return;
+          }
+          this.addScannedItem(data);
         },
-        error: (err) =>
-          this.toast.show(getErrorMessage(err, 'Could not add item to sale.'), 'error'),
+        error: (err) => {
+          this.toast.show(getErrorMessage(err, 'Could not resolve barcode.'), 'error');
+        },
       });
   }
 
-  /** Enter key in the search box = barcode scanner behavior: if there's exactly
-   *  one match, add it straight to the cart without another click. */
-  onSearchEnter(): void {
-    const results = this.searchResults();
-    if (results.length === 1) {
-      this.addToCart(results[0]);
-    } else if (results.length === 0) {
-      this.toast.show('No matching product found.', 'error');
-    }
+  private isValidBarcodeResult(data: BarcodeScanData): boolean {
+    return Boolean(
+      data.pharmacyMedicineId && data.medicineName && Number.isFinite(Number(data.price)),
+    );
+  }
+
+  private addScannedItem(data: BarcodeScanData): void {
+    const tab = this.activeTab();
+    if (!tab) return;
+
+    const customer = this.selectedCustomer();
+    const customerId = customer?.id ?? null;
+    const existing = tab.items.find(
+      (i) => i.pharmacyMedicineId === data.pharmacyMedicineId && i.customerId === customerId,
+    );
+    const itemId = existing?.id ?? crypto.randomUUID();
+
+    this.updateActiveTab((t) => ({
+      ...t,
+        items: existing
+        ? t.items.map((i) => (i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i))
+        : [
+            ...t.items,
+            {
+              id: itemId,
+              pharmacyMedicineId: data.pharmacyMedicineId,
+              medicineName: data.medicineName,
+              customerId,
+              customerName: customer?.name ?? '',
+              quantity: 1,
+              unitPrice: Number(data.price),
+              discount: 0,
+              taxAmount: 0,
+            },
+        ],
+        activeItemId: itemId,
+      }));
+    this.recentlyAddedItemId.set(itemId);
   }
 
   // ================= cart line actions =================
@@ -624,60 +1006,65 @@ export class Pos implements OnInit {
     item: SaleItem,
     changes: Partial<Pick<SaleItem, 'quantity' | 'discount' | 'taxAmount'>>,
   ): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    if (changes.quantity !== undefined && changes.quantity <= 0) return;
 
-    this.service
-      .updateSaleItem(currentSale.id, item.id, {
-        customerId: item.customerId ?? undefined,
-        quantity: changes.quantity ?? item.quantity,
-        discount: changes.discount ?? item.discount,
-        taxAmount: changes.taxAmount ?? item.taxAmount,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-          else this.toast.show(res.message || 'Could not update item.', 'error');
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not update item.'), 'error'),
-      });
+    this.updateActiveTab((t) => ({
+      ...t,
+      items: t.items.map((i) =>
+        i.id === item.id
+          ? {
+              ...i,
+              quantity: changes.quantity ?? i.quantity,
+              discount: changes.discount ?? i.discount,
+              taxAmount: changes.taxAmount ?? i.taxAmount,
+            }
+          : i,
+      ),
+    }), changes.quantity !== undefined);
+  }
+
+  selectCartItem(item: SaleItem, event: MouseEvent): void {
+    this.updateActiveTab((t) => ({ ...t, activeItemId: item.id }), false);
   }
 
   removeItem(item: SaleItem): void {
-    const currentSale = this.sale();
-    if (!currentSale) return;
+    this.removeItemById(item.id);
+  }
 
-    this.service.removeSaleItem(currentSale.id, item.id).subscribe({
-      next: (res) => {
-        if (res.success && res.data) this.patchActiveSale(res.data);
-        else this.toast.show(res.message || 'Could not remove item.', 'error');
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not remove item.'), 'error'),
-    });
+  private removeItemById(itemId: string): void {
+    if (this.removingItemId() === itemId) return;
+    const tab = this.activeTab();
+    if (!tab?.items.some((item) => item.id === itemId)) return;
+    const index = tab.items.findIndex((item) => item.id === itemId);
+    const nextActive = tab.items[index + 1] ?? tab.items[index - 1] ?? null;
+    this.removingItemId.set(itemId);
+    setTimeout(() => {
+      this.updateActiveTab((t) => ({
+        ...t,
+        items: t.items.filter((i) => i.id !== itemId),
+        activeItemId: nextActive?.id ?? null,
+      }));
+      this.removingItemId.set(null);
+      this.restoreScannerFocus(true);
+    }, 140);
   }
 
   toggleItemCustomerPicker(itemId: string): void {
     this.openItemCustomerPickerId.update((v) => (v === itemId ? null : itemId));
   }
 
-  selectCartItemCustomer(item: SaleItem, customer: Customer | null): void {
+  /** Per-row "Relative" dropdown — assigns one of the sale customer's relatives
+   *  (or clears back to no relative) to this specific cart line. */
+  selectCartItemRelative(item: SaleItem, relative: RelativeListItem | null): void {
     this.openItemCustomerPickerId.set(null);
-    const currentSale = this.sale();
-    if (!currentSale) return;
-
-    this.service
-      .updateSaleItem(currentSale.id, item.id, {
-        customerId: customer ? customer.id : undefined,
-        quantity: item.quantity,
-        discount: item.discount,
-        taxAmount: item.taxAmount,
-      })
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not set customer.'), 'error'),
-      });
+    this.updateActiveTab((t) => ({
+      ...t,
+      items: t.items.map((i) =>
+        i.id === item.id
+          ? { ...i, customerId: relative?.relativeId ?? null, customerName: relative?.relativeName ?? '' }
+          : i,
+      ),
+    }));
   }
 
   // ================= per-row discount (amount or percent, always sent as $) =================
@@ -714,6 +1101,7 @@ export class Pos implements OnInit {
   }
 
   onRowTaxSelect(item: SaleItem, taxId: string): void {
+    this.openRowTaxId.set(null);
     this.rowTaxSelection.update((m) => ({ ...m, [item.id]: taxId }));
     const tax = this.taxes().find((t) => t.id === taxId);
     const base = item.unitPrice * item.quantity;
@@ -752,8 +1140,10 @@ export class Pos implements OnInit {
 
   closeDiscountEditor(): void {
     this.showDiscountEditor.set(false);
+    this.restoreScannerFocus(true);
   }
 
+  /** Purely local — nothing to PATCH on a backend Sale that doesn't exist yet. */
   saveDiscount(): void {
     const currentSale = this.sale();
     if (!currentSale) return;
@@ -762,23 +1152,20 @@ export class Pos implements OnInit {
     const dollarAmount =
       this.discountMode() === 'percent' ? Math.round(currentSale.subTotal * raw) / 100 : raw;
 
+    if (dollarAmount < 0) {
+      this.toast.show('Discount cannot be negative.', 'error');
+      return;
+    }
+    if (dollarAmount > currentSale.subTotal) {
+      this.toast.show('Discount cannot exceed the sale subtotal.', 'error');
+      return;
+    }
+
     this.savingDiscount.set(true);
-    this.service.applyDiscount(currentSale.id, { discountAmount: dollarAmount }).subscribe({
-      next: (res) => {
-        this.savingDiscount.set(false);
-        if (res.success && res.data) {
-          this.patchActiveSale(res.data);
-          this.showDiscountEditor.set(false);
-          this.toast.show('Discount applied.', 'success');
-        } else {
-          this.toast.show(res.message || 'Could not apply discount.', 'error');
-        }
-      },
-      error: (err) => {
-        this.savingDiscount.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not apply discount.'), 'error');
-      },
-    });
+    this.updateActiveTab((t) => ({ ...t, discountAmount: dollarAmount }), false);
+    this.savingDiscount.set(false);
+    this.showDiscountEditor.set(false);
+    this.toast.show('Discount applied.', 'success');
   }
 
   // ================= sale-level tax =================
@@ -792,50 +1179,34 @@ export class Pos implements OnInit {
 
   closeTaxEditor(): void {
     this.showTaxEditor.set(false);
+    this.restoreScannerFocus(true);
   }
 
+  /** Purely local — nothing to PATCH on a backend Sale that doesn't exist yet. */
   saveTax(): void {
     const currentSale = this.sale();
     const taxId = this.taxInput();
     if (!currentSale || !taxId) return;
 
     this.savingTax.set(true);
-    this.service.applyTax(currentSale.id, { taxId }).subscribe({
-      next: (res) => {
-        this.savingTax.set(false);
-        if (res.success && res.data) {
-          this.patchActiveSale(res.data);
-          this.showTaxEditor.set(false);
-          this.toast.show('Tax applied.', 'success');
-        } else {
-          this.toast.show(res.message || 'Could not apply tax.', 'error');
-        }
-      },
-      error: (err) => {
-        this.savingTax.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not apply tax.'), 'error');
-      },
-    });
+    this.updateActiveTab((t) => ({ ...t, taxId }), false);
+    this.savingTax.set(false);
+    this.showTaxEditor.set(false);
+    this.toast.show('Tax applied.', 'success');
   }
 
   // ================= cancel / clear =================
 
+  /** Nothing exists server-side to cancel yet — this just discards the local
+   *  cart and drops the tab (same end state as before, no API call needed). */
   cancelSale(): void {
     const currentSale = this.sale();
-    if (!currentSale) return;
-    if (currentSale.items.length > 0 && !confirm('Cancel this sale and clear the cart?')) return;
+    if (!currentSale || currentSale.items.length === 0) return;
+    if (!confirm('Cancel this sale and clear the cart?')) return;
 
-    this.service.cancelSale(currentSale.id).subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.toast.show('Sale cancelled.', 'success');
-          this.removeTabLocally(this.activeTabId());
-        } else {
-          this.toast.show(res.message || 'Could not cancel sale.', 'error');
-        }
-      },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not cancel sale.'), 'error'),
-    });
+    this.toast.show('Sale cancelled.', 'success');
+    this.removeTabLocally(this.activeTabId());
+    this.restoreScannerFocus(true);
   }
 
   clearCart(): void {
@@ -843,16 +1214,9 @@ export class Pos implements OnInit {
     if (!currentSale || currentSale.items.length === 0) return;
     if (!confirm('Remove all items from this cart?')) return;
 
-    const itemIds = currentSale.items.map((i) => i.id);
-    from(itemIds)
-      .pipe(concatMap((itemId) => this.service.removeSaleItem(currentSale.id, itemId)))
-      .subscribe({
-        next: (res) => {
-          if (res.success && res.data) this.patchActiveSale(res.data);
-        },
-        error: (err) => this.toast.show(getErrorMessage(err, 'Could not clear the cart.'), 'error'),
-        complete: () => this.toast.show('Cart cleared.', 'success'),
-      });
+    this.updateActiveTab((t) => ({ ...t, items: [] }));
+    this.toast.show('Cart cleared.', 'success');
+    this.restoreScannerFocus(true);
   }
 
   // ================= AI patient safety check =================
@@ -860,9 +1224,7 @@ export class Pos implements OnInit {
   /** Which customer a line item's safety check should run against: its own
    *  per-line customer if one was picked, otherwise the sale's customer. */
   private effectiveCustomerId(item: SaleItem): string | null {
-    if (item.customerId && item.customerId !== EMPTY_GUID) return item.customerId;
-    const saleCustomerId = this.sale()?.customerId;
-    return saleCustomerId && saleCustomerId !== EMPTY_GUID ? saleCustomerId : null;
+    return item.customerId || this.sale()?.customerId || null;
   }
 
   private toneFor(result: PatientSafetyResult): 'ok' | 'warn' | 'danger' {
@@ -870,11 +1232,77 @@ export class Pos implements OnInit {
     if (result.overallDecision === 'Block') return 'danger';
     if (result.overallDecision === 'Warn') return 'warn';
     if (result.overallDecision === 'Approve') return 'ok';
+    return this.toneForIssues(result, result.issues);
+  }
+
+  toggleRowTaxEditor(itemId: string): void {
+    this.openRowTaxId.update((current) => (current === itemId ? null : itemId));
+  }
+
+  taxLabel(taxId: string): string {
+    const tax = this.taxes().find((item) => item.id === taxId);
+    return tax ? `${tax.name} (${tax.rate}%)` : 'No tax';
+  }
+
+  toggleSaleTaxMenu(): void {
+    this.showSaleTaxMenu.update((visible) => !visible);
+  }
+
+  private toneForIssues(
+    result: PatientSafetyResult,
+    issues: PatientSafetyResult['issues'],
+  ): 'ok' | 'warn' | 'danger' {
     const weight = { Minor: 1, Moderate: 2, Major: 3 } as const;
-    const worst = result.issues.reduce((max, i) => Math.max(max, weight[i.severity] ?? 0), 0);
+    const worst = issues.reduce((max, i) => Math.max(max, weight[i.severity] ?? 0), 0);
     if (worst >= 3 || (result.riskScore ?? 0) >= 70) return 'danger';
     if (worst >= 1 || (result.riskScore ?? 0) >= 30) return 'warn';
     return 'ok';
+  }
+
+  private buildSafetyItems(items: SaleItem[]): SafetyCheckedMedicine[] {
+    return items.map((item) => ({
+      id: item.id,
+      pharmacyMedicineId: item.pharmacyMedicineId,
+      medicineName: item.medicineName,
+      quantity: item.quantity,
+      customerId: this.effectiveCustomerId(item),
+    }));
+  }
+
+  private safetyKey(tabId: string, items: SafetyCheckedMedicine[]): string {
+    return JSON.stringify({
+      tabId,
+      items: items.map((item) => ({
+        id: item.id,
+        pharmacyMedicineId: item.pharmacyMedicineId,
+        quantity: item.quantity,
+        customerId: item.customerId,
+      })),
+    });
+  }
+
+  private isCurrentSafetyRequest(requestId: number, key: string, tabId: string): boolean {
+    return requestId === this.safetyRequestId &&
+      key === this.safetyRequestKey &&
+      tabId === this.activeTabId();
+  }
+
+  private saveSafetySnapshot(
+    tabId: string,
+    key: string,
+    customerId: string,
+    items: SafetyCheckedMedicine[],
+    results: PatientSafetyResult[],
+    patientNames: Record<string, string>,
+  ): void {
+    this.safetySnapshots.update((all) => ({
+      ...all,
+      [tabId]: { tabId, key, customerId, items, results, patientNames, stale: false },
+    }));
+    this.safetyResults.set(results);
+    this.safetyPatientNames.set(patientNames);
+    this.safetyError.set(null);
+    this.safetyDetailsExpanded.set(false);
   }
 
   private openSafetyResults(results: PatientSafetyResult[], names: Record<string, string>): void {
@@ -882,24 +1310,42 @@ export class Pos implements OnInit {
     this.safetyPatientNames.set(names);
     this.safetyError.set(null);
     this.safetyLoading.set(false);
+    // The modal is intentionally not reopened when a background request
+    // completes. The inline Order Summary becomes the persistent result.
+  }
+
+  openSafetyModal(): void {
     this.showSafetyModal.set(true);
   }
 
   closeSafetyModal(): void {
-    if (this.safetyLoading()) return;
     this.showSafetyModal.set(false);
+    if (!this.safetyLoading()) this.restoreScannerFocus(true);
   }
 
-  /** Per-line "Check" button — validates a single cart line against its own customer. */
+  /** Per-line "Check" button — validates a single cart line against its own
+   *  customer. `item.id` is just this line's local client id — the AI
+   *  endpoint only uses it as an opaque correlation token, so this works
+   *  identically whether or not the line has ever been persisted. */
   checkItem(item: SaleItem): void {
+    if (this.safetyLoading()) {
+      this.showSafetyModal.set(true);
+      return;
+    }
     const customerId = this.effectiveCustomerId(item);
     if (!customerId) {
       this.toast.show('Assign a customer to this item before checking it.', 'error');
       return;
     }
 
+    const tabId = this.activeTabId();
+    const checkedItems = this.buildSafetyItems([item]);
+    const requestKey = this.safetyKey(tabId, checkedItems);
+    const requestId = ++this.safetyRequestId;
+    this.safetyRequestKey = requestKey;
     this.checkingItemId.set(item.id);
     this.safetyLoading.set(true);
+    this.safetyError.set(null);
     this.showSafetyModal.set(true);
 
     this.safetyApi
@@ -912,8 +1358,10 @@ export class Pos implements OnInit {
         ],
         language: 'en',
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          if (!this.isCurrentSafetyRequest(requestId, requestKey, tabId)) return;
           this.checkingItemId.set(null);
           if (res.success && res.data) {
             const tone = res.data.results[0] ? this.toneFor(res.data.results[0]) : 'warn';
@@ -925,13 +1373,16 @@ export class Pos implements OnInit {
                   : t,
               ),
             );
-            this.openSafetyResults(res.data.results, { [customerId]: item.customerName || 'Customer' });
+            const names = { [customerId]: item.customerName || 'Customer' };
+            this.saveSafetySnapshot(tabId, requestKey, customerId, checkedItems, res.data.results, names);
+            this.openSafetyResults(res.data.results, names);
           } else {
             this.safetyLoading.set(false);
             this.safetyError.set(res.message || 'Could not complete the safety check.');
           }
         },
         error: (err) => {
+          if (!this.isCurrentSafetyRequest(requestId, requestKey, tabId)) return;
           this.checkingItemId.set(null);
           this.safetyLoading.set(false);
           this.safetyError.set(getErrorMessage(err, 'Could not complete the safety check.'));
@@ -943,6 +1394,10 @@ export class Pos implements OnInit {
    *  line's own customer (falling back to the sale's customer). Unlocks Pay
    *  once it succeeds. */
   checkAll(): void {
+    if (this.safetyLoading()) {
+      this.showSafetyModal.set(true);
+      return;
+    }
     const currentSale = this.sale();
     if (!currentSale || currentSale.items.length === 0) return;
 
@@ -960,7 +1415,7 @@ export class Pos implements OnInit {
     }
 
     if (groups.size === 0) {
-      this.toast.show('Assign a customer before checking the cart.', 'error');
+      // Walk-in sales intentionally have no patient-specific check to run.
       return;
     }
     if (skipped > 0) {
@@ -970,8 +1425,15 @@ export class Pos implements OnInit {
     const names: Record<string, string> = {};
     groups.forEach((g) => (names[g.customerId] = g.items[0].customerName || 'Customer'));
 
+    const tabId = this.activeTabId();
+    const checkedItems = this.buildSafetyItems(currentSale.items.filter((item) => this.effectiveCustomerId(item)));
+    const requestKey = this.safetyKey(tabId, checkedItems);
+    const requestId = ++this.safetyRequestId;
+    this.safetyRequestKey = requestKey;
+
     this.checkingAll.set(true);
     this.safetyLoading.set(true);
+    this.safetyError.set(null);
     this.showSafetyModal.set(true);
 
     this.safetyApi
@@ -982,8 +1444,10 @@ export class Pos implements OnInit {
         })),
         language: 'en',
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          if (!this.isCurrentSafetyRequest(requestId, requestKey, tabId)) return;
           this.checkingAll.set(false);
           if (res.success && res.data) {
             const toneByCustomer = new Map<string, 'ok' | 'warn' | 'danger'>();
@@ -1001,6 +1465,8 @@ export class Pos implements OnInit {
                 t.tabId === id ? { ...t, safetyChecked: true, itemCheckStatus } : t,
               ),
             );
+            const customerId = this.selectedCustomer()?.id ?? Array.from(groups.keys())[0];
+            this.saveSafetySnapshot(tabId, requestKey, customerId, checkedItems, res.data.results, names);
             this.openSafetyResults(res.data.results, names);
           } else {
             this.safetyLoading.set(false);
@@ -1008,6 +1474,7 @@ export class Pos implements OnInit {
           }
         },
         error: (err) => {
+          if (!this.isCurrentSafetyRequest(requestId, requestKey, tabId)) return;
           this.checkingAll.set(false);
           this.safetyLoading.set(false);
           this.safetyError.set(getErrorMessage(err, 'Could not complete the safety check.'));
@@ -1015,39 +1482,77 @@ export class Pos implements OnInit {
       });
   }
 
-  // ================= payment =================
+  // ================= payment / checkout =================
 
   openPaymentModal(method: PaymentMethodChoice): void {
     const currentSale = this.sale();
     if (!currentSale || currentSale.items.length === 0) return;
-    if (!this.canPay()) {
-      this.toast.show('Run "Check all" on the cart before taking payment.', 'error');
+    if (this.selectedCustomer() && !this.activeTab()?.safetyChecked) {
+      this.pendingPaymentMethod.set(method);
+      this.showSafetyReminder.set(true);
       return;
     }
     this.paymentMethodChoice.set(method);
     this.showPaymentModal.set(true);
   }
 
+  closeSafetyReminder(): void {
+    this.showSafetyReminder.set(false);
+    this.restoreScannerFocus(true);
+  }
+
+  runSafetyCheckFromReminder(): void {
+    this.showSafetyReminder.set(false);
+    this.checkAll();
+  }
+
+  continueWithoutSafetyCheck(): void {
+    this.showSafetyReminder.set(false);
+    this.paymentMethodChoice.set(this.pendingPaymentMethod());
+    this.showPaymentModal.set(true);
+  }
+
   closePaymentModal(): void {
     if (this.payingInProgress()) return;
     this.showPaymentModal.set(false);
+    this.restoreScannerFocus(true);
   }
 
+  /** The only moment the cart ever touches the database: everything the
+   *  pharmacist built up locally is sent in one call, which creates the Sale,
+   *  adds every item, applies discount/tax, and records payment atomically. */
   confirmPayment(dto: PaySaleDto): void {
+    const tab = this.activeTab();
     const currentSale = this.sale();
-    if (!currentSale) return;
+    if (!tab || !currentSale || currentSale.items.length === 0) return;
+
+    const checkoutDto: CheckoutDto = {
+      customerId: tab.selectedCustomer?.id,
+      items: tab.items.map((i) => ({
+        pharmacyMedicineId: i.pharmacyMedicineId,
+        customerId: i.customerId ?? undefined,
+        quantity: i.quantity,
+        discount: i.discount,
+        taxAmount: i.taxAmount,
+      })),
+      discountAmount: tab.discountAmount,
+      taxId: tab.taxId ?? undefined,
+      amountPaidByCash: dto.amountPaidByCash,
+      amountPaidByCard: dto.amountPaidByCard,
+    };
 
     this.payingInProgress.set(true);
-    this.service.pay(currentSale.id, dto).subscribe({
+    this.service.checkout(checkoutDto).subscribe({
       next: (res) => {
         this.payingInProgress.set(false);
         if (res.success && res.data) {
           this.showPaymentModal.set(false);
           this.toast.show(`Sale ${res.data.invoiceNumber} completed successfully.`, 'success');
-          // Drop this finished tab and open a fresh draft in its place.
+          // Drop this finished tab and open a fresh empty one in its place.
           const finishedTabId = this.activeTabId();
           this.tabs.update((list) => list.filter((t) => t.tabId !== finishedTabId));
           this.openNewTab();
+          this.restoreScannerFocus(true);
         } else {
           this.toast.show(res.message || 'Payment could not be completed.', 'error');
         }
@@ -1057,9 +1562,5 @@ export class Pos implements OnInit {
         this.toast.show(getErrorMessage(err, 'Payment could not be completed.'), 'error');
       },
     });
-  }
-  onRelativeSelected(relative: any) {
-    console.log('Selected relative:', relative);
-    // اعمل اللي انت عايزه بالبيانات دي
   }
 }

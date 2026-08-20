@@ -12,13 +12,14 @@ import {
 import { DashboardApiService } from '../Services/pharmacy_dashboard';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 const CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#e11d48', '#0891b2'];
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pharmacy_dashborad.html',
 })
@@ -28,6 +29,9 @@ export class DashboardPage implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly loading = signal(true);
+  protected readonly statsLoading = signal(true);
+  protected readonly trendLoading = signal(true);
+  protected readonly categoryMixLoading = signal(true);
 
   protected readonly stats = signal<SaleStats | null>(null);
   protected readonly trend = signal<SalesTrendPoint[]>([]);
@@ -78,26 +82,41 @@ export class DashboardPage implements OnInit {
 
   loadAll(): void {
     this.loading.set(true);
+    this.statsLoading.set(true);
+    this.trendLoading.set(true);
+    this.categoryMixLoading.set(true);
 
     this.api.getStats().subscribe({
       next: (res) => {
         if (res.success && res.data) this.stats.set(res.data);
+        this.statsLoading.set(false);
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load KPIs.'), 'error'),
+      error: (err) => {
+        this.statsLoading.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not load KPIs.'), 'error');
+      },
     });
 
     this.api.getTrend(7).subscribe({
       next: (res) => {
         if (res.success && res.data) this.trend.set(res.data);
+        this.trendLoading.set(false);
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load the sales trend.'), 'error'),
+      error: (err) => {
+        this.trendLoading.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not load the sales trend.'), 'error');
+      },
     });
 
     this.api.getCategoryMix().subscribe({
       next: (res) => {
         if (res.success && res.data) this.categoryMix.set(res.data);
+        this.categoryMixLoading.set(false);
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load category mix.'), 'error'),
+      error: (err) => {
+        this.categoryMixLoading.set(false);
+        this.toast.show(getErrorMessage(err, 'Could not load category mix.'), 'error');
+      },
     });
 
     this.api.getRecentActivity(6).subscribe({

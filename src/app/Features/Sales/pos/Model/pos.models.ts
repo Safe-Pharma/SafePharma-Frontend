@@ -5,6 +5,10 @@ export enum SaleStatus {
   Completed = 1,
   Cancelled = 2,
 }
+export interface RelativeListItem {
+  relativeId: string;
+  relativeName: string;
+}
 export interface MedicineSearchResult {
   pharmacyMedicineId: string;
   tradeNameAr: string;
@@ -33,6 +37,8 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  status?: 'Active' | 'Inactive';
+  isActive?: boolean;
 }
 
 export interface SaleItem {
@@ -118,4 +124,38 @@ export interface SaleStats {
   completedCount: number;
   averageBasket: number;
   cancelledCount: number;
+}
+
+// ---- Local-cart checkout (the cart lives entirely on the frontend/localStorage
+// until the pharmacist actually pays — nothing is created in the database
+// before that moment). See pos.ts for the local cart model itself. ----
+
+export interface StockAvailability {
+  availableQuantity: number;
+  unitPrice: number;
+}
+
+export interface CheckoutItemDto {
+  pharmacyMedicineId: string;
+  customerId?: string;
+  quantity: number;
+  discount: number;
+  taxAmount: number;
+}
+
+export interface CheckoutDto {
+  customerId?: string;
+  items: CheckoutItemDto[];
+  discountAmount: number;
+  taxId?: string;
+  amountPaidByCash: number;
+  amountPaidByCard: number;
+}
+
+export interface BarcodeScanData {
+  medicineId: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  price: number;
+  barcodeSource: string;
 }

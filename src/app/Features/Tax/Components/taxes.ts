@@ -13,6 +13,7 @@ import {
 } from 'rxjs';
 import { Tax, TaxCreateDto, TaxStats, TaxStatus, TaxUpdateDto } from '../Models/tax';
 import { TaxesService } from '../Services/tax';
+import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
 
 interface TaxFormModel {
   name: string;
@@ -23,7 +24,7 @@ interface TaxFormModel {
 @Component({
   selector: 'app-taxes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective],
   templateUrl: './taxes.html',
 })
 export class Taxes implements OnDestroy {
@@ -32,7 +33,7 @@ export class Taxes implements OnDestroy {
   /** bump this after any create/update/delete/toggle to refetch list + stats */
   private refreshTick = signal(0);
 
-  loading = signal(false);
+  loading = signal(true);
   errorMsg = signal<string | null>(null);
 
   private search$ = toObservable(this.search).pipe(

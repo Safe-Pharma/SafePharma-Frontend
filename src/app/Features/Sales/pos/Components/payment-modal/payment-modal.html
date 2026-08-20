@@ -1,4 +1,4 @@
-<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+<div appModalOverlay class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/30 p-3 pt-20 backdrop-blur-[1px] sm:p-4 sm:pt-20" (click)="onClose()">
   <div
     class="relative grid w-full max-w-md gap-4 rounded-lg border border-border bg-background p-6 shadow-lg"
     (click)="$event.stopPropagation()"
@@ -18,7 +18,7 @@
 
     <div>
       <h2 class="text-lg font-semibold leading-none tracking-tight">Complete payment</h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">Grand total: ${{ grandTotal().toFixed(2) }}</p>
+      <p class="mt-1.5 text-sm text-muted-foreground">Grand total: {{ grandTotal() | egpCurrency }}</p>
     </div>
 
     <!-- Method tabs -->
@@ -59,7 +59,7 @@
     @if (method() === 'Cash') {
     <div class="space-y-3">
       <div>
-        <label class="text-sm font-medium">Amount paid</label>
+        <label class="text-sm font-medium">Amount paid (EGP)</label>
         <input
           type="number"
           min="0"
@@ -71,7 +71,7 @@
       </div>
       <div class="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm">
         <span class="text-muted-foreground">Change</span>
-        <span class="font-semibold tabular-nums">${{ cashChange().toFixed(2) }}</span>
+        <span class="font-semibold tabular-nums">{{ cashChange() | egpCurrency }}</span>
       </div>
       @if (cashAmountPaid() < grandTotal()) {
       <p class="text-xs text-destructive">Amount paid is less than the grand total.</p>
@@ -83,7 +83,7 @@
     @if (method() === 'Card') {
     <div class="space-y-3">
       <div>
-        <label class="text-sm font-medium">Card amount</label>
+        <label class="text-sm font-medium">Card amount (EGP)</label>
         <input
           type="number"
           min="0"
@@ -104,7 +104,7 @@
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-sm font-medium">Cash amount</label>
+          <label class="text-sm font-medium">Cash amount (EGP)</label>
           <input
             type="number"
             min="0"
@@ -115,7 +115,7 @@
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Card amount</label>
+          <label class="text-sm font-medium">Card amount (EGP)</label>
           <input
             type="number"
             min="0"
@@ -128,7 +128,7 @@
       </div>
 
       <div>
-        <label class="text-sm font-medium">Amount paid in cash</label>
+        <label class="text-sm font-medium">Amount paid in cash (EGP)</label>
         <input
           type="number"
           min="0"
@@ -141,13 +141,13 @@
 
       <div class="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm">
         <span class="text-muted-foreground">Change</span>
-        <span class="font-semibold tabular-nums">${{ mixedChange().toFixed(2) }}</span>
+        <span class="font-semibold tabular-nums">{{ mixedChange() | egpCurrency }}</span>
       </div>
 
       @if (!mixedSplitMatches()) {
       <p class="text-xs text-destructive">
-        Cash amount + Card amount (${{ mixedSplitTotal().toFixed(2) }}) must equal the grand total
-        (${{ grandTotal().toFixed(2) }}).
+        Cash amount + Card amount ({{ mixedSplitTotal() | egpCurrency }}) must equal the grand total
+        ({{ grandTotal() | egpCurrency }}).
       </p>
       } @else if (mixedAmountPaidInCash() < mixedCashPortion()) {
       <p class="text-xs text-destructive">Amount paid in cash can't be less than the cash amount.</p>

@@ -13,10 +13,10 @@ export class SalesService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/Sale`;
 
-  getAll(search?: string, status?: SaleStatus): Observable<GeneralResult<Sale[]>> {
+  getAll(search?: string, status?: SaleStatus | null): Observable<GeneralResult<Sale[]>> {
     let params = new HttpParams();
     if (search) params = params.set('search', search);
-    if (status) params = params.set('status', status);
+    if (status !== undefined && status !== null) params = params.set('status', status);
     return this.http.get<GeneralResult<Sale[]>>(this.baseUrl, { params });
   }
 

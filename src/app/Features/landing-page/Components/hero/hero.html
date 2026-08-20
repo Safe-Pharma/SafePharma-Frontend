@@ -62,7 +62,7 @@
           <!-- Stat card: Revenue MTD -->
           <div class="rounded-xl border border-border bg-card p-4 shadow-card">
             <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Revenue MTD</div>
-            <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-primary-soft text-primary">$284,920</div>
+            <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-primary-soft text-primary">{{ 284920 | egpCurrency }}</div>
           </div>
 
           <!-- Stat card: Orders -->
@@ -90,7 +90,7 @@
           <!-- Chart header: title + total -->
           <div class="mb-3 flex items-center justify-between">
             <div class="text-sm font-semibold">Sales — Last 7 days</div>
-            <div class="text-xs text-muted-foreground">$166,600 total</div>
+            <div class="text-xs text-muted-foreground">{{ 166600 | egpCurrency }} total</div>
           </div>
 
           <!-- Chart bars: each div is one day, height set inline (hardcoded, not real data) -->

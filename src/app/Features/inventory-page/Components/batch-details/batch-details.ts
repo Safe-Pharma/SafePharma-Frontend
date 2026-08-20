@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { InventoryService } from '../../Service/inventory_service';
 import { Spinner } from '../../../../Shared/Components/spinner/spinner';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -11,7 +12,7 @@ interface newStockBatchDto {
 @Component({
   selector: 'app-batch-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, Spinner],
+  imports: [CommonModule, FormsModule, Spinner,ModalOverlayDirective],
   templateUrl: './batch-details.html',
   styleUrl: './batch-details.css',
 })
@@ -108,3 +109,5 @@ export class BatchDetailsComponent {
     );
   }
 }
+
+export { BatchDetailsComponent as BatchDetails };

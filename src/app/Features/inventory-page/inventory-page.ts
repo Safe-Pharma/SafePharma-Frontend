@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { InventoryService } from './Service/inventory_service';
 import { Spinner } from '../../Shared/Components/spinner/spinner';
+import { ModalOverlayDirective } from '../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../Shared/Pipes/egp-currency.pipe';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -30,7 +32,7 @@ interface Medicine {
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, Spinner],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe,Spinner],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.css',
 })
@@ -40,6 +42,7 @@ export class InventoryPage implements OnInit {
   medicines = signal<Medicine[]>([]);
   filteredMedicines = signal<Medicine[]>([]);
   loading = signal(true);
+  errorMessage = signal<string | null>(null);
   selectedBatch: Batch | null = null;
   newQuantity = 0;
   isEditModalOpen = false;
@@ -51,17 +54,19 @@ export class InventoryPage implements OnInit {
 
   ngOnInit() {
     this.loading.set(true);
-    this.inventoryService
-      .getAllInventory()
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (data) => {
-          const normalized = this.normalizeInventoryData(data);
-          this.medicines.set(normalized);
-          this.filteredMedicines.set(normalized);
-        },
-        error: (error) => console.error('Failed to load inventory:', error),
-      });
+    this.inventoryService.getAllInventory().subscribe({
+      next: (data) => {
+        const normalized = this.normalizeInventoryData(data);
+        this.medicines.set(normalized);
+        this.filteredMedicines.set(normalized);
+        this.loading.set(false);
+        console.log('Fetched inventory data:', this.medicines());
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('Could not load inventory.');
+      },
+    });
   }
 
   private normalizeInventoryData(data: any[] = []): Medicine[] {
@@ -349,5 +354,9 @@ export class InventoryPage implements OnInit {
     const expiryDate = batch?.expiryDate ?? '';
     const normalizedExpiry = String(expiryDate).trim();
     return normalizedExpiry === '0' || normalizedExpiry === '' || batch.daysLeft <= 0;
+  }
+
+  scrollToAlerts(): void {
+    document.querySelector('[data-inventory-table]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }

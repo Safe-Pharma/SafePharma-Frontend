@@ -83,3 +83,24 @@
   font-size: 13px;
   color: #dc2626;
 }
+
+.refreshing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: #64748b;
+  font-size: 13px;
+  border-top: 1px solid #f1f2f4;
+}
+
+.inline-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #bfdbfe;
+  border-top-color: #2563eb;
+  border-radius: 999px;
+  animation: users-spin 700ms linear infinite;
+}
+
+@keyframes users-spin { to { transform: rotate(360deg); } }
