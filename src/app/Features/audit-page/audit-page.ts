@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuditService } from './Service/audit_service';
 import { AuditDetailModalComponent } from './Components/audit-detail-modal-component/audit-detail-modal-component';
+import { Spinner } from '../../Shared/Components/spinner/spinner';
 
 interface AuditLog {
   date: string; // ISO format like "2026-03-03T09:10:00"
@@ -10,10 +12,12 @@ interface AuditLog {
   entity: string; // "Category", "Product", "Order"
   device: string; // "Edge - Windows"
   userFullName: string; // "user", "admin"
+  newValues?: unknown;
+  oldValues?: unknown;
 }
 @Component({
   selector: 'app-audit-page',
-  imports: [CommonModule, FormsModule, AuditDetailModalComponent],
+  imports: [CommonModule, FormsModule, AuditDetailModalComponent, Spinner],
   templateUrl: './audit-page.html',
   styleUrl: './audit-page.css',
 })
@@ -29,6 +33,7 @@ export class AuditPage implements OnInit {
   loading = signal(true);
   errorMessage = signal<string | null>(null);
   selectedLog = signal<AuditLog | null>(null);
+  loading = signal(true);
 
   constructor(private auditService: AuditService) {}
 

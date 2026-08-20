@@ -26,9 +26,9 @@ export class PharmacyService {
   updateActiveState(id: string, isActive: boolean): Observable<boolean> {
     const safeId = encodeURIComponent(id);
     return this.http
-      .post<
+      .patch<
         PharmacyReadDto | { data?: PharmacyReadDto | null } | null
-      >(`${this.baseUrl}/${safeId}`, { isActive })
+      >(`${this.baseUrl}/${safeId}/status`, { isActive })
       .pipe(
         map((response) => {
           if (response && 'data' in response) {
