@@ -46,7 +46,7 @@
             class="w-full bg-background px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
             <option value="">All users</option>
-            <option *ngFor="let log of getUniqueUsers(); let idx = index" value="{log}">
+            <option *ngFor="let log of getUniqueUsers()" [value]="log">
               {{ log }}
             </option>
           </select>
@@ -60,7 +60,7 @@
             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-background hover:border-gray-400 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
             <option value="">All actions</option>
-            <option *ngFor="let log of getUniqueActions(); let idx = index" value="{log}">
+            <option *ngFor="let log of getUniqueActions()" [value]="log">
               {{ log }}
             </option>
           </select>
@@ -75,7 +75,7 @@
           >
             <option value="">All entities</option>
 
-            <option *ngFor="let log of getUniqueEntities(); let idx = index" value="{log}">
+            <option *ngFor="let log of getUniqueEntities()" [value]="log">
               {{ log }}
             </option>
           </select>
@@ -93,22 +93,27 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div
+      *ngIf="loading()"
+      class="flex min-h-64 flex-col items-center justify-center gap-3 px-6 py-12 text-gray-500"
+      role="status"
+      aria-live="polite"
+    >
+      <app-spinner size="md"></app-spinner>
+      <span>Loading audit logs...</span>
+    </div>
+
     <!-- Table Container - Responsive Wrapper -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+    <div *ngIf="!loading()" class="w-full overflow-x-auto">
+      <table class="min-w-[720px] w-full text-sm">
         <thead>
           <tr class="border-b border-t border-gray-300 bg-background">
             <th class="px-6 py-4 text-left font-semibold text-gray-700">Date & Time</th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700 hidden sm:table-cell">
-              User
-            </th>
+            <th class="px-6 py-4 text-left font-semibold text-gray-700">User</th>
             <th class="px-6 py-4 text-left font-semibold text-gray-700">Action</th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700 hidden md:table-cell">
-              Entity
-            </th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700 hidden xl:table-cell">
-              Device
-            </th>
+            <th class="px-6 py-4 text-left font-semibold text-gray-700">Entity</th>
+            <th class="px-6 py-4 text-left font-semibold text-gray-700">Device</th>
           </tr>
         </thead>
         <tbody>
@@ -119,7 +124,7 @@
             class="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 hover:cursor-pointer"
           >
             <td class="px-6 py-4 text-gray-700">{{ log.date }}</td>
-            <td class="px-6 py-4 text-gray-700 hidden sm:table-cell">{{ log.userFullName }}</td>
+            <td class="px-6 py-4 text-gray-700">{{ log.userFullName }}</td>
             <td class="px-6 py-4">
               <span
                 [ngClass]="
@@ -133,14 +138,14 @@
                 {{ log.action }}
               </span>
             </td>
-            <td class="px-6 py-4 text-gray-700 hidden md:table-cell">{{ log.entity }}</td>
+            <td class="px-6 py-4 text-gray-700">{{ log.entity }}</td>
 
-            <td class="px-6 py-4 text-gray-700 hidden xl:table-cell">{{ log.device }}</td>
+            <td class="px-6 py-4 text-gray-700">{{ log.device }}</td>
           </tr>
 
           <!-- Empty state -->
           <tr *ngIf="filteredLogs().length === 0">
-            <td [attr.colspan]="7" class="px-6 py-8 text-center text-gray-500">
+            <td [attr.colspan]="5" class="px-6 py-8 text-center text-gray-500">
               No audit logs found matching your filters
             </td>
           </tr>

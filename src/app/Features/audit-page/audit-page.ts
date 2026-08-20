@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuditService } from './Service/audit_service';
 import { AuditDetailModalComponent } from './Components/audit-detail-modal-component/audit-detail-modal-component';
+import { Spinner } from '../../Shared/Components/spinner/spinner';
 
 interface AuditLog {
   date: string; // ISO format like "2026-03-03T09:10:00"
@@ -10,10 +12,12 @@ interface AuditLog {
   entity: string; // "Category", "Product", "Order"
   device: string; // "Edge - Windows"
   userFullName: string; // "user", "admin"
+  newValues?: unknown;
+  oldValues?: unknown;
 }
 @Component({
   selector: 'app-audit-page',
-  imports: [CommonModule, FormsModule, AuditDetailModalComponent],
+  imports: [CommonModule, FormsModule, AuditDetailModalComponent, Spinner],
   templateUrl: './audit-page.html',
   styleUrl: './audit-page.css',
 })
@@ -27,19 +31,24 @@ export class AuditPage implements OnInit {
 
   isModalOpen = signal(false);
   selectedLog = signal<AuditLog | null>(null);
+  loading = signal(true);
 
   constructor(private auditService: AuditService) {}
 
   audits = signal([] as AuditLog[]);
   filteredLogs = signal([] as AuditLog[]);
   ngOnInit() {
-    this.auditService.getAllAudits().subscribe({
-      next: (data) => {
-        this.audits.set(data);
-        this.filteredLogs.set(data);
-        console.log(this.audits());
-      },
-    });
+    this.loading.set(true);
+    this.auditService
+      .getAllAudits()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (data) => {
+          this.audits.set(data);
+          this.filteredLogs.set(data);
+        },
+        error: (error) => console.error('Failed to load audit logs:', error),
+      });
   }
   onFilterChange() {
     let res = [...this.audits()]; // Get current signal value
@@ -53,7 +62,7 @@ export class AuditPage implements OnInit {
       const matchUser = !this.selectedUser || log.userFullName === this.selectedUser;
       const matchAction = !this.selectedAction || log.action === this.selectedAction;
       const matchEntity = !this.selectedEntity || log.entity === this.selectedEntity;
-      const matchDate = !this.selectedDate || log.date === this.selectedDate;
+      const matchDate = !this.selectedDate || log.date.slice(0, 10) === this.selectedDate;
 
       return matchSearch && matchUser && matchAction && matchEntity && matchDate;
     });

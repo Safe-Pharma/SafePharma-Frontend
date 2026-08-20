@@ -15,7 +15,6 @@ import { AuthSessionService } from '../../../Core/Services/auth-session.service'
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, Spinner],
   templateUrl: './login.html',
-  
 })
 export class Login {
   private fb = inject(FormBuilder);
@@ -47,12 +46,15 @@ export class Login {
     if (errors['server']) return errors['server'];
     if (errors['required']) return 'This field is required.';
     if (errors['email']) return 'Please enter a valid email address.';
-    if (errors['minlength']) return `Must be at least ${errors['minlength'].requiredLength} characters.`;
-    if (errors['maxlength']) return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
+    if (errors['minlength'])
+      return `Must be at least ${errors['minlength'].requiredLength} characters.`;
+    if (errors['maxlength'])
+      return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
     if (errors['missingUppercase']) return 'Password must contain at least one uppercase letter.';
     if (errors['missingLowercase']) return 'Password must contain at least one lowercase letter.';
     if (errors['missingDigit']) return 'Password must contain at least one number.';
-    if (errors['missingSpecialChar']) return 'Password must contain at least one special character.';
+    if (errors['missingSpecialChar'])
+      return 'Password must contain at least one special character.';
     if (errors['pattern']) return 'Invalid format.';
     return 'Invalid value.';
   }
@@ -74,9 +76,22 @@ export class Login {
     this.auth.login(this.loginForm.getRawValue()).subscribe({
       next: (res: any) => {
         const token = res?.data?.accessToken ?? res?.token;
-        if (token) {
-          this.authSession.setToken(token);
+        if (!token) {
+          this.loading.set(false);
+          this.formError.set('The login response did not include an access token.');
+          return;
         }
+
+        this.authSession.setToken(token);
+        const user = this.authSession.user();
+
+        if (user?.role.trim().toLowerCase() === 'owner') {
+          this.authSession.clearToken();
+          this.loading.set(false);
+          this.formError.set('Unable to sign in. Please try again.');
+          return;
+        }
+
         this.loading.set(false);
         this.toast.show('Welcome back — you are signed in.', 'success');
         this.router.navigate(['/app/users']);

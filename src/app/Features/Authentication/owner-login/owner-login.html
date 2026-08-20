@@ -1,0 +1,58 @@
+<div class="flex min-h-[calc(100vh-65px)] items-center justify-center px-6 py-12">
+  <form
+    [formGroup]="loginForm"
+    (ngSubmit)="onSubmit()"
+    class="card w-full max-w-md animate-fade-in-up space-y-4"
+  >
+    <h1 class="text-2xl font-bold text-foreground">Owner Dashboard Sign In</h1>
+    <p class="text-sm text-muted-foreground">Sign in with an Owner account to continue.</p>
+
+    @if (formError(); as error) {
+      <div
+        class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+      >
+        {{ error }}
+      </div>
+    }
+
+    <div>
+      <label class="mb-1 block text-sm font-medium text-foreground">Email</label>
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="owner@safepharma.com"
+        class="input"
+        [class.border-destructive]="email.invalid && email.touched"
+      />
+      @if (getErrorMessage(email); as error) {
+        <p class="error">{{ error }}</p>
+      }
+    </div>
+
+    <div>
+      <label class="mb-1 block text-sm font-medium text-foreground">Password</label>
+      <input
+        type="password"
+        formControlName="password"
+        placeholder="Enter your password"
+        class="input"
+        [class.border-destructive]="password.invalid && password.touched"
+      />
+      @if (getErrorMessage(password); as error) {
+        <p class="error">{{ error }}</p>
+      }
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="loading()"
+      class="btn mt-6 flex w-full justify-center disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      @if (loading()) {
+        <app-spinner />
+      } @else {
+        Sign in
+      }
+    </button>
+  </form>
+</div>

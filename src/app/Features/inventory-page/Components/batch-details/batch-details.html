@@ -59,16 +59,19 @@
       <button
         type="button"
         class="rounded bg-gray-200 px-4 py-2 text-sm"
+        [disabled]="isSaving"
         (click)="closeEditModal()"
       >
         Cancel
       </button>
       <button
         type="button"
-        class="rounded bg-blue-600 px-4 py-2 text-sm text-white"
+        class="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="isSaving"
         (click)="saveQuantity()"
       >
-        Save
+        <app-spinner *ngIf="isSaving" size="sm"></app-spinner>
+        <span>{{ isSaving ? 'Saving...' : 'Save' }}</span>
       </button>
     </div>
   </div>
@@ -90,16 +93,19 @@
       <button
         type="button"
         class="rounded bg-gray-200 px-4 py-2 text-sm"
+        [disabled]="isDeleting"
         (click)="closeDeleteModal()"
       >
         Cancel
       </button>
       <button
         type="button"
-        class="rounded bg-red-600 px-4 py-2 text-sm text-white"
+        class="flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="isDeleting"
         (click)="deleteBatch()"
       >
-        Delete
+        <app-spinner *ngIf="isDeleting" size="sm"></app-spinner>
+        <span>{{ isDeleting ? 'Deleting...' : 'Delete' }}</span>
       </button>
     </div>
   </div>
