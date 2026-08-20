@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe, Location } from '@angular/common';
+import { DatePipe, Location } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { PortalApiService } from '../../Services/portal-api.service';
 import { PortalAuthService } from '../../Services/portal-auth.service';
@@ -26,7 +27,7 @@ import { PortalI18nService } from '../../Services/portal-i18n.service';
   standalone: true,
   imports: [
     DatePipe,
-    DecimalPipe,
+    EgpCurrencyPipe,
     PortalSkeleton,
     PortalEmptyStateComponent,
     PortalStatusBadge,

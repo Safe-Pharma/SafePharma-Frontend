@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PharmacyService } from './Service/pharmacy_service';
 import { PharmacyReadDto } from './Models/pharmacy-read.dto';
+import { formatCurrency } from '../../Shared/utils/currency.util';
 
 interface Pharmacy {
   id: string;
@@ -209,7 +210,7 @@ export class PharmaciesDashboardComponent implements OnInit {
   }
 
   formatMRR(value: number): string {
-    return `SAR ${value.toLocaleString()}`;
+    return formatCurrency(value);
   }
 
   formatDate(dateString: string): string {

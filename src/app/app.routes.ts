@@ -74,6 +74,7 @@ export const routes: Routes = [
     canActivate: [staffAuthGuard],
     canActivateChild: [staffAuthGuard],
     children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'settings',
         loadComponent: () =>

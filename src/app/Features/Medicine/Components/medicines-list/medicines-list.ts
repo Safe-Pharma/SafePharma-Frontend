@@ -17,11 +17,12 @@ import { Medicine, MedicineStats } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddMedicineDialogComponent } from '../add-medicine-dialog/add-medicine-dialog';
 import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-medicines-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, AddMedicineDialogComponent, EditPharmacyMedicineDialogComponent],
+  imports: [CommonModule, RouterLink, AddMedicineDialogComponent, EditPharmacyMedicineDialogComponent, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicines-list.html',
 })

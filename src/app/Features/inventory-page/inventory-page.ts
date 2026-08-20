@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from './Service/inventory_service';
 import { ModalOverlayDirective } from '../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../Shared/Pipes/egp-currency.pipe';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -29,7 +30,7 @@ interface Medicine {
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalOverlayDirective],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.css',
 })

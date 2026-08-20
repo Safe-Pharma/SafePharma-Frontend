@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthSessionService } from '../../../../../Core/Services/auth-session.service';
 import { PharmacySettings as PharmacySettingsService } from '../../../../settings/pharmacy-settings/Services/pharmacy-settings';
+import { UserLanguage } from '../../../../settings/pharmacy-settings/Services/user-language';
 // ASSUMPTION: Features/ sits at the same depth as Core/ from this file.
 // Adjust the relative path if your actual folder layout differs.
 // Import from the feature's barrel (index.ts), not its internal files.
@@ -23,6 +24,7 @@ export interface Breadcrumb {
 export class PrivateHeader {
   private readonly authSession = inject(AuthSessionService);
   private readonly pharmacySettings = inject(PharmacySettingsService);
+  private readonly userLanguage = inject(UserLanguage);
   private readonly router = inject(Router);
 
   readonly pharmacyName = computed(() => {
@@ -35,9 +37,17 @@ export class PrivateHeader {
       : null;
   });
 
-  readonly lang: 'EN' | 'AR' = 'EN';
+  readonly lang = computed(() => this.userLanguage.language().toUpperCase());
   readonly userMenuOpen = signal(false);
   readonly user = this.authSession.user;
+  private readonly failedLogoUrl = signal<string | null>(null);
+  readonly pharmacyLogo = computed(() => {
+    const previewUrl = this.pharmacySettings.logoPreview();
+    if (previewUrl !== undefined) return previewUrl;
+
+    const logoUrl = this.pharmacySettings.settings()?.logoUrl?.trim();
+    return logoUrl && logoUrl !== 'null' && logoUrl !== this.failedLogoUrl() ? logoUrl : null;
+  });
 
   @Output() readonly menuToggle = new EventEmitter<void>();
 
@@ -117,5 +127,9 @@ export class PrivateHeader {
 
   closeUserMenu(): void {
     this.userMenuOpen.set(false);
+  }
+
+  onLogoError(url: string): void {
+    this.failedLogoUrl.set(url);
   }
 }

@@ -43,6 +43,7 @@ import {
 } from './Model/pos.models';
 import { PatientSafetyResult, SafetyCheckedMedicine } from './Model/patient-safety.models';
 import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 /** One line of a cart that only exists in the browser — no PharmacyMedicine
  *  batch/price is "locked in" server-side until checkout; `unitPrice` here is
@@ -106,6 +107,7 @@ interface StoredPosTabs {
   imports: [
     FormsModule,
     CommonModule,
+    EgpCurrencyPipe,
     PaymentModalComponent,
     SafetyResultModalComponent,
     AddEditCustomerDialogComponent,

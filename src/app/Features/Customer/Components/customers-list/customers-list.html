@@ -51,7 +51,7 @@
 
     <div class="rounded-xl border border-border bg-card p-4 shadow-card">
       <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Paid at your pharmacy</div>
-      <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.totalPaidAllCustomers | currency }}</div>
+      <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.totalPaidAllCustomers | egpCurrency }}</div>
     </div>
   </div>
   }
@@ -109,7 +109,7 @@
             </td>
             <td class="px-4 py-3 text-muted-foreground">{{ customer.phone }}</td>
             <td class="px-4 py-3 text-muted-foreground">{{ customer.email || '—' }}</td>
-            <td class="px-4 py-3">{{ customer.totalPaid | currency }}</td>
+            <td class="px-4 py-3">{{ customer.totalPaid | egpCurrency }}</td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
                 [ngClass]="statusBadge(customer.status).classes">

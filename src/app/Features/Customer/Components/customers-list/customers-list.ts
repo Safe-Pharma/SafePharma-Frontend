@@ -8,11 +8,12 @@ import { Customer, CustomerStats } from '../../Models/customer.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { AddEditCustomerDialogComponent } from '../add-edit-customer-dialog/add-edit-customer-dialog';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-customers-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, AddEditCustomerDialogComponent],
+  imports: [CommonModule, RouterLink, AddEditCustomerDialogComponent, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customers-list.html',
 })

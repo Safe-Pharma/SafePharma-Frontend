@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, input, output, si
 import { FormsModule } from '@angular/forms';
 import { PaymentMethodChoice, PaySaleDto } from '../../Model/pos.models';
 import { ModalOverlayDirective } from '../../../../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-payment-modal',
   standalone: true,
-  imports: [FormsModule, ModalOverlayDirective],
+  imports: [FormsModule, ModalOverlayDirective, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './payment-modal.html',
 })

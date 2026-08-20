@@ -135,7 +135,7 @@
                     </p>
                   </div>
                   <p class="text-sm font-semibold text-blue-600 shrink-0 ms-3">
-                    ${{ item.sellingPrice }}
+                    {{ item.sellingPrice | egpCurrency }}
                   </p>
                 </button>
               }
@@ -348,7 +348,7 @@
                       {{ item.medicineName }}
                     </p>
                     <p class="text-xs text-slate-400">
-                      ${{ item.unitPrice }}
+                      {{ item.unitPrice | egpCurrency }}
                     </p>
                   </div>
 
@@ -474,7 +474,7 @@
                   </div>
 
                   <p class="w-16 text-right text-sm font-semibold text-slate-800 shrink-0">
-                    ${{ item.lineTotal }}
+                    {{ item.lineTotal | egpCurrency }}
                   </p>
 
                   <button
@@ -510,7 +510,7 @@
                         [class.text-white]="getRowDiscountMode(item.id) === 'amount'"
                         class="px-1.5 py-1 text-[11px] font-medium text-slate-500 cursor-pointer"
                       >
-                        $
+                        EGP
                       </button>
                       <button
                         type="button"
@@ -574,25 +574,25 @@
             <div class="flex justify-between">
               <span class="text-slate-500">Subtotal</span>
               <span class="font-medium text-slate-800"
-                >${{ (sale()?.subTotal ?? 0).toFixed(2) }}</span
+                >{{ (sale()?.subTotal ?? 0) | egpCurrency }}</span
               >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Discount</span>
               <span class="font-medium text-amber-500"
-                >- ${{ (sale()?.discount ?? 0).toFixed(2) }}</span
+                >− {{ (sale()?.discount ?? 0) | egpCurrency }}</span
               >
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Tax</span>
-              <span class="font-medium text-slate-800">${{ (sale()?.tax ?? 0).toFixed(2) }}</span>
+              <span class="font-medium text-slate-800">{{ (sale()?.tax ?? 0) | egpCurrency }}</span>
             </div>
           </div>
 
           <div class="mt-4 rounded-xl bg-blue-50 px-4 py-3.5">
             <p class="text-[11px] font-semibold tracking-wide text-blue-600">GRAND TOTAL</p>
             <p class="text-2xl font-bold text-blue-700">
-              ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+              {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
             </p>
           </div>
 
@@ -713,7 +713,7 @@
             (click)="openPaymentModal('Cash')"
             class="mt-2 w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl py-3.5 transition-colors cursor-pointer"
           >
-            Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+            Pay {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
           </button>
 
           <div class="grid grid-cols-3 gap-2 mt-2">
@@ -756,7 +756,7 @@
                     [class.text-primary-foreground]="discountMode() === 'amount'"
                     class="px-2 py-1 text-xs font-medium cursor-pointer"
                   >
-                    $
+                    EGP
                   </button>
                   <button
                     type="button"
@@ -936,7 +936,7 @@
     <div class="flex-1">
       <p class="text-[11px] text-slate-400 leading-tight">Grand total</p>
       <p class="text-lg font-bold text-blue-700 leading-tight">
-        ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+        {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
       </p>
     </div>
     @if (selectedCustomer() && !activeTab()?.safetyChecked) {
@@ -954,7 +954,7 @@
         (click)="openPaymentModal('Cash')"
         class="flex-1 bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl py-2.5 cursor-pointer"
       >
-        Pay ${{ (sale()?.grandTotal ?? 0).toFixed(2) }}
+        Pay {{ (sale()?.grandTotal ?? 0) | egpCurrency }}
       </button>
     }
   </div>

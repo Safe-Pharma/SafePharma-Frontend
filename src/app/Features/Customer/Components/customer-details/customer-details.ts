@@ -33,6 +33,7 @@ import {
   CustomerPickResult,
 } from '../../../../Shared/Components/customer-picker/customer-picker';
 import { LoadingOverlay } from '../../../../Shared/Components/loading-overlay/loading-overlay';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-customer-details',
@@ -46,6 +47,7 @@ import { LoadingOverlay } from '../../../../Shared/Components/loading-overlay/lo
     MedicinePickerComponent,
     CustomerPickerComponent,
     LoadingOverlay,
+    EgpCurrencyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-details.html',

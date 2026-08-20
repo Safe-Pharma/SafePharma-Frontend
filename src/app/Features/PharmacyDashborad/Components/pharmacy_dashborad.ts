@@ -12,13 +12,14 @@ import {
 import { DashboardApiService } from '../Services/pharmacy_dashboard';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 const CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#e11d48', '#0891b2'];
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pharmacy_dashborad.html',
 })

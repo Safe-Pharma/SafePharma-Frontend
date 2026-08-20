@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PurchaseOrderApiService } from '../Services/purchase-order-api';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-purchase-order-details-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, EgpCurrencyPipe],
   templateUrl: './purchase-order-details-page.html',
   styleUrl: './purchase-order-details-page.css',
 })

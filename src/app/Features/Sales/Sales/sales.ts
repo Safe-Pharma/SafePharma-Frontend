@@ -5,12 +5,13 @@ import { Router } from '@angular/router';
 import { Sale, SaleStats, SaleStatus } from '../pos/Model/pos.models';
 import { SalesService } from './Services/sales';
 import { LoadingOverlay } from '../../../Shared/Components/loading-overlay/loading-overlay';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 
 @Component({
   selector: 'app-sales-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingOverlay],
+  imports: [CommonModule, FormsModule, LoadingOverlay, EgpCurrencyPipe],
   templateUrl: './sales.html',
   styleUrl: './sales.css',
 })

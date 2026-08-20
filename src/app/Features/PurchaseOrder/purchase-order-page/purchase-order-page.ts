@@ -10,6 +10,7 @@ import { LoadingOverlay } from '../../../Shared/Components/loading-overlay/loadi
 import { ModalShellComponent } from '../../users/components/modal-shell/modal-shell';
 import { PosService } from '../../Sales/pos/Services/pos-service';
 import { MedicineSearchResult } from '../../Sales/pos/Model/pos.models';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 interface PurchaseLineErrors {
   medicine?: string;
@@ -22,7 +23,7 @@ interface PurchaseLineErrors {
 @Component({
   selector: 'app-purchase-order-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, Spinner, LoadingOverlay, ModalShellComponent],
+  imports: [CommonModule, FormsModule, Spinner, LoadingOverlay, ModalShellComponent, EgpCurrencyPipe],
   templateUrl: './purchase-order-page.html',
   styleUrl: './purchase-order-page.css',
 })

@@ -129,7 +129,7 @@
             <td class="px-4 py-3 font-mono text-sm">{{ s.taxNumber || '—' }}</td>
             <td class="px-4 py-3">{{ s.country }}</td>
             <td class="px-4 py-3 font-mono text-sm" [ngClass]="s.outstanding > 0 ? 'text-warning' : 'text-muted-foreground'">
-              {{ s.outstanding | number: '1.0-2' }}
+              {{ s.outstanding | egpCurrency }}
             </td>
             <td class="px-4 py-3">
               <span
@@ -184,7 +184,7 @@
           <tr class="border-b border-border last:border-0 hover:bg-muted/30">
             <td class="px-4 py-3 text-muted-foreground">{{ p.paidAt | date: 'yyyy-MM-dd' }}</td>
             <td class="px-4 py-3 font-medium">{{ p.supplierName }}</td>
-            <td class="px-4 py-3 font-mono text-sm text-success">{{ p.amount | number: '1.0-2' }}</td>
+            <td class="px-4 py-3 font-mono text-sm text-success">{{ p.amount | egpCurrency }}</td>
             <td class="px-4 py-3">{{ p.paymentMethod }}</td>
             <td class="px-4 py-3 font-mono text-xs text-muted-foreground">{{ p.note || '—' }}</td>
           </tr>
@@ -319,7 +319,7 @@
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">Outstanding balance</label>
+            <label class="text-sm font-medium">Outstanding balance (EGP)</label>
             <input type="number" min="0" step="0.01" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               [(ngModel)]="formModel.outstanding" name="outstanding" />
           </div>
@@ -379,7 +379,7 @@
           <h2 class="text-lg font-semibold">Record payment</h2>
           <p class="mt-1 text-sm text-muted-foreground">
             Recording payment to <span class="font-medium text-foreground">{{ supplier.name }}</span> — current balance:
-            <span class="font-semibold text-warning">{{ supplier.outstanding | number: '1.0-2' }}</span>
+            <span class="font-semibold text-warning">{{ supplier.outstanding | egpCurrency }}</span>
           </p>
         </div>
         <button type="button" class="text-muted-foreground hover:text-foreground" (click)="closeRecordPaymentModal()">
@@ -389,7 +389,7 @@
 
       <form (ngSubmit)="submitRecordPayment()" class="space-y-4">
         <div class="space-y-1.5">
-          <label class="text-sm font-medium">Amount</label>
+          <label class="text-sm font-medium">Amount (EGP)</label>
           <input
             type="number" min="0.01" [max]="supplier.outstanding" step="0.01"
             class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"

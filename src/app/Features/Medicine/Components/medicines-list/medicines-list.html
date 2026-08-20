@@ -166,7 +166,7 @@
             </td>
             <td class="px-4 py-3 text-muted-foreground">{{ med.category }}</td>
             <td class="px-4 py-3 text-muted-foreground">{{ med.unitOfSale }}</td>
-            <td class="px-4 py-3">{{ med.sellingPrice | currency }}</td>
+            <td class="px-4 py-3">{{ med.sellingPrice | egpCurrency }}</td>
             <td class="px-4 py-3">
               <span [class.text-warning]="med.availableQuantity < med.minStockLevel"
                 [class.font-semibold]="med.availableQuantity < med.minStockLevel">

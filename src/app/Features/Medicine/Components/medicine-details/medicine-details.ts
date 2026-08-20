@@ -8,13 +8,14 @@ import { MedicineDetails as MedicineDetailsModel } from '../../Models/medicine.m
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddBarcodeDialogComponent } from '../add-barcode-dialog/add-barcode-dialog';
 import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 
 type Tab = 'general' | 'pharmacy' | 'barcodes' | 'batches';
 
 @Component({
   selector: 'app-medicine-details',
   standalone: true,
-  imports: [CommonModule, RouterLink,AddBarcodeDialogComponent,EditPharmacyMedicineDialogComponent],
+  imports: [CommonModule, RouterLink,AddBarcodeDialogComponent,EditPharmacyMedicineDialogComponent, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicine-details.html',
 })

@@ -79,7 +79,7 @@ export class Login {
         }
         this.loading.set(false);
         this.toast.show('Welcome back — you are signed in.', 'success');
-        this.router.navigate(['/app/users']);
+        this.router.navigate(['/app/dashboard'], { replaceUrl: true });
       },
       error: (err) => {
         this.loading.set(false);
