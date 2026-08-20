@@ -5,6 +5,10 @@ export enum SaleStatus {
   Completed = 1,
   Cancelled = 2,
 }
+export interface RelativeListItem {
+  relativeId: string;
+  relativeName: string;
+}
 export interface MedicineSearchResult {
   pharmacyMedicineId: string;
   tradeNameAr: string;
