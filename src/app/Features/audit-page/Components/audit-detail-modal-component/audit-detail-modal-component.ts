@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 
 interface AuditLog {
   date: string;
@@ -14,7 +15,7 @@ interface AuditLog {
 }
 @Component({
   selector: 'app-audit-detail-modal-component',
-  imports: [CommonModule],
+  imports: [CommonModule, ModalOverlayDirective],
   templateUrl: './audit-detail-modal-component.html',
   styleUrl: './audit-detail-modal-component.css',
 })

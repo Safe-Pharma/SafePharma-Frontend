@@ -23,7 +23,7 @@ export class CustomersListComponent {
   protected readonly isOwner = computed(() => this.auth.user()?.role === 'Owner');
 
   protected readonly search = signal('');
-  protected readonly loading = signal(false);
+  protected readonly loading = signal(true);
   protected readonly errorMsg = signal<string | null>(null);
   private readonly refreshTick = signal(0);
 
@@ -123,3 +123,5 @@ export class CustomersListComponent {
     });
   }
 }
+
+export { CustomersListComponent as CustomersList };

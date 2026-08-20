@@ -1,0 +1,9 @@
+.sales-detail-panel {
+  transform-origin: top;
+  animation: sales-detail-expand 180ms ease-out both;
+}
+
+@keyframes sales-detail-expand {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

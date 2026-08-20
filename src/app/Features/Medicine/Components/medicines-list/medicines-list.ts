@@ -30,7 +30,7 @@ export class MedicinesListComponent implements AfterViewChecked {
 
   protected readonly search = signal('');
   protected readonly showInactive = signal(false);
-  protected readonly loading = signal(false);
+  protected readonly loading = signal(true);
   protected readonly errorMsg = signal<string | null>(null);
   private readonly refreshTick = signal(0);
 
@@ -200,3 +200,5 @@ export class MedicinesListComponent implements AfterViewChecked {
     this.onRefresh();
   }
 }
+
+export { MedicinesListComponent as MedicinesList };

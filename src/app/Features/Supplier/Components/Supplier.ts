@@ -28,6 +28,7 @@ import { SuppliersService } from '../Services/Supplier';
 import { SupplierPaymentsService } from '../Services/Supplier-Payment';
 import { CountryWithCities } from '../../subscribe/Models/country-with-cities.model';
 import { LocationService } from '../../subscribe/Services/location.service';
+import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
 
 
 interface SupplierFormModel {
@@ -57,7 +58,7 @@ const EMPTY_FORM: SupplierFormModel = {
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective],
   templateUrl: './supplier.html',
 })
 export class Suppliers implements OnInit, OnDestroy {
@@ -67,7 +68,7 @@ export class Suppliers implements OnInit, OnDestroy {
   search = signal('');
   private refreshTick = signal(0);
 
-  loading = signal(false);
+  loading = signal(true);
   errorMsg = signal<string | null>(null);
 
   private search$ = toObservable(this.search).pipe(

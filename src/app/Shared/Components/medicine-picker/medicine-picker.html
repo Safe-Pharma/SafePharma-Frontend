@@ -31,7 +31,7 @@
     @if (showDropdown()) {
     <div class="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-border bg-card py-1 shadow-card">
       @if (searching()) {
-      <div class="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
+      <div class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"><app-spinner size="sm" /> Searching…</div>
       } @else {
         @if (showNoResults()) {
         <div class="px-3 py-2 text-xs text-muted-foreground">No matches in the catalog.</div>

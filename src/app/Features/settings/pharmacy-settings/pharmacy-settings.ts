@@ -19,6 +19,7 @@ export class PharmacySettings implements OnInit {
 
   selectedLanguage: string = 'en';
   isLoading = false;
+  settingsLoading = true;
 
   languages = [
     { value: 'en', label: 'English' },
@@ -55,6 +56,11 @@ export class PharmacySettings implements OnInit {
         taxRegistrationNumber:
           res.data.taxRegistrationNumber === 'null' ? '' : res.data.taxRegistrationNumber || '',
       };
+      this.settingsLoading = false;
+      this.cdr.detectChanges();
+    }, (err) => {
+      this.settingsLoading = false;
+      this.toast.show('Could not load pharmacy settings.', 'error');
       this.cdr.detectChanges();
     });
     this.userLanguageService.getLanguage().subscribe((res) => {

@@ -4,6 +4,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { MedicinesApiService } from '../../../Features/Medicine/Services/medicines-api.service';
 import { GlobalMedicineSearchResult } from '../../../Features/Medicine/Models/medicine.model';
+import { Spinner } from '../spinner/spinner';
 
 // medicineId set   -> picked from the global catalog (label = trade name)
 // medicineId null  -> typed manually, not found in the catalog
@@ -17,7 +18,7 @@ export interface MedicineSelection {
 @Component({
   selector: 'app-medicine-picker',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Spinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicine-picker.html',
 })

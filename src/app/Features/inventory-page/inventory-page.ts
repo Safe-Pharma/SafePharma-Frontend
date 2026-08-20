@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from './Service/inventory_service';
+import { ModalOverlayDirective } from '../../Shared/Components/modal-overlay/modal-overlay';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -28,7 +29,7 @@ interface Medicine {
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.css',
 })
@@ -37,6 +38,8 @@ export class InventoryPage implements OnInit {
 
   medicines = signal<Medicine[]>([]);
   filteredMedicines = signal<Medicine[]>([]);
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
   selectedBatch: Batch | null = null;
   newQuantity = 0;
   isEditModalOpen = false;
@@ -45,12 +48,18 @@ export class InventoryPage implements OnInit {
   constructor(private inventoryService: InventoryService) {}
 
   ngOnInit() {
+    this.loading.set(true);
     this.inventoryService.getAllInventory().subscribe({
       next: (data) => {
         const normalized = this.normalizeInventoryData(data);
         this.medicines.set(normalized);
         this.filteredMedicines.set(normalized);
+        this.loading.set(false);
         console.log('Fetched inventory data:', this.medicines());
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('Could not load inventory.');
       },
     });
   }
@@ -316,5 +325,9 @@ export class InventoryPage implements OnInit {
     const expiryDate = batch?.expiryDate ?? '';
     const normalizedExpiry = String(expiryDate).trim();
     return normalizedExpiry === '0' || normalizedExpiry === '' || batch.daysLeft <= 0;
+  }
+
+  scrollToAlerts(): void {
+    document.querySelector('[data-inventory-table]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }

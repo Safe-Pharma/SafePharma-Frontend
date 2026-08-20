@@ -25,23 +25,23 @@
   <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     <div class="rounded-xl border border-border bg-card p-5 shadow-card">
       <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Today</div>
-      <div class="mt-2 text-2xl font-semibold tracking-tight">
-        ${{ (stats()?.todayTotal ?? 0).toFixed(2) }}
-      </div>
+      @if (stats(); as currentStats) { <div class="mt-2 text-2xl font-semibold tracking-tight">${{ currentStats.todayTotal.toFixed(2) }}</div> }
+      @else { <div class="mt-3 h-8 w-28 animate-pulse rounded bg-muted"></div> }
     </div>
     <div class="rounded-xl border border-border bg-card p-5 shadow-card">
       <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Invoices</div>
-      <div class="mt-2 text-2xl font-semibold tracking-tight">{{ stats()?.completedCount ?? 0 }}</div>
+      @if (stats(); as currentStats) { <div class="mt-2 text-2xl font-semibold tracking-tight">{{ currentStats.completedCount }}</div> }
+      @else { <div class="mt-3 h-8 w-16 animate-pulse rounded bg-muted"></div> }
     </div>
     <div class="rounded-xl border border-border bg-card p-5 shadow-card">
       <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cancelled</div>
-      <div class="mt-2 text-2xl font-semibold tracking-tight">{{ stats()?.cancelledCount ?? 0 }}</div>
+      @if (stats(); as currentStats) { <div class="mt-2 text-2xl font-semibold tracking-tight">{{ currentStats.cancelledCount }}</div> }
+      @else { <div class="mt-3 h-8 w-16 animate-pulse rounded bg-muted"></div> }
     </div>
     <div class="rounded-xl border border-border bg-card p-5 shadow-card">
       <div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Avg basket</div>
-      <div class="mt-2 text-2xl font-semibold tracking-tight">
-        ${{ (stats()?.averageBasket ?? 0).toFixed(2) }}
-      </div>
+      @if (stats(); as currentStats) { <div class="mt-2 text-2xl font-semibold tracking-tight">${{ currentStats.averageBasket.toFixed(2) }}</div> }
+      @else { <div class="mt-3 h-8 w-28 animate-pulse rounded bg-muted"></div> }
     </div>
   </div>
 
@@ -56,10 +56,12 @@
         </div>
       </div>
 
-      @if (trend().length === 0) {
+      @if (trendLoading()) {
+      <div class="h-48 animate-pulse rounded-lg bg-muted/60"></div>
+      } @else if (trend().length === 0) {
       <div class="flex h-48 items-center justify-center text-sm text-muted-foreground">No sales yet.</div>
       } @else {
-      <svg viewBox="0 0 700 220" class="h-56 w-full" preserveAspectRatio="none">
+      <svg viewBox="0 0 700 220" class="animate-chart-enter h-56 w-full" preserveAspectRatio="none">
         <defs>
           <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stop-color="#2563eb" stop-opacity="0.25" />
@@ -82,7 +84,9 @@
       <div class="text-sm font-semibold">Category mix</div>
       <div class="text-xs text-muted-foreground">Share of revenue</div>
 
-      @if (categoryMix().length === 0) {
+      @if (categoryMixLoading()) {
+      <div class="mt-3 h-40 animate-pulse rounded-lg bg-muted/60"></div>
+      } @else if (categoryMix().length === 0) {
       <div class="flex h-40 items-center justify-center text-sm text-muted-foreground">No completed sales yet.</div>
       } @else {
       <div class="mt-3 flex items-center justify-center">
@@ -110,7 +114,9 @@
     <div class="rounded-xl border border-border bg-card p-5 shadow-card lg:col-span-2">
       <div class="mb-4 text-sm font-semibold">Top products by stock</div>
 
-      @if (topProductsByStock().length === 0) {
+      @if (loading()) {
+      <div class="h-44 animate-pulse rounded-lg bg-muted/60"></div>
+      } @else if (topProductsByStock().length === 0) {
       <div class="flex h-44 items-center justify-center text-sm text-muted-foreground">No products yet.</div>
       } @else {
       <div class="flex h-44 items-end gap-3">

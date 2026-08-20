@@ -18,6 +18,7 @@ import {
   successPulse,
 } from '../../../Shared/portal-animations';
 import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
+import { ModalOverlayDirective } from '../../../../../Shared/Components/modal-overlay/modal-overlay';
 
 @Component({
   selector: 'app-organ-functions-section',
@@ -28,6 +29,7 @@ import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-hea
     PortalSkeleton,
     PortalEmptyStateComponent,
     PortalSectionHeaderComponent,
+    ModalOverlayDirective,
   ],
   templateUrl: './organ-functions.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],

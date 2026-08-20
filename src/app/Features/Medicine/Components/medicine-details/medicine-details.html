@@ -1,6 +1,10 @@
-<div class="mx-auto w-full max-w-7xl p-6 md:p-8">
+<div class="mx-auto w-full max-w-7xl p-4 sm:p-6 md:p-8">
   @if (loading()) {
-    <div class="p-8 text-center text-sm text-muted-foreground">Loading medicine…</div>
+    <div class="space-y-4" aria-busy="true">
+      <div class="h-20 animate-pulse rounded-xl bg-muted"></div>
+      <div class="h-32 animate-pulse rounded-xl bg-muted"></div>
+      <div class="h-56 animate-pulse rounded-xl bg-muted"></div>
+    </div>
   } @else if (errorMsg(); as msg) {
     <div class="p-8 text-center text-sm text-destructive">{{ msg }}</div>
   } @else if (medicine(); as m) {
@@ -13,7 +17,7 @@
     </nav>
 
     <div class="sticky top-0 z-10 -mx-6 mb-6 border-b border-border bg-background/95 px-6 py-4 backdrop-blur md:-mx-8 md:px-8">
-      <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
+      <div class="grid grid-cols-1 items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div class="flex min-w-0 items-start gap-4">
           <div class="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary-soft to-primary/10 text-primary">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6">
@@ -58,16 +62,14 @@
             Back
           </a>
 
-          <button
-            type="button"
-            (click)="addBarcode()"
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
-              <path d="M3 5v14" /><path d="M8 5v14" /><path d="M12 5v14" /><path d="M17 5v14" /><path d="M21 5v14" />
-            </svg>
-            Add barcode
-          </button>
+          <div class="flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-muted/30 p-1">
+            <button type="button" (click)="addBarcode('manufacturer')" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-foreground transition hover:bg-background hover:shadow-sm">
+              <span class="font-mono text-[11px]">MFR</span> Add manufacturer barcode
+            </button>
+            <button type="button" (click)="addBarcode('pharmacy')" class="inline-flex h-8 items-center gap-1.5 rounded-md bg-background px-2.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-accent">
+              <span class="font-mono text-[11px]">PH</span> Add pharmacy barcode
+            </button>
+          </div>
 
           <button
             type="button"
@@ -268,7 +270,10 @@
         @case ('barcodes') {
           <div class="space-y-5">
             <div class="rounded-xl border border-border bg-card p-5 shadow-card">
-              <div class="mb-3 text-sm font-semibold">Manufacturer barcodes</div>
+              <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <div><div class="text-sm font-semibold">Manufacturer barcodes</div><p class="mt-0.5 text-xs text-muted-foreground">Medicine/manufacturer identifiers shared across pharmacies.</p></div>
+                <button type="button" (click)="addBarcode('manufacturer')" class="rounded-md border border-input px-2.5 py-1.5 text-xs font-medium transition hover:bg-accent">+ Add manufacturer barcode</button>
+              </div>
               <div class="flex flex-wrap gap-2">
                 @for (b of m.manufacturerBarcodes; track b) {
                   <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-mono text-xs">{{ b }}</span>
@@ -278,7 +283,10 @@
               </div>
             </div>
             <div class="rounded-xl border border-border bg-card p-5 shadow-card">
-              <div class="mb-3 text-sm font-semibold">Pharmacy barcodes</div>
+              <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <div><div class="text-sm font-semibold">Pharmacy barcodes</div><p class="mt-0.5 text-xs text-muted-foreground">Barcode assigned locally by this pharmacy.</p></div>
+                <button type="button" (click)="addBarcode('pharmacy')" class="rounded-md border border-input px-2.5 py-1.5 text-xs font-medium transition hover:bg-accent">+ Add pharmacy barcode</button>
+              </div>
               <div class="flex flex-wrap gap-2">
                 @for (b of m.pharmacyBarcodes; track b) {
                   <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-mono text-xs">{{ b }}</span>
@@ -310,6 +318,7 @@
       <app-add-barcode-dialog
         [medicineId]="m.id"
         [pharmacyMedicineId]="m.pharmacyMedicineId"
+        [initialType]="barcodeType()"
         (closed)="onBarcodeDialogClosed()"
         (added)="onBarcodeAdded()"
       />

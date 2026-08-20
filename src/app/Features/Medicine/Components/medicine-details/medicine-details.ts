@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { MedicinesApiService } from '../../Services/medicines-api.service';
-import { MedicineDetails } from '../../Models/medicine.model';
+import { MedicineDetails as MedicineDetailsModel } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddBarcodeDialogComponent } from '../add-barcode-dialog/add-barcode-dialog';
 import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
@@ -25,10 +25,11 @@ export class MedicineDetailsComponent {
 
   protected readonly showEditDialog = signal(false);
   protected readonly showAddBarcodeDialog = signal(false);
+  protected readonly barcodeType = signal<'manufacturer' | 'pharmacy'>('pharmacy');
   protected readonly activeTab = signal<Tab>('general');
   protected readonly loading = signal(true);
   protected readonly errorMsg = signal<string | null>(null);
-  protected readonly medicine = signal<MedicineDetails | null>(null);
+  protected readonly medicine = signal<MedicineDetailsModel | null>(null);
   protected readonly updatingStatus = signal(false);
 
   constructor() {
@@ -76,7 +77,8 @@ export class MedicineDetailsComponent {
     });
   }
 
-addBarcode(): void {
+addBarcode(type: 'manufacturer' | 'pharmacy'): void {
+    this.barcodeType.set(type);
     this.showAddBarcodeDialog.set(true);
   }
 
@@ -110,3 +112,5 @@ onMedicineSaved(): void {
   });
 }
 }
+
+export { MedicineDetailsComponent as MedicineDetails };

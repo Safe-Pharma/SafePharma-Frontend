@@ -1,26 +1,28 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MedicinesApiService } from '../../Services/medicines-api.service';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 
 type BarcodeType = 'pharmacy' | 'manufacturer';
 
 @Component({
   selector: 'app-add-barcode-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ModalOverlayDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-barcode-dialog.html',
 })
-export class AddBarcodeDialogComponent {
+export class AddBarcodeDialogComponent implements OnInit {
   private readonly api = inject(MedicinesApiService);
   private readonly auth = inject(AuthSessionService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   medicineId = input.required<string>();
   pharmacyMedicineId = input.required<string>();
+  initialType = input<BarcodeType>('pharmacy');
 
   closed = output<void>();
   added = output<void>();
@@ -34,6 +36,10 @@ export class AddBarcodeDialogComponent {
     barcode: this.fb.control(''),
     isPrimary: this.fb.control(false),
   });
+
+  ngOnInit(): void {
+    this.setType(this.initialType());
+  }
 
   setType(type: BarcodeType): void {
     this.type.set(type);
@@ -82,3 +88,5 @@ export class AddBarcodeDialogComponent {
     });
   }
 }
+
+export { AddBarcodeDialogComponent as AddBarcodeDialog };

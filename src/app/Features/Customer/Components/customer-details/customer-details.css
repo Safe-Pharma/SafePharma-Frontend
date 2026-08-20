@@ -1,0 +1,8 @@
+.medicine-history-add-panel {
+  animation: medicine-history-panel-in 160ms ease-out both;
+}
+
+@keyframes medicine-history-panel-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -135,6 +135,14 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'purchases/:id',
+        loadComponent: () =>
+          import('./Features/PurchaseOrder/purchase-order-details-page/purchase-order-details-page').then(
+            (m) => m.PurchaseOrderDetailsPage,
+          ),
+        data: { title: 'Purchase Order Details' },
+      },
+      {
         path: 'products',
         loadComponent: () =>
           import('./Features/Medicine/Components/medicines-list/medicines-list').then(
@@ -175,6 +183,11 @@ export const routes: Routes = [
         path: 'sales',
         loadComponent: () => import('./Features/Sales/Sales/sales').then((m) => m.Sales),
         data: { title: 'Sales' },
+      },
+      {
+        path: 'reports',
+        loadComponent: () => import('./Features/Reports/reports').then((m) => m.ReportsPage),
+        data: { title: 'Reports' },
       },
 
       /* {
