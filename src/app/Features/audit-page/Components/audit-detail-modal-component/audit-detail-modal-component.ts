@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 
 interface AuditLog {
   date: string;
@@ -9,12 +10,12 @@ interface AuditLog {
   userFullName: string;
   recordId?: string;
   ip?: string;
-  newValue?: any;
-  oldValue?: any;
+  newValues?: unknown;
+  oldValues?: unknown;
 }
 @Component({
   selector: 'app-audit-detail-modal-component',
-  imports: [CommonModule],
+  imports: [CommonModule, ModalOverlayDirective],
   templateUrl: './audit-detail-modal-component.html',
   styleUrl: './audit-detail-modal-component.css',
 })
@@ -82,16 +83,30 @@ export class AuditDetailModalComponent {
     return colors[normalized] || 'bg-gray-500';
   }
 
+  getFormattedValue(value: unknown): string {
+    if (value === null || value === undefined || value === '') {
+      return '{}';
+    }
+
+    if (typeof value === 'string') {
+      try {
+        return JSON.stringify(JSON.parse(value), null, 2);
+      } catch {
+        return value;
+      }
+    }
+
+    return JSON.stringify(value, null, 2);
+  }
+
   // Get new value as formatted JSON
   getFormattedNewValue(): string {
-    const log = this.auditLog();
-    if (!log) return '';
+    return this.getFormattedValue(this.auditLog()?.newValues);
+  }
 
-    // If newValue exists, use it; otherwise show empty
-    if (log.newValue) {
-      return JSON.stringify(log.newValue, null, 2);
-    }
-    return '{}';
+  // Get old value as formatted JSON
+  getFormattedOldValue(): string {
+    return this.getFormattedValue(this.auditLog()?.oldValues);
   }
 
   // Get raw JSON of entire log

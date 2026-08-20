@@ -4,21 +4,27 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Sale, SaleStats, SaleStatus } from '../pos/Model/pos.models';
 import { SalesService } from './Services/sales';
+import { LoadingOverlay } from '../../../Shared/Components/loading-overlay/loading-overlay';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 
 @Component({
   selector: 'app-sales-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingOverlay, EgpCurrencyPipe],
   templateUrl: './sales.html',
+  styleUrl: './sales.css',
 })
 export class Sales implements OnInit {
   sales = signal<Sale[]>([]);
   stats = signal<SaleStats | null>(null);
+  statsLoading = signal(true);
   loading = signal(false);
   errorMsg = signal<string | null>(null);
 
   searchTerm = signal('');
+  statusFilter = signal<SaleStatus | null>(null);
+  readonly saleStatuses = [SaleStatus.Open, SaleStatus.Completed, SaleStatus.Cancelled];
   expandedSaleId = signal<string | null>(null);
 
   private searchDebounce?: ReturnType<typeof setTimeout>;
@@ -34,7 +40,7 @@ export class Sales implements OnInit {
     this.loading.set(true);
     this.errorMsg.set(null);
 
-    this.salesService.getAll(this.searchTerm() || undefined).subscribe({
+    this.salesService.getAll(this.searchTerm() || undefined, this.statusFilter()).subscribe({
       next: (res) => {
         this.sales.set(res.data ?? []);
         this.loading.set(false);
@@ -47,9 +53,15 @@ export class Sales implements OnInit {
   }
 
   loadStats(): void {
+    this.statsLoading.set(true);
     this.salesService.getStats().subscribe({
-      next: (res) => this.stats.set(res.data ?? null),
-      error: () => {}, // KPI failure shouldn't block the whole page
+      next: (res) => {
+        this.stats.set(res.data ?? null);
+        this.statsLoading.set(false);
+      },
+      error: () => {
+        this.statsLoading.set(false);
+      }, // KPI failure shouldn't block the whole page
     });
   }
 
@@ -67,30 +79,51 @@ export class Sales implements OnInit {
     this.router.navigateByUrl('/app/pos');
   }
 
-  statusColor(status: SaleStatus): string {
-    switch (status) {
-        case SaleStatus.Open:
+  statusColor(status: SaleStatus | string | number): string {
+    switch (this.normalizeStatus(status)) {
+      case 'open':
         return 'bg-blue-100 text-blue-700';
-      case SaleStatus.Completed:
+      case 'completed':
         return 'bg-green-100 text-green-700';
-      case SaleStatus.Cancelled:
+      case 'cancelled':
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
   }
-  statusName(status: SaleStatus): string {
-     console.log(status);
-    switch (status) {
-       case SaleStatus.Open:
-        return 'Open';
-      case SaleStatus.Completed:
-        return 'Completed';
-      case SaleStatus.Cancelled:
-        return 'Cancelled';
-     
-      default:
-        return 'Unknown';
+
+  onStatusChange(value: string | number | null): void {
+    this.statusFilter.set(value === null || value === '' ? null : Number(value) as SaleStatus);
+    this.loadSales();
+  }
+
+  clearFilters(): void {
+    this.searchTerm.set('');
+    this.statusFilter.set(null);
+    this.loadSales();
+  }
+  statusName(status: SaleStatus | string | number): string {
+    const normalized = this.normalizeStatus(status);
+    if (normalized === 'open') return 'Open';
+    if (normalized === 'completed') return 'Completed';
+    if (normalized === 'cancelled') return 'Cancelled';
+    return typeof status === 'string' && status.trim() ? status : 'Unknown';
+  }
+
+  private normalizeStatus(status: SaleStatus | string | number): string {
+    if (typeof status === 'number') {
+      return status === SaleStatus.Open
+        ? 'open'
+        : status === SaleStatus.Completed
+          ? 'completed'
+          : status === SaleStatus.Cancelled
+            ? 'cancelled'
+            : String(status);
     }
+    const value = String(status).trim().toLowerCase();
+    if (value === '0') return 'open';
+    if (value === '1') return 'completed';
+    if (value === '2') return 'cancelled';
+    return value;
   }
 }

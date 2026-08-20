@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RelativesService } from '../../Services/relatives';
+import { Spinner } from '../../../../../Shared/Components/spinner/spinner';
 interface Relative {
   relativeId: string;
   relativeName: string;
@@ -18,7 +19,7 @@ interface Relative {
 
 @Component({
   selector: 'app-relative-drop-down',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Spinner],
   templateUrl: './relative-drop-down.html',
   styleUrl: './relative-drop-down.css',
 })
@@ -39,6 +40,7 @@ export class RelativeDropDown implements OnInit, OnChanges {
 
   relatives = signal<Relative[]>([]);
   selectedRelativeId = signal<string>('');
+  menuOpen = signal(false);
   isLoading = signal(false);
   error = signal<string | null>(null);
 
@@ -94,5 +96,18 @@ export class RelativeDropDown implements OnInit, OnChanges {
     if (selected) {
       this.relativeSelected.emit(selected);
     }
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  choose(relativeId: string): void {
+    this.menuOpen.set(false);
+    this.onSelectionChange(relativeId);
+  }
+
+  selectedRelativeName(): string {
+    return this.relatives().find((relative) => relative.relativeId === this.selectedRelativeId())?.relativeName ?? 'Relative';
   }
 }

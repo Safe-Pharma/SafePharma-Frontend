@@ -9,13 +9,14 @@ import { Tax } from '../../../Tax/Models/tax';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { NgTemplateOutlet } from '@angular/common';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 
 type Step = 'search' | 'link' | 'create';
 
 @Component({
   selector: 'app-add-medicine-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule,NgTemplateOutlet ],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, ModalOverlayDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-medicine-dialog.html',
 })
@@ -37,6 +38,8 @@ export class AddMedicineDialogComponent {
   protected readonly errorMsg = signal<string | null>(null);
 
   protected readonly taxes = signal<Tax[]>([]);
+  protected readonly taxesLoading = signal(true);
+  protected readonly taxesError = signal<string | null>(null);
   protected readonly selectedTaxIds = signal<Set<string>>(new Set());
 
   private readonly query$ = toObservable(this.query).pipe(debounceTime(300), distinctUntilChanged());
@@ -77,9 +80,22 @@ export class AddMedicineDialogComponent {
   });
 
   constructor() {
+    this.loadTaxes();
+  }
+
+  protected loadTaxes(): void {
+    this.taxesLoading.set(true);
+    this.taxesError.set(null);
     this.taxesApi.getAll().subscribe({
-      next: (list) => this.taxes.set(list),
-      error: () => this.taxes.set([]),
+      next: (list) => {
+        this.taxes.set(list.filter((tax) => tax.status === 'Active'));
+        this.taxesLoading.set(false);
+      },
+      error: () => {
+        this.taxes.set([]);
+        this.taxesLoading.set(false);
+        this.taxesError.set('Could not load active taxes.');
+      },
     });
   }
 
@@ -188,3 +204,5 @@ export class AddMedicineDialogComponent {
     });
   }
 }
+
+export { AddMedicineDialogComponent as AddMedicineDialog };

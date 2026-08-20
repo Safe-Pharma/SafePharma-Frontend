@@ -85,9 +85,9 @@
                   }
                 </td>
                 <td class="px-4 py-3 text-end text-muted-foreground">{{ item.quantity }}</td>
-                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.price | number: '1.2-2' }}</td>
-                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.discount | number: '1.2-2' }}</td>
-                <td class="px-4 py-3 text-end font-medium text-foreground">{{ item.total | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.price | egpCurrency }}</td>
+                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.discount | egpCurrency }}</td>
+                <td class="px-4 py-3 text-end font-medium text-foreground">{{ item.total | egpCurrency }}</td>
               </tr>
             }
           </tbody>
@@ -100,23 +100,23 @@
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.subtotal') }}</dt>
-          <dd class="font-medium text-foreground">{{ subtotal() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-foreground">{{ subtotal() | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.tax') }}</dt>
-          <dd class="font-medium text-foreground">{{ tax() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-foreground">{{ tax() | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.discount') }}</dt>
-          <dd class="font-medium text-destructive">− {{ discount() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-destructive">− {{ discount() | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between border-t border-border pt-2 text-base">
           <dt class="font-semibold text-foreground">{{ i18n.t('receiptDetail.grandTotal') }}</dt>
-          <dd class="font-semibold text-foreground">{{ receipt()!.grandTotal | number: '1.2-2' }}</dd>
+          <dd class="font-semibold text-foreground">{{ receipt()!.grandTotal | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.paidAmount') }}</dt>
-          <dd class="font-medium text-success">{{ paidAmount() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-success">{{ paidAmount() | egpCurrency }}</dd>
         </div>
       </dl>
     </div>

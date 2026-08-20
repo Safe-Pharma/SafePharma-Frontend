@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
 
 @Component({
   selector: 'portal-confirm-dialog',
   standalone: true,
+  imports: [ModalOverlayDirective],
   template: `
     @if (open) {
-      <div class="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4" (click)="cancel.emit()">
+      <div appModalOverlay class="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4" (click)="cancel.emit()">
         <div
           class="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-lg"
           (click)="$event.stopPropagation()"

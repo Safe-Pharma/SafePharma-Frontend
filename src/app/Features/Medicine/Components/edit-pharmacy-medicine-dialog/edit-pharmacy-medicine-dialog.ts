@@ -5,11 +5,12 @@ import { TaxesService } from '../../../Tax/Services/tax';
 import { Tax } from '../../../Tax/Models/tax';
 import { MedicineDetails, MedicineEditFields } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 
 @Component({
   selector: 'app-edit-pharmacy-medicine-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ModalOverlayDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-pharmacy-medicine-dialog.html',
 })
@@ -29,6 +30,8 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
   protected readonly errorMsg = signal<string | null>(null);
 
   protected readonly taxes = signal<Tax[]>([]);
+  protected readonly taxesLoading = signal(true);
+  protected readonly taxesError = signal<string | null>(null);
   protected readonly selectedTaxIds = signal<Set<string>>(new Set());
 
   readonly form = this.fb.group({
@@ -46,9 +49,22 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
     });
     this.selectedTaxIds.set(new Set(m.taxes.map((t) => t.id)));
 
+    this.loadTaxes();
+  }
+
+  protected loadTaxes(): void {
+    this.taxesLoading.set(true);
+    this.taxesError.set(null);
     this.taxesApi.getAll().subscribe({
-      next: (list) => this.taxes.set(list),
-      error: () => this.taxes.set([]),
+      next: (list) => {
+        this.taxes.set(list.filter((tax) => tax.status === 'Active'));
+        this.taxesLoading.set(false);
+      },
+      error: () => {
+        this.taxes.set([]);
+        this.taxesLoading.set(false);
+        this.taxesError.set('Could not load active taxes.');
+      },
     });
   }
 
@@ -97,3 +113,5 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
       });
   }
 }
+
+export { EditPharmacyMedicineDialogComponent as EditPharmacyMedicineDialog };

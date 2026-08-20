@@ -1,8 +1,13 @@
 import { Component, OnInit, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { PharmacyService } from './Service/pharmacy_service';
 import { PharmacyReadDto } from './Models/pharmacy-read.dto';
+import { Router } from '@angular/router';
+import { AuthSessionService } from '../../Core/Services/auth-session.service';
+import { Spinner } from '../../Shared/Components/spinner/spinner';
+import { formatCurrency } from '../../Shared/utils/currency.util';
 
 interface Pharmacy {
   id: string;
@@ -39,12 +44,16 @@ interface StatCard {
 
 @Component({
   selector: 'app-owner-dashboard',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Spinner],
   templateUrl: './owner-dashboard.html',
   styleUrl: './owner-dashboard.css',
 })
 export class PharmaciesDashboardComponent implements OnInit {
-  constructor(private pharmacyService: PharmacyService) {}
+  constructor(
+    private pharmacyService: PharmacyService,
+    private authSession: AuthSessionService,
+    private router: Router,
+  ) {}
 
   // Top Stats
   stats = signal<StatCard[]>([
@@ -94,6 +103,7 @@ export class PharmaciesDashboardComponent implements OnInit {
   // Pharmacies data
   pharmacies = signal<Pharmacy[]>([]);
   filteredPharmacies = signal<Pharmacy[]>([]);
+  loading = signal(true);
   updatingPharmacyId = signal<string | null>(null);
 
   ngOnInit() {
@@ -101,31 +111,35 @@ export class PharmaciesDashboardComponent implements OnInit {
   }
 
   loadPharmacies() {
-    this.pharmacyService.getAllPharmacies().subscribe({
-      next: (data) => {
-        const pharmacies = data.map(
-          (pharmacy: PharmacyReadDto, index): Pharmacy => ({
-            ...pharmacy,
-            nameAr: '',
-            initials: pharmacy.name.slice(0, 2).toUpperCase(),
-            avatarColor: index % 2 === 0 ? 'var(--primary)' : 'var(--success)',
-            ownerName: pharmacy.businessEmail,
-            ownerEmail: pharmacy.businessEmail,
-            plan: 'Starter',
-            users: 0,
-            mrr: 0,
-            renewsDate: '-',
-            status: pharmacy.isActive ? 'Active' : 'Inactive',
-            activated: pharmacy.isActive,
-          }),
-        );
+    this.loading.set(true);
+    this.pharmacyService
+      .getAllPharmacies()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (data) => {
+          const pharmacies = data.map(
+            (pharmacy: PharmacyReadDto, index): Pharmacy => ({
+              ...pharmacy,
+              nameAr: '',
+              initials: pharmacy.name.slice(0, 2).toUpperCase(),
+              avatarColor: index % 2 === 0 ? 'var(--primary)' : 'var(--success)',
+              ownerName: pharmacy.businessEmail,
+              ownerEmail: pharmacy.businessEmail,
+              plan: 'Starter',
+              users: 0,
+              mrr: 0,
+              renewsDate: '-',
+              status: pharmacy.isActive ? 'Active' : 'Inactive',
+              activated: pharmacy.isActive,
+            }),
+          );
 
-        this.pharmacies.set(pharmacies);
-        this.filteredPharmacies.set(pharmacies);
-        this.updateStats(data);
-      },
-      error: (error) => console.error('Failed to load pharmacies:', error),
-    });
+          this.pharmacies.set(pharmacies);
+          this.filteredPharmacies.set(pharmacies);
+          this.updateStats(data);
+        },
+        error: (error) => console.error('Failed to load pharmacies:', error),
+      });
   }
 
   private updateStats(data: PharmacyReadDto[]): void {
@@ -195,6 +209,11 @@ export class PharmaciesDashboardComponent implements OnInit {
     });
   }
 
+  logout(): void {
+    this.authSession.clearToken();
+    this.router.navigateByUrl('/owner-login');
+  }
+
   getPlanBadgeStyle(plan: string): { bg: string; color: string; dot: string } {
     const styles: { [key: string]: { bg: string; color: string; dot: string } } = {
       Starter: {
@@ -209,7 +228,7 @@ export class PharmaciesDashboardComponent implements OnInit {
   }
 
   formatMRR(value: number): string {
-    return `SAR ${value.toLocaleString()}`;
+    return formatCurrency(value);
   }
 
   formatDate(dateString: string): string {

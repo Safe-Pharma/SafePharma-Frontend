@@ -1,7 +1,15 @@
+@if (mobileOpen) {
+  <div
+    class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[1px] lg:hidden"
+    aria-hidden="true"
+    (click)="closeOnMobile()"
+  ></div>
+}
+
 <aside
-  class="flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 min-h-screen"
-  [class.w-64]="!collapsed"
-  [class.w-16]="collapsed"
+  class="fixed inset-y-0 start-0 z-50 flex min-h-screen w-72 shrink-0 -translate-x-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-200 ease-out lg:static lg:z-auto lg:min-h-0 lg:translate-x-0 lg:shadow-none lg:transition-[width] lg:duration-200"
+  [class.translate-x-0]="mobileOpen"
+  [ngClass]="collapsed ? 'lg:w-16' : 'lg:w-64'"
 >
   <div class="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
     <div class="flex items-center gap-2">
@@ -22,13 +30,21 @@
     </div>
     <button
       type="button"
-      class="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+      class="hidden h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground lg:grid"
       aria-label="Toggle sidebar"
       (click)="toggleCollapsed()"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 transition-transform" [class.rotate-180]="collapsed" aria-hidden="true">
         <path d="m15 18-6-6 6-6"></path>
       </svg>
+    </button>
+    <button
+      type="button"
+      class="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground lg:hidden"
+      aria-label="Close sidebar"
+      (click)="closeOnMobile()"
+    >
+      <span aria-hidden="true" class="text-xl leading-none">×</span>
     </button>
   </div>
 
@@ -43,6 +59,7 @@
         class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         [ngClass]="rla.isActive ? 'bg-sidebar-primary/10 text-sidebar-primary' : 'text-sidebar-foreground/80'"
         [attr.aria-current]="rla.isActive ? 'page' : null"
+        (click)="closeOnMobile()"
       >
         <span
           class="h-4.5 w-4.5 shrink-0"
@@ -64,7 +81,7 @@
     <button
       type="button"
       class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-destructive-soft hover:text-destructive"
-      (click)="logout.emit()"
+      (click)="logout.emit(); closeOnMobile()"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5 shrink-0" aria-hidden="true">
         <path d="m16 17 5-5-5-5"></path>

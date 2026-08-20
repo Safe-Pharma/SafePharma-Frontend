@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+.searchable-select-menu {
+  animation: searchable-select-open 120ms ease-out both;
+}
+
+@keyframes searchable-select-open {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

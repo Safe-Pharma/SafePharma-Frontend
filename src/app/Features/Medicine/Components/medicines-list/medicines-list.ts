@@ -17,11 +17,12 @@ import { Medicine, MedicineStats } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddMedicineDialogComponent } from '../add-medicine-dialog/add-medicine-dialog';
 import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-medicines-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, AddMedicineDialogComponent, EditPharmacyMedicineDialogComponent],
+  imports: [CommonModule, RouterLink, AddMedicineDialogComponent, EditPharmacyMedicineDialogComponent, EgpCurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicines-list.html',
 })
@@ -30,7 +31,7 @@ export class MedicinesListComponent implements AfterViewChecked {
 
   protected readonly search = signal('');
   protected readonly showInactive = signal(false);
-  protected readonly loading = signal(false);
+  protected readonly loading = signal(true);
   protected readonly errorMsg = signal<string | null>(null);
   private readonly refreshTick = signal(0);
 
@@ -200,3 +201,5 @@ export class MedicinesListComponent implements AfterViewChecked {
     this.onRefresh();
   }
 }
+
+export { MedicinesListComponent as MedicinesList };

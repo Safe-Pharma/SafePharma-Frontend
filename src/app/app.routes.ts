@@ -9,6 +9,7 @@ import { ChangePassword } from './Features/Authentication/change-password/change
 import { InventoryPage } from './Features/inventory-page/inventory-page';
 import { portalAuthGuard } from './Core/Guards/portal-auth.guard';
 import { staffAuthGuard } from './Core/Guards/staff-auth.guard';
+import { ownerAuthGuard } from './Core/Guards/owner-auth.guard';
 
 export const routes: Routes = [
   {
@@ -65,7 +66,14 @@ export const routes: Routes = [
   {
     path: '',
     component: AuthLayout,
-    children: [{ path: 'login', component: Login }],
+    children: [
+      { path: 'login', component: Login },
+      {
+        path: 'owner-login',
+        loadComponent: () =>
+          import('./Features/Authentication/owner-login/owner-login').then((m) => m.OwnerLogin),
+      },
+    ],
   },
 
   {
@@ -74,6 +82,7 @@ export const routes: Routes = [
     canActivate: [staffAuthGuard],
     canActivateChild: [staffAuthGuard],
     children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'settings',
         loadComponent: () =>
@@ -116,10 +125,12 @@ export const routes: Routes = [
           title: 'Suppliers',
         },
       },
-       {
+      {
         path: 'dashboard',
         loadComponent: () =>
-          import('./Features/PharmacyDashborad/Components/pharmacy_dashborad').then((m) => m.DashboardPage),
+          import('./Features/PharmacyDashborad/Components/pharmacy_dashborad').then(
+            (m) => m.DashboardPage,
+          ),
         data: {
           title: 'Dashboard',
         },
@@ -133,6 +144,14 @@ export const routes: Routes = [
         data: {
           title: 'Purchases',
         },
+      },
+      {
+        path: 'purchases/:id',
+        loadComponent: () =>
+          import('./Features/PurchaseOrder/purchase-order-details-page/purchase-order-details-page').then(
+            (m) => m.PurchaseOrderDetailsPage,
+          ),
+        data: { title: 'Purchase Order Details' },
       },
       {
         path: 'products',
@@ -176,6 +195,11 @@ export const routes: Routes = [
         loadComponent: () => import('./Features/Sales/Sales/sales').then((m) => m.Sales),
         data: { title: 'Sales' },
       },
+      {
+        path: 'reports',
+        loadComponent: () => import('./Features/Reports/reports').then((m) => m.ReportsPage),
+        data: { title: 'Reports' },
+      },
 
       /* {
 
@@ -186,10 +210,16 @@ export const routes: Routes = [
       {
         path: 'audit',
         component: AuditPage,
+        data: {
+          title: 'Audit',
+        },
       },
       {
         path: 'inventory',
         component: InventoryPage,
+        data: {
+          title: 'Inventory',
+        },
       },
       //{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
@@ -296,7 +326,13 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'owner-login',
+    loadComponent: () =>
+      import('./Features/Authentication/owner-login/owner-login').then((m) => m.OwnerLogin),
+  },
+  {
     path: 'owner-dashboard',
+    canActivate: [ownerAuthGuard],
     loadComponent: () =>
       import('./Features/owner-dashboard/owner-dashboard').then(
         (m) => m.PharmaciesDashboardComponent,

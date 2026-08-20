@@ -4,6 +4,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { CustomersApiService } from '../../../Features/Customer/Services/customers-api.service';
 import { Customer } from '../../../Features/Customer/Models/customer.model';
+import { Spinner } from '../spinner/spinner';
 
 export interface CustomerPickResult {
   customerId: string;
@@ -13,7 +14,7 @@ export interface CustomerPickResult {
 @Component({
   selector: 'app-customer-picker',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Spinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-picker.html',
 })

@@ -112,7 +112,7 @@
                 <td class="px-4 py-3 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
                 <td class="px-4 py-3 text-muted-foreground">{{ r.pharmacyName || '—' }}</td>
                 <td class="px-4 py-3 text-end text-muted-foreground">{{ r.items.length }}</td>
-                <td class="px-4 py-3 text-end font-medium text-foreground">{{ r.grandTotal | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-end font-medium text-foreground">{{ r.grandTotal | egpCurrency }}</td>
                 <td class="px-4 py-3">
                   <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
                 </td>

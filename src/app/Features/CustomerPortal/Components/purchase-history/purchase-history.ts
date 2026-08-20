@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortalApiService } from '../../Services/portal-api.service';
@@ -21,7 +22,7 @@ const PAGE_SIZE = 10;
 @Component({
   selector: 'app-purchase-history',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
+  imports: [FormsModule, RouterLink, DatePipe, EgpCurrencyPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
   templateUrl: './purchase-history.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
