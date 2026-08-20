@@ -26,6 +26,8 @@ export class AuditPage implements OnInit {
   selectedDate: string = '';
 
   isModalOpen = signal(false);
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
   selectedLog = signal<AuditLog | null>(null);
 
   constructor(private auditService: AuditService) {}
@@ -33,11 +35,17 @@ export class AuditPage implements OnInit {
   audits = signal([] as AuditLog[]);
   filteredLogs = signal([] as AuditLog[]);
   ngOnInit() {
+    this.loading.set(true);
     this.auditService.getAllAudits().subscribe({
       next: (data) => {
         this.audits.set(data);
         this.filteredLogs.set(data);
+        this.loading.set(false);
         console.log(this.audits());
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('Could not load audit history.');
       },
     });
   }
@@ -53,7 +61,7 @@ export class AuditPage implements OnInit {
       const matchUser = !this.selectedUser || log.userFullName === this.selectedUser;
       const matchAction = !this.selectedAction || log.action === this.selectedAction;
       const matchEntity = !this.selectedEntity || log.entity === this.selectedEntity;
-      const matchDate = !this.selectedDate || log.date === this.selectedDate;
+      const matchDate = !this.selectedDate || log.date.startsWith(this.selectedDate);
 
       return matchSearch && matchUser && matchAction && matchEntity && matchDate;
     });
@@ -109,5 +117,14 @@ export class AuditPage implements OnInit {
       Login: 'bg-purple-500',
     };
     return colors[action] || 'bg-gray-500';
+  }
+
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedUser = '';
+    this.selectedAction = '';
+    this.selectedEntity = '';
+    this.selectedDate = '';
+    this.filteredLogs.set(this.audits());
   }
 }

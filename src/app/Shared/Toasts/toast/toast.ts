@@ -11,3 +11,6 @@ import { Toast } from '../toast';
 export class ToastComponent {
   constructor(public toastService: Toast) {}
 }
+
+/** Backwards-compatible test import for the toast service. */
+export { Toast } from '../toast';

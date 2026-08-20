@@ -1,4 +1,4 @@
-<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+<div appModalOverlay class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/30 p-3 pt-20 backdrop-blur-[1px] sm:p-4 sm:pt-20" (click)="onClose()">
   <div
     class="relative grid w-full max-w-2xl gap-4 rounded-lg border border-border bg-background p-6 shadow-lg max-h-[92vh] overflow-y-auto"
     (click)="$event.stopPropagation()">
@@ -248,6 +248,13 @@
       <div class="space-y-1.5">
         <label class="text-sm font-medium">Taxes</label>
         <div class="flex flex-wrap gap-2">
+          @if (taxesLoading()) {
+            <div class="flex items-center gap-2 text-xs text-muted-foreground"><span class="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-primary"></span> Loading taxes…</div>
+          } @else if (taxesError(); as error) {
+            <button type="button" class="text-xs text-destructive underline" (click)="loadTaxes()">{{ error }} Retry</button>
+          } @else if (taxes().length === 0) {
+            <span class="text-xs text-muted-foreground">No active taxes configured.</span>
+          } @else {
           @for (tax of taxes(); track tax.id) {
           <label
             class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium"
@@ -256,6 +263,7 @@
               (change)="toggleTax(tax.id)" />
             {{ tax.name }} ({{ tax.rate }}%)
           </label>
+          }
           }
         </div>
       </div>

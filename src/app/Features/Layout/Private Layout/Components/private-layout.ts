@@ -16,6 +16,7 @@ import { AuthSessionService } from '../../../../Core/Services/auth-session.servi
 export class privatelayout implements OnInit, OnDestroy {
   private idleTimerService = inject(IdleTimerService);
   readonly authSession = inject(AuthSessionService);
+  readonly mobileSidebarOpen = signal(false);
   constructor(private router: Router) {}
 
   ngOnInit(): void {
@@ -32,7 +33,16 @@ export class privatelayout implements OnInit, OnDestroy {
   }
 
   onLogout() {
+    this.closeMobileSidebar();
     this.authSession.clearToken();
     this.router.navigateByUrl('/login');
+  }
+
+  openMobileSidebar(): void {
+    this.mobileSidebarOpen.set(true);
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileSidebarOpen.set(false);
   }
 }

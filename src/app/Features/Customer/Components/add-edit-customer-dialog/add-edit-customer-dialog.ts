@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -24,6 +25,7 @@ import {
   CustomerPickResult,
 } from '../../../../Shared/Components/customer-picker/customer-picker';
 import { fullNameValidator, phoneValidator } from '../../../subscribe/Validators/custom-validators';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
 
 interface OrganFunctionEntry {
   organId: string;
@@ -40,9 +42,11 @@ interface OrganFunctionEntry {
     TagPickerComponent,
     MedicinePickerComponent,
     CustomerPickerComponent,
+    ModalOverlayDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-edit-customer-dialog.html',
+  styleUrl: './add-edit-customer-dialog.css',
 })
 export class AddEditCustomerDialogComponent {
   private readonly api = inject(CustomersApiService);
@@ -57,6 +61,7 @@ export class AddEditCustomerDialogComponent {
   protected readonly isEdit = computed(() => this.customer() !== null);
   protected readonly submitting = signal(false);
   protected readonly errorMsg = signal<string | null>(null);
+  private catalogsLoaded = false;
 
   readonly form = this.fb.group({
     name: this.fb.control('', [Validators.required, Validators.maxLength(255), fullNameValidator]),
@@ -69,22 +74,24 @@ export class AddEditCustomerDialogComponent {
   });
 
   constructor() {
-    const existing = this.customer();
-    if (existing) {
-      this.form.patchValue({
-        name: existing.name,
-        phone: existing.phone,
-        email: existing.email,
-        address: existing.address,
-        dateOfBirth: existing.dateOfBirth?.slice(0, 10) ?? '',
-        notes: existing.notes,
-        status: existing.status,
-      });
-    } else {
-      // These extra sections (medicine/allergy/condition/organ) only make sense when
-      // CREATING a customer — editing an existing one manages them from customer-details.
-      this.loadCatalogs();
-    }
+    effect(() => {
+      const existing = this.customer();
+      if (existing) {
+        this.form.reset({
+          name: existing.name ?? '',
+          phone: existing.phone ?? '',
+          email: existing.email ?? '',
+          address: existing.address ?? '',
+          dateOfBirth: existing.dateOfBirth?.slice(0, 10) ?? '',
+          notes: existing.notes ?? '',
+          status: existing.status ?? 'Active',
+        });
+      } else if (!this.catalogsLoaded) {
+        // These extra sections only make sense when creating a customer.
+        this.catalogsLoaded = true;
+        this.loadCatalogs();
+      }
+    });
   }
 
   onClose(): void {
@@ -316,3 +323,5 @@ export class AddEditCustomerDialogComponent {
     });
   }
 }
+
+export { AddEditCustomerDialogComponent as AddEditCustomerDialog };

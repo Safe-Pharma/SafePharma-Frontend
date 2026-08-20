@@ -28,6 +28,9 @@ import { SuppliersService } from '../Services/Supplier';
 import { SupplierPaymentsService } from '../Services/Supplier-Payment';
 import { CountryWithCities } from '../../subscribe/Models/country-with-cities.model';
 import { LocationService } from '../../subscribe/Services/location.service';
+import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
+import { formatCurrency } from '../../../Shared/utils/currency.util';
 
 
 interface SupplierFormModel {
@@ -57,7 +60,7 @@ const EMPTY_FORM: SupplierFormModel = {
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe],
   templateUrl: './supplier.html',
 })
 export class Suppliers implements OnInit, OnDestroy {
@@ -67,7 +70,7 @@ export class Suppliers implements OnInit, OnDestroy {
   search = signal('');
   private refreshTick = signal(0);
 
-  loading = signal(false);
+  loading = signal(true);
   errorMsg = signal<string | null>(null);
 
   private search$ = toObservable(this.search).pipe(
@@ -363,7 +366,7 @@ export class Suppliers implements OnInit, OnDestroy {
 
     if (amount > supplier.outstanding) {
       this.recordPaymentError.set(
-        `Amount can't exceed the outstanding balance (${supplier.outstanding}).`
+        `Amount can't exceed the outstanding balance (${formatCurrency(supplier.outstanding)}).`
       );
       return;
     }

@@ -66,7 +66,7 @@
 </div>
 
 @if (editorOpen()) {
-  <div class="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4" @dialogOverlay (click)="closeEditor()">
+  <div appModalOverlay class="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4" @dialogOverlay (click)="closeEditor()">
     <div
       class="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-lg"
       @dialogPanel

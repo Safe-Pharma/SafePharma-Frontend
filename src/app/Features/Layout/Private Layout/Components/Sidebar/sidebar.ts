@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { SafeHtmlPipe } from '../../../../../Shared/Pipes/safe-html.pipe';
@@ -12,10 +12,17 @@ import { SafeHtmlPipe } from '../../../../../Shared/Pipes/safe-html.pipe';
 export class Sidebar {
   collapsed = false;
 
+  @Input() mobileOpen = false;
+
   @Output() logout = new EventEmitter<void>();
+  @Output() mobileClosed = new EventEmitter<void>();
 
   toggleCollapsed() {
     this.collapsed = !this.collapsed;
+  }
+
+  closeOnMobile(): void {
+    this.mobileClosed.emit();
   }
 
   navItems = [

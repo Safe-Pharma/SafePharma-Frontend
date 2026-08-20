@@ -181,7 +181,7 @@
 
 <!-- Create / Edit modal -->
 @if (showFormModal()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" (click)="closeFormModal()">
+  <div appModalOverlay class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/30 px-3 pt-20 sm:px-4 sm:pt-20" (click)="closeFormModal()">
     <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-popover" (click)="$event.stopPropagation()">
       <div class="mb-4 flex items-start justify-between">
         <div>
@@ -261,7 +261,7 @@
 
 <!-- Delete confirm modal -->
 @if (confirmDeleteTax(); as tax) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" (click)="cancelDelete()">
+  <div appModalOverlay class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/30 px-3 pt-20 sm:px-4 sm:pt-20" (click)="cancelDelete()">
     <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-popover" (click)="$event.stopPropagation()">
       <h2 class="text-lg font-semibold">Delete this tax?</h2>
       <p class="mt-2 text-sm text-muted-foreground">

@@ -6,6 +6,7 @@ import { PaymentInstructions } from '../Models/payment-instructions.model';
 import { SubmitPaymentProofRequest } from '../Models/payment-verification.model';
 import { receiptFileValidator } from '../Validators/custom-validators';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { formatCurrency } from '../../../Shared/utils/currency.util';
 
 @Component({
   selector: 'app-submit-payment-proof',
@@ -32,7 +33,7 @@ export class SubmitPaymentProof implements OnInit {
 
   readonly summaryLabel = computed(() => {
     const data = this.instructions();
-    return data ? `${data.referenceCode} · ${data.planTier} · ${data.currency} ${data.amountDue}` : '';
+    return data ? `${data.referenceCode} · ${data.planTier} · ${formatCurrency(data.amountDue)}` : '';
   });
 
   form = this.fb.group({

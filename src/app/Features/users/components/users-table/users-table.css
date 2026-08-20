@@ -54,7 +54,20 @@
     color: #9ca3af;
     padding: 40px 16px;
   }
+
+  .skeleton-cell {
+    display: block;
+    height: 14px;
+    width: 78%;
+    border-radius: 5px;
+    background: #eef2f7;
+    animation: users-table-pulse 1.2s ease-in-out infinite;
+  }
+
+  .skeleton-row td { padding-top: 16px; padding-bottom: 16px; }
 }
+
+@keyframes users-table-pulse { 50% { opacity: 0.5; } }
 
 /* ── Action menu ──────────────────────────────────────────── */
 .menu-wrap {

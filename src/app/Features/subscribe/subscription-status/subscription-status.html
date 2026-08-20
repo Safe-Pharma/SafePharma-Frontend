@@ -7,7 +7,7 @@
       <p class="mt-1.5 text-sm text-muted-foreground">
         Reference
         <span class="font-mono font-semibold text-foreground">{{ data.referenceCode }}</span>
-        · {{ data.planTier }} · ${{ data.paidAmount }}
+        · {{ data.planTier }} · {{ data.paidAmount | egpCurrency }}
       </p>
     </div>
 
@@ -68,7 +68,7 @@
                 {{ item.paymentMethod }} · <span class="font-mono">{{ item.transactionReference }}</span>
               </div>
               <div class="text-xs text-muted-foreground">
-                Submitted {{ item.createdAt | date: 'yyyy-MM-dd' }} · Paid on {{ item.paymentDate | date: 'yyyy-MM-dd' }} · ${{ item.paidAmount }}
+                Submitted {{ item.createdAt | date: 'yyyy-MM-dd' }} · Paid on {{ item.paymentDate | date: 'yyyy-MM-dd' }} · {{ item.paidAmount | egpCurrency }}
               </div>
             </div>
             <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" [class]="classesForStatus(item.status)">

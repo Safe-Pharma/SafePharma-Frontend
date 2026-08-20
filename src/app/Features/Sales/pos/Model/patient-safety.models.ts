@@ -49,3 +49,14 @@ export interface PatientSafetyResult {
 export interface PatientSafetyCheckResponseData {
   results: PatientSafetyResult[];
 }
+
+/** The local cart lines included in a safety request. Keeping these beside
+ * the response lets the POS render a result for the exact checked snapshot,
+ * rather than treating a later cart as if it had already been checked. */
+export interface SafetyCheckedMedicine {
+  id: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  quantity: number;
+  customerId: string | null;
+}

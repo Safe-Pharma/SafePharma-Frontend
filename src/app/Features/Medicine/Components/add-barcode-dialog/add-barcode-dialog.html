@@ -1,4 +1,4 @@
-<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+<div appModalOverlay class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/30 p-3 pt-20 backdrop-blur-[1px] sm:p-4 sm:pt-20" (click)="onClose()">
   <div
     class="relative grid w-full max-w-md gap-4 rounded-lg border border-border bg-background p-6 shadow-lg"
     (click)="$event.stopPropagation()">
@@ -13,8 +13,8 @@
     </button>
 
     <div>
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Add barcode</h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">Attach a barcode to this medicine.</p>
+      <h2 class="text-lg font-semibold leading-none tracking-tight">Add {{ type() === 'manufacturer' ? 'manufacturer' : 'pharmacy' }} barcode</h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">{{ type() === 'manufacturer' ? 'Used by the medicine manufacturer and shared across pharmacies.' : 'Assigned by this pharmacy for local scanning.' }}</p>
     </div>
 
     @if (isOwner()) {
@@ -61,7 +61,7 @@
         </button>
         <button type="submit" [disabled]="submitting()"
           class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ submitting() ? 'Adding…' : 'Add barcode' }}
+          {{ submitting() ? 'Adding…' : 'Add ' + (type() === 'manufacturer' ? 'manufacturer' : 'pharmacy') + ' barcode' }}
         </button>
       </div>
     </form>

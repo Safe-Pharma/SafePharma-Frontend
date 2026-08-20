@@ -94,3 +94,8 @@ select {
   color: #dc2626;
   margin-top: -2px;
 }
+
+@media (max-width: 640px) {
+  .user-form { gap: 16px; }
+  .row { grid-template-columns: 1fr; gap: 16px; }
+}

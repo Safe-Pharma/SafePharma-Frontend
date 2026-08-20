@@ -4,11 +4,12 @@ import { PaymentVerificationService } from '../Services/payment-verification.ser
 import { PaymentVerificationRead } from '../Models/payment-verification.model';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { DatePipe } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-subscription-status',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, EgpCurrencyPipe],
   templateUrl: './subscription-status.html',
   styleUrl: './subscription-status.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -32,6 +32,8 @@ import {
   CustomerPickerComponent,
   CustomerPickResult,
 } from '../../../../Shared/Components/customer-picker/customer-picker';
+import { LoadingOverlay } from '../../../../Shared/Components/loading-overlay/loading-overlay';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 
 @Component({
   selector: 'app-customer-details',
@@ -44,6 +46,8 @@ import {
     TagPickerComponent,
     MedicinePickerComponent,
     CustomerPickerComponent,
+    LoadingOverlay,
+    EgpCurrencyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-details.html',
@@ -65,6 +69,8 @@ export class CustomerDetailsComponent {
 
   protected readonly customer = signal<Customer | null>(null);
   protected readonly history = signal<CustomerMedicineHistory[]>([]);
+  protected readonly historyLoading = signal(true);
+  protected readonly historyRefreshing = signal(false);
   protected readonly historyFilter = signal<'all' | 'active'>('all');
 
   constructor() {
@@ -95,10 +101,21 @@ export class CustomerDetailsComponent {
   }
 
   private loadHistory(): void {
+    const hasLoadedHistory = this.history().length > 0;
+    this.historyLoading.set(!hasLoadedHistory);
+    this.historyRefreshing.set(hasLoadedHistory);
     const isActive = this.historyFilter() === 'active' ? true : undefined;
     this.api.getMedicineHistory(this.id, isActive).subscribe({
-      next: (history) => this.history.set(history),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not load medicine history.')),
+      next: (history) => {
+        this.history.set(history);
+        this.historyLoading.set(false);
+        this.historyRefreshing.set(false);
+      },
+      error: (err) => {
+        this.historyLoading.set(false);
+        this.historyRefreshing.set(false);
+        this.errorMsg.set(getErrorMessage(err, 'Could not load medicine history.'));
+      },
     });
   }
 

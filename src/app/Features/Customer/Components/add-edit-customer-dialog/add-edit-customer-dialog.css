@@ -1,0 +1,9 @@
+.customer-dialog-panel app-customer-picker,
+.customer-dialog-panel app-medicine-picker {
+  position: relative;
+  z-index: 30;
+}
+
+.dialog-form-body {
+  overscroll-behavior: contain;
+}

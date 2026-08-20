@@ -6,6 +6,7 @@ import { GeneralResult } from '../../../../Core/Models/general-result.model';
 import {
   ApplySaleDiscountDto,
   ApplySaleTaxDto,
+  BarcodeScanData,
   CheckoutDto,
   Customer,
   CreateSaleItemsDto,
@@ -21,10 +22,15 @@ import {
 @Injectable({ providedIn: 'root' })
 export class PosService {
   private readonly medicineSearchApi = `${environment.apiUrl}/MedicineSearch`;
+  private readonly barcodeApi = `${environment.apiUrl}/Barcode`;
   private readonly saleApi = `${environment.apiUrl}/Sale`;
   private readonly customersApi = `${environment.apiUrl}/Customers`;
 
   constructor(private http: HttpClient) {}
+
+  scanBarcode(barcode: string): Observable<GeneralResult<BarcodeScanData>> {
+    return this.http.post<GeneralResult<BarcodeScanData>>(`${this.barcodeApi}/scan`, { barcode });
+  }
 
   searchMedicines(
     query: string,

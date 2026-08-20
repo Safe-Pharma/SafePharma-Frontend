@@ -10,6 +10,8 @@ import{ alphanumericHyphenValidator, fullNameValidator, passwordComplexityValida
 import { Toast } from '../../Shared/Toasts/toast';
 import { SubscriptionPlanService } from './Services/subscription-plan.service';
 import { SubscriptionPlanRead } from './Models/subscription-plan.model';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../Shared/Components/searchable-select/searchable-select';
+import { formatCurrency } from '../../Shared/utils/currency.util';
 interface PlanOption {
   tier: 'Starter' | 'Professional' | 'Enterprise';
   price: string;
@@ -20,7 +22,7 @@ interface PlanOption {
 @Component({
   selector: 'app-subscribe',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SearchableSelectComponent],
   templateUrl: './subscribe.html',
   styleUrl: './subscribe.css',
 })
@@ -33,6 +35,8 @@ export class Subscribe implements OnInit {
   private planService = inject(SubscriptionPlanService);
 
   isLoadingPlans = signal(true);
+  isLoadingLocations = signal(true);
+  locationError = signal<string | null>(null);
   isSubmitting = signal(false);
   submitError = signal<string | null>(null);
   countries = signal<CountryWithCities[]>([]);
@@ -40,6 +44,29 @@ export class Subscribe implements OnInit {
   isUploadingLogo = signal(false);
   logoFileName = signal<string | null>(null);
   plans = signal<SubscriptionPlanRead[]>([]);
+
+  get countryOptions(): SearchableSelectOption[] {
+    return this.countries().map((country) => ({ value: country.id, label: country.name, secondary: country.code }));
+  }
+
+  get cityOptions(): SearchableSelectOption[] {
+    return this.cities().map((city) => ({ value: city.name, label: city.name }));
+  }
+
+  get languageOptions(): SearchableSelectOption[] {
+    return [
+      { value: 'English', label: 'English' },
+      { value: 'Arabic', label: 'العربية' },
+    ];
+  }
+
+  get timeZoneOptions(): SearchableSelectOption[] {
+    return [
+      { value: '(GMT+4) Gulf Standard Time', label: '(GMT+4) Gulf Standard Time' },
+      { value: '(GMT+3) Arabia Standard Time', label: '(GMT+3) Arabia Standard Time' },
+      { value: '(GMT+2) Eastern European Time', label: '(GMT+2) Eastern European Time' },
+    ];
+  }
 
 form = this.fb.group({
   planTier: this.fb.control<'Starter' | 'Professional' | 'Enterprise'>('Professional', {
@@ -74,11 +101,20 @@ form = this.fb.group({
 });
 
 ngOnInit(): void {
+  this.isLoadingLocations.set(true);
+  this.locationError.set(null);
   this.locationService.getCountries().subscribe({
     next: (result) => {
       if (result.success && result.data) {
         this.countries.set(result.data);
+      } else {
+        this.locationError.set('Could not load locations.');
       }
+      this.isLoadingLocations.set(false);
+    },
+    error: () => {
+      this.isLoadingLocations.set(false);
+      this.locationError.set('Could not load locations.');
     },
   });
 
@@ -94,8 +130,27 @@ ngOnInit(): void {
   });
 }
 
-onCountryChange(): void {
-  const selectedCountryId = this.form.controls.pharmacy.controls.country.value;
+retryLocations(): void {
+  this.isLoadingLocations.set(true);
+  this.locationError.set(null);
+  this.locationService.getCountries().subscribe({
+    next: (result) => {
+      if (result.success && result.data) {
+        this.countries.set(result.data);
+      } else {
+        this.locationError.set('Could not load locations.');
+      }
+      this.isLoadingLocations.set(false);
+    },
+    error: () => {
+      this.isLoadingLocations.set(false);
+      this.locationError.set('Could not load locations.');
+    },
+  });
+}
+
+onCountryChange(selectedCountryId = this.form.controls.pharmacy.controls.country.value): void {
+  this.form.controls.pharmacy.controls.country.setValue(selectedCountryId);
 
   const country = this.countries().find(c => c.id === selectedCountryId);
 
@@ -117,7 +172,7 @@ onCountryChange(): void {
   }
   planPrice(plan: SubscriptionPlanRead): string {
   const amount = this.form.controls.billingCycle.value === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
-  return `${plan.currency} ${amount}`;
+  return formatCurrency(amount);
 }
 
 planPeriod(): string {

@@ -26,14 +26,15 @@
 
     <app-users-table
       [users]="usersService.users()"
+      [loading]="usersService.isLoading()"
       (view)="onView($event)"
       (edit)="onEdit($event)"
       (delete)="onDelete($event)"
       (toggleStatus)="onToggleStatus($event)"
     />
 
-    @if (usersService.isLoading()) {
-      <div class="loading">Loading users...</div>
+    @if (usersService.isLoading() && usersService.users().length > 0) {
+      <div class="refreshing" role="status"><span class="inline-spinner"></span> Updating users…</div>
     }
 
     @if (usersService.error()) {

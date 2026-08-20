@@ -37,6 +37,8 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  status?: 'Active' | 'Inactive';
+  isActive?: boolean;
 }
 
 export interface SaleItem {
@@ -148,4 +150,12 @@ export interface CheckoutDto {
   taxId?: string;
   amountPaidByCash: number;
   amountPaidByCard: number;
+}
+
+export interface BarcodeScanData {
+  medicineId: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  price: number;
+  barcodeSource: string;
 }

@@ -39,7 +39,7 @@
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4" [@staggerList]="4">
       <portal-stat-card
         [label]="i18n.t('dashboard.totalPurchases')"
-        [value]="totalReceiptsValue() | number: '1.2-2'"
+        [value]="totalReceiptsValue() | egpCurrency"
         [icon]="icons.purchases"
         tone="primary"
         class="transition-transform duration-200 hover:-translate-y-0.5"
@@ -113,7 +113,7 @@
                     </td>
                     <td class="py-2.5 text-muted-foreground">{{ r.pharmacyName || '—' }}</td>
                     <td class="py-2.5 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
-                    <td class="py-2.5 text-end font-medium text-foreground">{{ r.grandTotal | number: '1.2-2' }}</td>
+                    <td class="py-2.5 text-end font-medium text-foreground">{{ r.grandTotal | egpCurrency }}</td>
                     <td class="py-2.5 text-end">
                       <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
                     </td>

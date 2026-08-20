@@ -4,6 +4,7 @@ import { CopyField } from '../Components/copy-field/copy-field';
 import { PaymentInstructions as PaymentInstructionsModel } from '../Models/payment-instructions.model';
 import { PaymentVerificationService } from '../Services/payment-verification.service';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { formatCurrency } from '../../../Shared/utils/currency.util';
 
 @Component({
   selector: 'app-payment-instructions',
@@ -31,7 +32,7 @@ export class PaymentInstructions implements OnInit {
 
   readonly amountLabel = computed(() => {
     const data = this.instructions();
-    return data ? `${data.currency} ${data.amountDue}` : '';
+    return data ? formatCurrency(data.amountDue) : '';
   });
 
   ngOnInit(): void {

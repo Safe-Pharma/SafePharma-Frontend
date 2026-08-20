@@ -169,17 +169,16 @@
 
                 <div class="space-y-2">
                     <label class="text-sm font-medium leading-none">Country</label>
-                    <select formControlName="country" (change)="onCountryChange()"
-                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.country)"
-                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.country)"
-                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="" disabled selected>Select a country</option>
-                        @for (country of countries(); track country.id) {
-                        <option [value]="country.id">
-                            {{ country.name }}
-                        </option>
-                        }
-                    </select>
+                    <app-searchable-select
+                        [options]="countryOptions"
+                        [value]="form.controls.pharmacy.controls.country.value"
+                        placeholder="Select a country"
+                        searchPlaceholder="Search countries…"
+                        [loading]="isLoadingLocations()"
+                        [error]="locationError()"
+                        (valueChange)="onCountryChange($event)"
+                        (retry)="retryLocations()"
+                    />
                     @if (getErrorMessage(form.controls.pharmacy.controls.country); as error) {
                     <p class="text-xs text-destructive">{{ error }}</p>
                     }
@@ -187,15 +186,17 @@
 
                 <div class="space-y-2">
                     <label class="text-sm font-medium leading-none">City</label>
-                    <select formControlName="city"
-                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.city)"
-                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.city)"
-                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="" disabled selected>Select a city</option>
-                        @for (city of cities(); track city.id) {
-                        <option [value]="city.name">{{ city.name }}</option>
-                        }
-                    </select>
+                    <app-searchable-select
+                        [options]="cityOptions"
+                        [value]="form.controls.pharmacy.controls.city.value"
+                        placeholder="Select a city"
+                        searchPlaceholder="Search cities…"
+                        [disabled]="!form.controls.pharmacy.controls.country.value"
+                        [loading]="isLoadingLocations()"
+                        [error]="locationError()"
+                        (valueChange)="form.controls.pharmacy.controls.city.setValue($event)"
+                        (retry)="retryLocations()"
+                    />
                     @if (getErrorMessage(form.controls.pharmacy.controls.city); as error) {
                     <p class="text-xs text-destructive">{{ error }}</p>
                     }
@@ -236,21 +237,24 @@
 
                 <div class="space-y-2">
                     <label class="text-sm font-medium leading-none">Preferred language</label>
-                    <select formControlName="preferredLanguage"
-                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="English">English</option>
-                        <option value="Arabic">العربية</option>
-                    </select>
+                    <app-searchable-select
+                        [options]="languageOptions"
+                        [value]="form.controls.pharmacy.controls.preferredLanguage.value"
+                        placeholder="Select a language"
+                        searchPlaceholder="Search languages…"
+                        (valueChange)="form.controls.pharmacy.controls.preferredLanguage.setValue($event)"
+                    />
                 </div>
 
                 <div class="space-y-2">
                     <label class="text-sm font-medium leading-none">Time zone</label>
-                    <select formControlName="timeZone"
-                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="(GMT+4) Gulf Standard Time">(GMT+4) Gulf Standard Time</option>
-                        <option value="(GMT+3) Arabia Standard Time">(GMT+3) Arabia Standard Time</option>
-                        <option value="(GMT+2) Eastern European Time">(GMT+2) Eastern European Time</option>
-                    </select>
+                    <app-searchable-select
+                        [options]="timeZoneOptions"
+                        [value]="form.controls.pharmacy.controls.timeZone.value"
+                        placeholder="Select a time zone"
+                        searchPlaceholder="Search time zones…"
+                        (valueChange)="form.controls.pharmacy.controls.timeZone.setValue($event)"
+                    />
                 </div>
             </div>
         </section>
