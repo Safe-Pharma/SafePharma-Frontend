@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, finalize, of, tap } from 'rxjs';
+import { environment } from '../../../../../environments/environment.production';
 
 export interface PharmacySettingsData {
   name: string;
@@ -20,7 +21,7 @@ export interface PharmacySettingsData {
   providedIn: 'root',
 })
 export class PharmacySettings {
-  private apiUrl = 'https://localhost:7259/api/PharmacySettings';
+  private apiUrl = `${environment.apiUrl}/PharmacySettings`;
   readonly settings = signal<PharmacySettingsData | null>(null);
   readonly loading = signal(false);
   /** Undefined means there is no unsaved logo preview; null means the draft removed it. */

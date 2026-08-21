@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PagedResult, User } from '../models/user.model';
 import { UserQueryParams } from '../models/user-query-params.model';
+import { environment } from '../../../../environments/environment';
 
 export interface RoleDto {
   id: string;
@@ -10,7 +11,7 @@ export interface RoleDto {
   description: string | null;
 }
 
-const BASE_URL = 'https://localhost:7259/api';
+const BASE_URL = `${environment.apiUrl}`;
 
 @Injectable({ providedIn: 'root' })
 export class UsersApiService {
