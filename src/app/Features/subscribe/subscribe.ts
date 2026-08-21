@@ -87,7 +87,6 @@ form = this.fb.group({
     city: ['', [Validators.required, Validators.maxLength(100)]],
     phone: ['', [Validators.required, phoneValidator]],
     businessEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-    numberOfBranches: [1, [Validators.required, Validators.min(1), Validators.max(1000)]],
     preferredLanguage: ['English', Validators.required],
     timeZone: ['(GMT+4) Gulf Standard Time', Validators.required],
   }),
@@ -243,7 +242,14 @@ getErrorMessage(control: AbstractControl | null): string | null {
     this.isSubmitting.set(true);
     this.submitError.set(null);
 
-    const payload = this.form.getRawValue() as CreateSubscriptionRequest;
+    const formValue = this.form.getRawValue();
+    const payload = {
+      ...formValue,
+      pharmacy: {
+        ...formValue.pharmacy,
+        numberOfBranches: 1,
+      },
+    } as unknown as CreateSubscriptionRequest;
 
     this.subscriptionService.create(payload).subscribe({
       next: (result) => {
