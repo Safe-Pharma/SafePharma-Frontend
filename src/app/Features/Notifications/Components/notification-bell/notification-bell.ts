@@ -1,6 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
+import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../../Services/notification.service';
 import {
   Notification,
@@ -31,10 +39,23 @@ export class NotificationBell {
   readonly loading = this.notificationService.loading;
 
   readonly isOpen = signal(false);
-  private hasLoadedList = false;
+  private readonly refreshOnOpen$ = new Subject<void>();
 
   readonly NotificationType = NotificationType;
   readonly NotificationPriority = NotificationPriority;
+
+  constructor() {
+    this.refreshOnOpen$
+      .pipe(
+        // A quick close/reopen should only keep the latest refresh. This
+        // avoids an older response replacing newer notification data.
+        switchMap(() =>
+          this.notificationService.getAllNotifications().pipe(catchError(() => EMPTY)),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe();
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -44,18 +65,13 @@ export class NotificationBell {
   }
 
   toggle(): void {
-    this.isOpen.update(open => !open);
+    const shouldOpen = !this.isOpen();
+    this.isOpen.set(shouldOpen);
 
-    // Fetch the full list lazily, only the first time the panel opens —
-    // the unread count itself is already kept live by the background poll.
-    if (this.isOpen() && (!this.hasLoadedList || this.notifications().length === 0)) {
-      this.hasLoadedList = true;
-      this.notificationService.getAllNotifications().subscribe({
-        error: () => {
-          // Do not permanently cache a failed request; the next open retries.
-          this.hasLoadedList = false;
-        },
-      });
+    if (shouldOpen) {
+      // Always fetch on open so changes made on the backend are visible
+      // immediately, even when the panel was opened earlier.
+      this.refreshOnOpen$.next();
     }
   }
 

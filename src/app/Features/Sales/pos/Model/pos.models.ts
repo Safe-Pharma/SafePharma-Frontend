@@ -15,6 +15,7 @@ export interface MedicineSearchResult {
   tradeNameEn: string;
   scientificName: string;
   barcode: string | null;
+  purchasePrice?: number;
   sellingPrice: number;
   stockQuantity: number;
 }

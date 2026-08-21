@@ -68,7 +68,7 @@
   </div>
 
   <!-- Search + Customer + User strip -->
-  <div class="module-motion-toolbar shrink-0 bg-slate-50 px-3 sm:px-6 py-3 border-b border-slate-200">
+  <div class="module-motion-toolbar relative z-40 shrink-0 bg-slate-50 px-3 sm:px-6 py-3 border-b border-slate-200">
     <div class="flex flex-col lg:flex-row gap-3">
       <!-- ================= Product search ================= -->
       <div class="relative flex-1" (click)="stop($event)">
@@ -107,7 +107,7 @@
 
         @if (searchOpen() && query().trim().length >= 1) {
           <div
-            class="absolute z-10 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-lg max-h-80 overflow-y-auto"
+            class="absolute z-50 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-lg max-h-80 overflow-y-auto"
           >
             @if (searching()) {
               <div class="px-4 py-3 text-sm text-slate-400">{{ t('search.searching') }}</div>
@@ -277,7 +277,7 @@
   </div>
 
   <!-- Body: cart + summary + icon rail -->
-  <div class="flex-1 flex min-h-0 overflow-hidden">
+  <div class="relative z-0 flex-1 flex min-h-0 overflow-hidden">
     <div class="flex-1 flex gap-4 p-3 sm:p-6 min-h-0 overflow-y-auto">
       <!-- Cart -->
       <section class="module-motion-panel flex-1 min-w-0 bg-white border border-slate-200 rounded-xl flex flex-col">
