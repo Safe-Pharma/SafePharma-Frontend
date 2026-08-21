@@ -75,8 +75,8 @@
       >
         <option [ngValue]="null">{{ text('sales.allStatuses') }}</option>
         <option [ngValue]="0">{{ text('sales.open') }}</option>
-        <option [ngValue]="1">{{ text('sales.completed') }}</option>
-        <option [ngValue]="2">{{ text('sales.cancelled') }}</option>
+        <option [ngValue]="SaleStatus.Completed">{{ text('sales.completed') }}</option>
+        <option [ngValue]="SaleStatus.Cancelled">{{ text('sales.cancelled') }}</option>
       </select>
       @if (searchTerm() || statusFilter() !== null) {
         <button type="button" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100" (click)="clearFilters()">{{ text('sales.clear') }}</button>
@@ -85,7 +85,7 @@
   </div>
 
   <!-- Table -->
-  <div class="module-motion-panel relative rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div class="module-motion-panel app-page-section relative rounded-xl border border-gray-200 bg-white shadow-sm">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>

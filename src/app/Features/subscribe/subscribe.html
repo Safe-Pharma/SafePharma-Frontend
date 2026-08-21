@@ -223,17 +223,6 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="br">{{ i18n.text('subscribe.numberOfBranches') }}</label>
-                    <input type="number" formControlName="numberOfBranches" id="br" min="1"
-                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.numberOfBranches)"
-                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.numberOfBranches)"
-                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-                    @if (getErrorMessage(form.controls.pharmacy.controls.numberOfBranches); as error) {
-                    <p class="text-xs text-destructive">{{ error }}</p>
-                    }
-                </div>
-
-                <div class="space-y-2">
                     <label class="text-sm font-medium leading-none">{{ i18n.text('subscribe.preferredLanguage') }}</label>
                     <app-searchable-select
                         [options]="languageOptions"

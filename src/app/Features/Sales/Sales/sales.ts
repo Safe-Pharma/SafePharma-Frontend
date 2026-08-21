@@ -18,6 +18,8 @@ import { PageHeaderComponent } from '../../../Shared/Components/page-header/page
   styleUrl: './sales.css',
 })
 export class Sales implements OnInit {
+  readonly SaleStatus = SaleStatus;
+
   sales = signal<Sale[]>([]);
   stats = signal<SaleStats | null>(null);
   statsLoading = signal(true);
