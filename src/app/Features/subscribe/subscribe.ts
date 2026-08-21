@@ -48,7 +48,7 @@ export class Subscribe implements OnInit {
   plans = signal<SubscriptionPlanRead[]>([]);
 
   get countryOptions(): SearchableSelectOption[] {
-    return this.countries().map((country) => ({ value: country.id, label: country.name, secondary: country.code }));
+    return this.countries().map((country) => ({ value: country.name, label: country.name, secondary: country.code }));
   }
 
   get cityOptions(): SearchableSelectOption[] {
@@ -151,10 +151,13 @@ retryLocations(): void {
   });
 }
 
-onCountryChange(selectedCountryId = this.form.controls.pharmacy.controls.country.value): void {
-  this.form.controls.pharmacy.controls.country.setValue(selectedCountryId);
+onCountryChange(selectedCountryName = this.form.controls.pharmacy.controls.country.value): void {
+  const country = this.countries().find((item) =>
+    item.name === selectedCountryName || item.id === selectedCountryName,
+  );
+  const countryName = country?.name ?? selectedCountryName;
 
-  const country = this.countries().find(c => c.id === selectedCountryId);
+  this.form.controls.pharmacy.controls.country.setValue(countryName);
 
   this.cities.set(country?.cities ?? []);
 

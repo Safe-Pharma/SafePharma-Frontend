@@ -101,7 +101,7 @@
             <div class="grid gap-5 md:grid-cols-2">
                 <div class="space-y-2">
                     <label class="text-sm font-medium leading-none" for="pname">{{ i18n.text('subscribe.pharmacyName') }}</label>
-                    <input formControlName="name" id="pname" placeholder="MediRx Pharmacy"
+                    <input formControlName="name" id="pname" [placeholder]="i18n.text('subscribe.pharmacyNamePlaceholder')"
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.name)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.name)"
                         class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">

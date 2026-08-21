@@ -90,6 +90,24 @@
       </div>
 
       <div class="col-span-1">
+        <label class="mb-1 block text-sm font-medium text-gray-700">{{ text('settings.country') }}</label>
+        <app-searchable-select
+          [options]="countryOptions"
+          [value]="settings.country"
+          [placeholder]="text('settings.selectCountry')"
+          [searchPlaceholder]="text('settings.searchCountries')"
+          [disabled]="locationLoading"
+          [loading]="locationLoading"
+          [error]="locationError"
+          (valueChange)="onCountryChange($event)"
+          (retry)="retryLocations()"
+        />
+        @if (validationErrors['Country']) {
+          <p class="mt-1 text-xs text-red-500">{{ validationErrors['Country'] }}</p>
+        }
+      </div>
+
+      <div class="col-span-1">
         <label class="mb-1 block text-sm font-medium text-gray-700">{{ text('settings.city') }}</label>
         <app-searchable-select
           [options]="cityOptions"
@@ -104,24 +122,6 @@
         />
         @if (validationErrors['City']) {
           <p class="mt-1 text-xs text-red-500">{{ validationErrors['City'] }}</p>
-        }
-      </div>
-
-      <div class="col-span-1">
-        <label class="mb-1 block text-sm font-medium text-gray-700">{{ text('settings.governorate') }}</label>
-        <app-searchable-select
-          [options]="governorateOptions"
-          [value]="settings.country"
-          [placeholder]="text('settings.selectGovernorate')"
-          [searchPlaceholder]="text('settings.searchGovernorates')"
-          [disabled]="locationLoading"
-          [loading]="locationLoading"
-          [error]="locationError"
-          (valueChange)="onGovernorateChange($event)"
-          (retry)="retryLocations()"
-        />
-        @if (validationErrors['Governorate']) {
-          <p class="mt-1 text-xs text-red-500">{{ validationErrors['Governorate'] }}</p>
         }
       </div>
 

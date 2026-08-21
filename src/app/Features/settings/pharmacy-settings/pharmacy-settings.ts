@@ -92,7 +92,7 @@ export class PharmacySettings implements OnInit, OnDestroy {
     this.settingsService.clearLogoPreview();
   }
 
-  get governorateOptions(): SearchableSelectOption[] {
+  get countryOptions(): SearchableSelectOption[] {
     return this.countries.map((country) => ({
       value: country.name,
       label: country.name,
@@ -132,32 +132,38 @@ export class PharmacySettings implements OnInit, OnDestroy {
 
   private syncLocationSelection(): void {
     if (!this.countries.length || !this.settings.country) return;
-    const selected = this.findGovernorate(this.settings.country);
+    const selected = this.findCountry(this.settings.country);
     if (!selected) return;
 
     this.settings.country = selected.name;
     this.cities = selected.cities ?? [];
-    if (this.settings.city && !this.cities.some((city) => city.name === this.settings.city)) {
-      this.settings.city = '';
-    }
+    this.syncCitySelection();
   }
 
-  private findGovernorate(value: string): CountryWithCities | undefined {
+  private findCountry(value: string): CountryWithCities | undefined {
     const normalized = value.trim().toLowerCase();
     return this.countries.find((country) =>
       [country.id, country.name, country.code].some((candidate) => candidate?.toLowerCase() === normalized),
     );
   }
 
-  onGovernorateChange(value: string): void {
-    this.settings.country = value;
-    const selected = this.findGovernorate(value);
+  onCountryChange(value: string): void {
+    const selected = this.findCountry(value);
+    this.settings.country = selected?.name ?? value;
     this.cities = selected?.cities ?? [];
-    if (!this.cities.some((city) => city.name === this.settings.city)) {
-      this.settings.city = '';
-    }
-    delete this.validationErrors['Governorate'];
+    this.syncCitySelection();
+    delete this.validationErrors['Country'];
     delete this.validationErrors['City'];
+  }
+
+  private syncCitySelection(): void {
+    if (!this.settings.city) return;
+
+    const normalized = this.settings.city.trim().toLowerCase();
+    const selected = this.cities.find((city) =>
+      [city.id, city.name].some((candidate) => candidate.toLowerCase() === normalized),
+    );
+    this.settings.city = selected?.name ?? '';
   }
 
   onCityChange(value: string): void {
@@ -186,8 +192,8 @@ export class PharmacySettings implements OnInit, OnDestroy {
 
     formData.append('Name', this.settings.name);
     formData.append('Address', this.settings.address);
-    formData.append('City', this.settings.city);
     formData.append('Country', this.settings.country);
+    formData.append('City', this.settings.city);
     formData.append('Phone', this.settings.phone);
     formData.append('TaxRegistrationNumber', this.settings.taxRegistrationNumber);
     // Settings controls the tenant default; the Navbar controls the user override.
