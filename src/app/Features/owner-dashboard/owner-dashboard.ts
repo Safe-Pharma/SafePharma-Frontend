@@ -1,237 +1,119 @@
-import { Component, OnInit, signal, WritableSignal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { PharmacyService } from './Service/pharmacy_service';
-import { PharmacyReadDto } from './Models/pharmacy-read.dto';
-import { Router } from '@angular/router';
-import { AuthSessionService } from '../../Core/Services/auth-session.service';
+import { I18nService } from '../../Core/Services/i18n.service';
 import { Spinner } from '../../Shared/Components/spinner/spinner';
-import { formatCurrency } from '../../Shared/utils/currency.util';
+import { PageHeaderComponent } from '../../Shared/Components/page-header/page-header';
+import { PharmacyReadDto } from './Models/pharmacy-read.dto';
+import { PharmacyService } from './Service/pharmacy_service';
 
-interface Pharmacy {
-  id: string;
-  name: string;
-  nameAr: string;
-  initials: string;
-  avatarColor: string;
-  ownerName: string;
-  ownerEmail: string;
-  city: string;
-  plan: 'Starter' | 'Professional' | 'Enterprise';
-  users: number;
-  mrr: number;
-  renewsDate: string;
-  status: 'Active' | 'Inactive';
-  activated: boolean;
-  commercialRegistration: string | null;
-  address: string;
-  country: string;
-  phone: string;
-  businessEmail: string;
-  isActive: boolean;
+type PharmacyStatus = 'Active' | 'Inactive';
+
+interface PharmacyRow extends PharmacyReadDto {
+  readonly initials: string;
+  readonly avatarColor: string;
+  readonly status: PharmacyStatus;
 }
 
 interface StatCard {
-  label: string;
-  value: WritableSignal<string>;
-  change: string;
-  changeType: 'positive' | 'negative';
-  icon: string;
-  iconBg: string;
-  iconColor: string;
+  readonly label: string;
+  readonly value: string;
+  readonly icon: 'building' | 'active' | 'inactive';
 }
 
 @Component({
   selector: 'app-owner-dashboard',
-  imports: [CommonModule, FormsModule, Spinner],
+  standalone: true,
+  imports: [FormsModule, Spinner, PageHeaderComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './owner-dashboard.html',
   styleUrl: './owner-dashboard.css',
 })
-export class PharmaciesDashboardComponent implements OnInit {
-  constructor(
-    private pharmacyService: PharmacyService,
-    private authSession: AuthSessionService,
-    private router: Router,
-  ) {}
+export class OwnerDashboard implements OnInit {
+  protected readonly i18n = inject(I18nService);
 
-  // Top Stats
-  stats = signal<StatCard[]>([
-    {
-      label: 'Total Pharmacies',
-      value: signal('0'),
-      change: '',
-      changeType: 'positive',
-      icon: 'building',
-      iconBg: 'var(--primary-soft)',
-      iconColor: 'var(--primary)',
-    },
-    {
-      label: 'Active Pharmacies',
-      value: signal('0'),
-      change: '',
-      changeType: 'positive',
-      icon: 'check-circle',
-      iconBg: 'var(--success-soft)',
-      iconColor: 'var(--success)',
-    },
-    {
-      label: 'Inactive',
-      value: signal('0'),
-      change: '',
-      changeType: 'positive',
-      icon: 'pause-circle',
-      iconBg: 'var(--warning-soft)',
-      iconColor: 'var(--warning)',
-    },
-  ]);
+  private readonly pharmacyService = inject(PharmacyService);
+  private requestInFlight = false;
 
-  // Plan distribution
-  planDistribution = signal([
-    { name: 'Starter', count: 4, percentage: 33 },
-    { name: 'Professional', count: 4, percentage: 33 },
-    { name: 'Enterprise', count: 4, percentage: 33 },
-  ]);
+  readonly pharmacies = signal<PharmacyRow[]>([]);
+  readonly loading = signal(true);
+  readonly loadError = signal(false);
+  readonly updatingPharmacyId = signal<string | null>(null);
+  readonly searchQuery = signal('');
+  readonly selectedStatus = signal<'' | PharmacyStatus>('');
 
-  activeUsers = signal(136);
+  readonly filteredPharmacies = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const status = this.selectedStatus();
 
-  // Filters
-  searchQuery = signal('');
-  selectedPlan = signal('');
-  selectedStatus = signal('');
+    return this.pharmacies().filter((pharmacy) => {
+      const matchesQuery = !query || [pharmacy.name, pharmacy.businessEmail, pharmacy.city]
+        .some((value) => value.toLowerCase().includes(query));
+      return matchesQuery && (!status || pharmacy.status === status);
+    });
+  });
 
-  // Pharmacies data
-  pharmacies = signal<Pharmacy[]>([]);
-  filteredPharmacies = signal<Pharmacy[]>([]);
-  loading = signal(true);
-  updatingPharmacyId = signal<string | null>(null);
+  readonly stats = computed<StatCard[]>(() => {
+    const rows = this.pharmacies();
+    const active = rows.filter((pharmacy) => pharmacy.isActive).length;
 
-  ngOnInit() {
+    return [
+      { label: 'ownerDashboard.totalPharmacies', value: String(rows.length), icon: 'building' },
+      { label: 'ownerDashboard.activePharmacies', value: String(active), icon: 'active' },
+      { label: 'ownerDashboard.inactive', value: String(rows.length - active), icon: 'inactive' },
+    ];
+  });
+
+  ngOnInit(): void {
     this.loadPharmacies();
   }
 
-  loadPharmacies() {
+  loadPharmacies(): void {
+    if (this.requestInFlight) return;
+
+    this.requestInFlight = true;
     this.loading.set(true);
-    this.pharmacyService
-      .getAllPharmacies()
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (data) => {
-          const pharmacies = data.map(
-            (pharmacy: PharmacyReadDto, index): Pharmacy => ({
-              ...pharmacy,
-              nameAr: '',
-              initials: pharmacy.name.slice(0, 2).toUpperCase(),
-              avatarColor: index % 2 === 0 ? 'var(--primary)' : 'var(--success)',
-              ownerName: pharmacy.businessEmail,
-              ownerEmail: pharmacy.businessEmail,
-              plan: 'Starter',
-              users: 0,
-              mrr: 0,
-              renewsDate: '-',
-              status: pharmacy.isActive ? 'Active' : 'Inactive',
-              activated: pharmacy.isActive,
-            }),
-          );
+    this.loadError.set(false);
 
-          this.pharmacies.set(pharmacies);
-          this.filteredPharmacies.set(pharmacies);
-          this.updateStats(data);
-        },
-        error: (error) => console.error('Failed to load pharmacies:', error),
-      });
-  }
-
-  private updateStats(data: PharmacyReadDto[]): void {
-    const activeCount = data.filter((pharmacy) => pharmacy.isActive).length;
-    this.stats()
-      .find((card) => card.label === 'Total Pharmacies')
-      ?.value.set(String(data.length));
-    this.stats()
-      .find((card) => card.label === 'Active Pharmacies')
-      ?.value.set(String(activeCount));
-    this.stats()
-      .find((card) => card.label === 'Inactive')
-      ?.value.set(String(data.length - activeCount));
-  }
-
-  onFilterChange() {
-    const query = this.searchQuery().toLowerCase();
-    const plan = this.selectedPlan();
-    const status = this.selectedStatus();
-
-    const filtered = this.pharmacies().filter((p) => {
-      const matchSearch =
-        !query ||
-        p.name.toLowerCase().includes(query) ||
-        p.ownerName.toLowerCase().includes(query) ||
-        p.city.toLowerCase().includes(query);
-
-      const matchPlan = !plan || p.plan === plan;
-      const matchStatus = !status || p.status === status;
-
-      return matchSearch && matchPlan && matchStatus;
+    this.pharmacyService.getAllPharmacies().pipe(
+      finalize(() => {
+        this.requestInFlight = false;
+        this.loading.set(false);
+      }),
+    ).subscribe({
+      next: (pharmacies) => this.pharmacies.set(pharmacies.map((pharmacy, index) => this.toRow(pharmacy, index))),
+      error: () => this.loadError.set(true),
     });
-
-    this.filteredPharmacies.set(filtered);
   }
 
-  toggleActivation(pharmacy: Pharmacy) {
-    if (this.updatingPharmacyId()) {
-      return;
-    }
+  toggleActivation(pharmacy: PharmacyRow): void {
+    if (this.updatingPharmacyId()) return;
 
-    const nextActiveState = !pharmacy.activated;
+    const nextIsActive = !pharmacy.isActive;
     this.updatingPharmacyId.set(pharmacy.id);
-
-    this.pharmacyService.updateActiveState(pharmacy.id, nextActiveState).subscribe({
-      next: (isActive) => {
-        const updateRow = (row: Pharmacy): Pharmacy =>
-          row.id === pharmacy.id
-            ? {
-                ...row,
-                status: isActive ? 'Active' : 'Inactive',
-                activated: isActive,
-                isActive,
-              }
-            : row;
-
-        const updatedPharmacies = this.pharmacies().map(updateRow);
-        this.pharmacies.set(updatedPharmacies);
-        this.filteredPharmacies.update((rows) => rows.map(updateRow));
-        this.updateStats(updatedPharmacies);
-        this.updatingPharmacyId.set(null);
-      },
-      error: (error) => {
-        console.error('Failed to update pharmacy status:', error);
-        this.updatingPharmacyId.set(null);
-      },
+    this.pharmacyService.updateActiveState(pharmacy.id, nextIsActive).pipe(
+      finalize(() => this.updatingPharmacyId.set(null)),
+    ).subscribe({
+      next: (isActive) => this.pharmacies.update((rows) => rows.map((row) => row.id === pharmacy.id
+        ? { ...row, isActive, status: isActive ? 'Active' : 'Inactive' }
+        : row)),
     });
   }
 
-  logout(): void {
-    this.authSession.clearToken();
-    this.router.navigateByUrl('/owner-login');
+  statusLabel(status: PharmacyStatus): string {
+    return this.i18n.text(status === 'Active' ? 'ownerDashboard.active' : 'ownerDashboard.inactiveStatus');
   }
 
-  getPlanBadgeStyle(plan: string): { bg: string; color: string; dot: string } {
-    const styles: { [key: string]: { bg: string; color: string; dot: string } } = {
-      Starter: {
-        bg: 'var(--muted)',
-        color: 'var(--muted-foreground)',
-        dot: 'var(--muted-foreground)',
-      },
-      Professional: { bg: 'var(--success-soft)', color: 'var(--success)', dot: 'var(--success)' },
-      Enterprise: { bg: 'var(--primary-soft)', color: 'var(--primary)', dot: 'var(--primary)' },
+  private toRow(pharmacy: PharmacyReadDto, index: number): PharmacyRow {
+    const name = String(pharmacy.name ?? '');
+    const isActive = Boolean(pharmacy.isActive);
+
+    return {
+      ...pharmacy,
+      name,
+      initials: name.slice(0, 2).toUpperCase() || '—',
+      avatarColor: index % 2 === 0 ? 'var(--primary)' : 'var(--success)',
+      status: isActive ? 'Active' : 'Inactive',
     };
-    return styles[plan] || styles['Starter'];
-  }
-
-  formatMRR(value: number): string {
-    return formatCurrency(value);
-  }
-
-  formatDate(dateString: string): string {
-    return dateString;
   }
 }

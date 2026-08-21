@@ -9,6 +9,7 @@ import {
 } from '../../Models/notification.model';
 import { TimeAgoPipe } from '../../../../Shared/Pipes/Date/time-ago-pipe';
 import { NOTIFICATION_ROUTE_MAP } from '../../Services/notification-route-map';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-notification-bell',
@@ -20,6 +21,7 @@ export class NotificationBell {
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  protected readonly i18n = inject(I18nService);
 
   // Reads straight from the shared service signals — the count here is
   // the same instance driving the poll, so no separate subscription is
@@ -46,9 +48,14 @@ export class NotificationBell {
 
     // Fetch the full list lazily, only the first time the panel opens —
     // the unread count itself is already kept live by the background poll.
-    if (this.isOpen() && !this.hasLoadedList) {
+    if (this.isOpen() && (!this.hasLoadedList || this.notifications().length === 0)) {
       this.hasLoadedList = true;
-      this.notificationService.getAllNotifications().subscribe();
+      this.notificationService.getAllNotifications().subscribe({
+        error: () => {
+          // Do not permanently cache a failed request; the next open retries.
+          this.hasLoadedList = false;
+        },
+      });
     }
   }
 
@@ -85,17 +92,25 @@ export class NotificationBell {
   typeLabel(type: NotificationType): string {
     switch (type) {
       case NotificationType.LowStock:
-        return 'Low Stock';
+        return this.i18n.text('notification.lowStock');
       case NotificationType.BatchExpiry90:
-        return 'Expiring in 90 days';
+        return this.i18n.text('notification.expiry90');
       case NotificationType.BatchExpiry60:
-        return 'Expiring in 60 days';
+        return this.i18n.text('notification.expiry60');
       case NotificationType.BatchExpiry30:
-        return 'Expiring in 30 days';
+        return this.i18n.text('notification.expiry30');
       case NotificationType.BatchExpired:
-        return 'Batch Expired';
+        return this.i18n.text('notification.expired');
       default:
-        return 'Notification';
+        return this.i18n.text('notification.generic');
     }
+  }
+
+  localizedTitle(notification: Notification): string {
+    return this.i18n.lang() === 'ar' ? notification.titleAr || notification.titleEn : notification.titleEn;
+  }
+
+  localizedMessage(notification: Notification): string {
+    return this.i18n.lang() === 'ar' ? notification.messageAr || notification.messageEn : notification.messageEn;
   }
 }

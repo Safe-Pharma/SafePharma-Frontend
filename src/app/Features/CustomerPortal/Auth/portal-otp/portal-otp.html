@@ -1,15 +1,15 @@
 <div class="flex min-h-screen items-center justify-center bg-background px-4">
   <div class="w-full max-w-sm">
     <div class="mb-8 text-center">
-      <h1 class="text-lg font-semibold text-foreground">Enter verification code</h1>
+      <h1 class="text-lg font-semibold text-foreground">{{ i18n.t('common.enterCode') }}</h1>
       <p class="mt-1 text-sm text-muted-foreground">
-        We sent a 6-digit code via WhatsApp to <span class="font-medium text-foreground">{{ phone() }}</span>
+        {{ i18n.t('common.codeHint', { phone: phone() }) }}
       </p>
     </div>
 
     <div class="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <form (ngSubmit)="verify()">
-        <label for="otp" class="mb-1.5 block text-sm font-medium text-foreground">6-digit code</label>
+        <label for="otp" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('common.codeLabel') }}</label>
         <input
           id="otp"
           type="text"
@@ -24,7 +24,7 @@
           name="otp"
         />
         @if (touched() && !otpValid()) {
-          <p class="mt-1.5 text-xs text-destructive">Enter the 6-digit code.</p>
+          <p class="mt-1.5 text-xs text-destructive">{{ i18n.t('common.invalidCode') }}</p>
         }
 
         <button
@@ -35,7 +35,7 @@
           @if (loading()) {
             <span class="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"></span>
           }
-          Verify
+          {{ i18n.t('common.verify') }}
         </button>
 
         <button
@@ -44,7 +44,7 @@
           [disabled]="resending()"
           (click)="resend()"
         >
-          {{ resending() ? 'Sending…' : "Didn't get a code? Resend" }}
+          {{ resending() ? i18n.t('common.sending') : i18n.t('common.resendCode') }}
         </button>
       </form>
     </div>

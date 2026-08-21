@@ -73,7 +73,7 @@ export class PersonalInfoSection implements OnChanges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load your profile.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadProfileError')), 'error');
       },
     });
   }
@@ -106,11 +106,11 @@ export class PersonalInfoSection implements OnChanges {
 
           this.saving.set(false);
           this.dirty.set(false);
-          this.toast.show('Profile updated.', 'success');
+          this.toast.show(this.i18n.t('toast.profileUpdated'), 'success');
         },
         error: (err) => {
           this.saving.set(false);
-          this.toast.show(getErrorMessage(err, 'Could not save your changes.'), 'error');
+          this.toast.show(getErrorMessage(err, this.i18n.t('toast.saveProfileError')), 'error');
         },
       });
   }

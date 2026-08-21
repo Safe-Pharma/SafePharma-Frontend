@@ -1,0 +1,101 @@
+<header class="app-page-header">
+  <div class="app-page-header-main">
+    <div class="app-page-header-icon" aria-hidden="true">
+      @switch (icon()) {
+        @case ('dashboard') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+        }
+        @case ('medicine') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.5 3.5h3a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3h-3a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3Z"></path>
+            <path d="M7.5 9.5h9"></path>
+            <path d="M12 7v5"></path>
+          </svg>
+        }
+        @case ('inventory') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 7 9-4 9 4-9 4-9-4Z"></path>
+            <path d="m3 12 9 4 9-4"></path>
+            <path d="m3 17 9 4 9-4"></path>
+          </svg>
+        }
+        @case ('suppliers') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"></path>
+            <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+            <path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"></path>
+          </svg>
+        }
+        @case ('sales') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle>
+            <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"></path>
+          </svg>
+        }
+        @case ('purchases') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"></path>
+            <circle cx="7" cy="19" r="1.5"></circle><circle cx="18" cy="19" r="1.5"></circle>
+          </svg>
+        }
+        @case ('taxes') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle><path d="M8 16 16 8"></path><path d="M8.5 8.5h.01M15.5 15.5h.01"></path>
+          </svg>
+        }
+        @case ('customers') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        }
+        @case ('reports') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19V5M4 19h16"></path><path d="m7 15 3-4 3 2 5-6"></path>
+          </svg>
+        }
+        @case ('users') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="7" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path>
+            <path d="M17 4.5v5M14.5 7h5"></path>
+          </svg>
+        }
+        @case ('settings') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
+            <path d="m19.4 15 .1.1a2 2 0 1 1-2.8 2.8l-.1-.1a2 2 0 0 0-3.4 1.4v.3a2 2 0 1 1-4 0v-.3a2 2 0 0 0-3.4-1.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A2 2 0 0 0 1.7 11H1.5a2 2 0 1 1 0-4h.3a2 2 0 0 0 1.4-3.4l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A2 2 0 0 0 9.4 2V1.7a2 2 0 1 1 4 0V2a2 2 0 0 0 3.4 1.4l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A2 2 0 0 0 21 7h.3a2 2 0 1 1 0 4H21a2 2 0 0 0-1.6 4Z"></path>
+          </svg>
+        }
+        @case ('history') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 7v5l3 2"></path>
+          </svg>
+        }
+        @case ('payment') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20M6 15h4"></path>
+          </svg>
+        }
+      }
+    </div>
+
+    <div class="app-page-header-copy">
+      <div class="app-page-header-title-row">
+        <h1 class="app-page-title">{{ title() }}</h1>
+        <ng-content select="[pageHeaderTitleSuffix]"></ng-content>
+      </div>
+      @if (description()) {
+        <p class="app-page-description">{{ description() }}</p>
+      }
+    </div>
+  </div>
+
+  <div class="app-page-header-actions">
+    <ng-content select="[pageHeaderActions]"></ng-content>
+  </div>
+</header>

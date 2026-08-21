@@ -5,6 +5,7 @@ import { MedicinesApiService } from '../../Services/medicines-api.service';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 type BarcodeType = 'pharmacy' | 'manufacturer';
 
@@ -19,6 +20,7 @@ export class AddBarcodeDialogComponent implements OnInit {
   private readonly api = inject(MedicinesApiService);
   private readonly auth = inject(AuthSessionService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly i18n = inject(I18nService);
 
   medicineId = input.required<string>();
   pharmacyMedicineId = input.required<string>();
@@ -83,9 +85,13 @@ export class AddBarcodeDialogComponent implements OnInit {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.errorMsg.set(getErrorMessage(err, 'Could not add this barcode.'));
+        this.errorMsg.set(getErrorMessage(err, this.text('medicine.errorBarcode')));
       },
     });
+  }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
   }
 }
 

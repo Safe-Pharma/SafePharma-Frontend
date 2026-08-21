@@ -1,5 +1,5 @@
 
-<div class="mx-auto max-w-6xl space-y-6" @fadeSlideIn>
+<div class="portal-motion-page mx-auto max-w-6xl space-y-6" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">
       {{ i18n.t('dashboard.title') }}, {{ profile()?.name || '…' }}
@@ -36,7 +36,7 @@
     </div>
   } @else {
     <!-- Stat cards -->
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4" [@staggerList]="4">
+    <div class="portal-motion-stats grid grid-cols-2 gap-4 lg:grid-cols-4" [@staggerList]="4">
       <portal-stat-card
         [label]="i18n.t('dashboard.totalPurchases')"
         [value]="totalReceiptsValue() | egpCurrency"
@@ -69,7 +69,7 @@
 
     <div class="grid gap-6 lg:grid-cols-3">
       <!-- Recent purchases -->
-      <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2" @fadeSlideIn>
+      <div class="portal-motion-panel rounded-xl border border-border bg-card p-5 lg:col-span-2" @fadeSlideIn>
         <div class="mb-3 flex items-center justify-between">
           <h3 class="text-sm font-semibold text-foreground">{{ i18n.t('dashboard.recentPurchases') }}</h3>
           <a
@@ -115,7 +115,7 @@
                     <td class="py-2.5 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
                     <td class="py-2.5 text-end font-medium text-foreground">{{ r.grandTotal | egpCurrency }}</td>
                     <td class="py-2.5 text-end">
-                      <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
+                      <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="i18n.statusLabel(r.status)" />
                     </td>
                   </tr>
                 }
@@ -126,7 +126,7 @@
       </div>
 
       <!-- Quick actions -->
-      <div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+      <div class="portal-motion-panel rounded-xl border border-border bg-card p-5" @fadeSlideIn>
         <h3 class="mb-3 text-sm font-semibold text-foreground">{{ i18n.t('dashboard.quickActions') }}</h3>
         <div class="space-y-2">
           <a
@@ -156,7 +156,7 @@
     </div>
 
     <!-- Recent medicines -->
-    <div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+    <div class="portal-motion-panel rounded-xl border border-border bg-card p-5" @fadeSlideIn>
       <h3 class="mb-3 text-sm font-semibold text-foreground">{{ i18n.t('dashboard.recentMedicines') }}</h3>
       @if (recentMedicines().length === 0) {
         <portal-empty-state [title]="i18n.t('dashboard.noRecentMedicines')">

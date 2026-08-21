@@ -5,9 +5,9 @@
   >
     <button
       type="button"
-      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      class="absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
       (click)="onClose()"
-      aria-label="Close"
+      [attr.aria-label]="i18n.text('common.actions.close')"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -24,12 +24,12 @@
       </svg>
     </button>
 
-    <div class="shrink-0 border-b border-border px-6 py-5 pr-14 text-center sm:text-left">
+    <div class="shrink-0 border-b border-border px-6 py-5 pe-14 text-center sm:text-start">
       <h2 class="text-lg font-semibold leading-none tracking-tight">
-        {{ isEdit() ? 'Edit customer' : 'New customer' }}
+        {{ isEdit() ? i18n.text('customer.editTitle') : i18n.text('customer.newTitle') }}
       </h2>
       <p class="mt-1.5 text-sm text-muted-foreground">
-        Customers are shared across every pharmacy on the platform.
+        {{ i18n.text('customer.sharedDescription') }}
       </p>
     </div>
 
@@ -37,7 +37,7 @@
       <div class="dialog-form-body grid min-h-0 flex-1 gap-4 overflow-y-auto px-6 py-5">
       <div class="grid gap-4 md:grid-cols-2">
       <div class="grid gap-2">
-        <label class="text-sm font-medium" for="c-name">Name</label>
+        <label class="text-sm font-medium" for="c-name">{{ i18n.text('customer.name') }}</label>
         <input
           id="c-name"
           formControlName="name"
@@ -46,17 +46,17 @@
         @if (form.get('name')?.invalid && form.get('name')?.touched) {
           <p class="text-xs text-destructive">
             @if (form.get('name')?.hasError('required')) {
-              Name is required.
+              {{ i18n.text('customer.nameRequired') }}
             } @else if (form.get('name')?.hasError('maxlength')) {
-              Name is too long.
+              {{ i18n.text('customer.nameTooLong') }}
             } @else if (form.get('name')?.hasError('invalidName')) {
-              Enter a valid name (letters only).
+              {{ i18n.text('customer.invalidName') }}
             }
           </p>
         }
       </div>
       <div class="grid gap-2">
-        <label class="text-sm font-medium" for="c-email">Email</label>
+        <label class="text-sm font-medium" for="c-email">{{ i18n.text('customer.email') }}</label>
         <input
           id="c-email"
           type="email"
@@ -64,39 +64,38 @@
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         @if (form.get('email')?.invalid && form.get('email')?.touched) {
-          <p class="text-xs text-destructive">Enter a valid email address.</p>
+          <p class="text-xs text-destructive">{{ i18n.text('customer.enterValidEmail') }}</p>
         }
       </div>
       </div>
       <div class="grid gap-2">
-        <label class="text-sm font-medium" for="c-phone">Phone</label>
+        <label class="text-sm font-medium" for="c-phone">{{ i18n.text('customer.phone') }}</label>
         <input
           id="c-phone"
           formControlName="phone"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <p class="text-xs text-muted-foreground">
-          Required when doesn't choose Parent customer.
+          {{ i18n.text('customer.requiredWithoutParent') }}
         </p>
         @if (form.get('phone')?.invalid && form.get('phone')?.touched) {
           <p class="text-xs text-destructive">
             @if (form.get('phone')?.hasError('invalidPhone')) {
-              Use international format, e.g. +201001234567.
+              {{ i18n.text('customer.invalidPhone') }}
             }
           </p>
         }
       </div>
      
       <div class="grid gap-2">
-        <label class="text-sm font-medium">Parent customer</label>
+        <label class="text-sm font-medium">{{ i18n.text('customer.parent') }}</label>
         <p class="text-xs text-muted-foreground">
-          Choose an existing customer to link as this customer's parent. Access to the parent will
-          be enabled automatically.
+          {{ i18n.text('customer.parentDescription') }}
         </p>
         <app-customer-picker (selectionChange)="onParentSelectionChange($event)" />
       </div>
       <div class="grid gap-2">
-        <label class="text-sm font-medium" for="c-address">Address</label>
+        <label class="text-sm font-medium" for="c-address">{{ i18n.text('supplier.address') }}</label>
         <input
           id="c-address"
           formControlName="address"
@@ -106,7 +105,7 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div class="grid gap-2">
-          <label class="text-sm font-medium" for="c-dob">Date of birth</label>
+          <label class="text-sm font-medium" for="c-dob">{{ i18n.text('customer.dateOfBirth') }}</label>
           <input
             id="c-dob"
             type="date"
@@ -115,20 +114,20 @@
           />
         </div>
         <div class="grid gap-2">
-          <label class="text-sm font-medium" for="c-status">Status</label>
+          <label class="text-sm font-medium" for="c-status">{{ i18n.text('customer.status') }}</label>
           <select
             id="c-status"
             formControlName="status"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="Active">{{ i18n.text('customer.active') }}</option>
+            <option value="Inactive">{{ i18n.text('customer.inactive') }}</option>
           </select>
         </div>
       </div>
 
       <div class="grid gap-2">
-        <label class="text-sm font-medium" for="c-notes">Notes</label>
+        <label class="text-sm font-medium" for="c-notes">{{ i18n.text('customer.notes') }}</label>
         <textarea
           id="c-notes"
           formControlName="notes"
@@ -144,15 +143,15 @@
       @if (!isEdit()) {
         <div class="grid gap-4 border-t border-border pt-4">
           <p class="text-xs text-muted-foreground">
-            Optional — added right after the customer is created (separate requests).
+            {{ i18n.text('customer.optionalExtras') }}
           </p>
 
           <!-- Medicine (search global catalog, or add manually) -->
           <div [formGroup]="medicineForm" class="grid gap-2">
-            <label class="text-sm font-medium">Medicine</label>
+            <label class="text-sm font-medium">{{ i18n.text('customer.medicine') }}</label>
             <app-medicine-picker (selectionChange)="onMedicineSelectionChange($event)" />
             <div class="flex items-center gap-3">
-              <label class="text-xs font-medium" for="c-medicine-qty">Qty</label>
+              <label class="text-xs font-medium" for="c-medicine-qty">{{ i18n.text('customer.quantity') }}</label>
               <input
                 id="c-medicine-qty"
                 type="number"
@@ -167,19 +166,19 @@
                 formControlName="isActive"
                 class="h-4 w-4 rounded-sm border border-primary"
               />
-              Currently taking this
+              {{ i18n.text('customer.currentlyTakingThis') }}
             </label>
           </div>
 
           <!-- Allergies -->
           @if (allergyCatalog().length > 0) {
             <div class="grid gap-2">
-              <label class="text-sm font-medium">Allergies</label>
+              <label class="text-sm font-medium">{{ i18n.text('customer.allergies') }}</label>
               <app-tag-picker
                 [items]="allergyItems()"
                 [selectedIds]="selectedAllergyIds()"
-                placeholder="Search allergies…"
-                emptyLabel="No matching allergies."
+                [placeholder]="i18n.text('shared.searchOptions')"
+                [emptyLabel]="i18n.text('customer.noAllergies')"
                 (selectionChange)="onAllergySelectionChange($event)"
               />
             </div>
@@ -188,12 +187,12 @@
           <!-- Chronic conditions -->
           @if (chronicConditionCatalog().length > 0) {
             <div class="grid gap-2">
-              <label class="text-sm font-medium">Chronic conditions</label>
+              <label class="text-sm font-medium">{{ i18n.text('customer.conditions') }}</label>
               <app-tag-picker
                 [items]="chronicConditionItems()"
                 [selectedIds]="selectedChronicConditionIds()"
-                placeholder="Search conditions…"
-                emptyLabel="No matching conditions."
+                [placeholder]="i18n.text('shared.searchOptions')"
+                [emptyLabel]="i18n.text('customer.noConditions')"
                 (selectionChange)="onChronicConditionSelectionChange($event)"
               />
             </div>
@@ -202,13 +201,13 @@
           <!-- Organ function -->
           @if (organCatalog().length > 0) {
             <div class="grid gap-2">
-              <label class="text-sm font-medium">Organ function</label>
+              <label class="text-sm font-medium">{{ i18n.text('customer.organFunction') }}</label>
               <div [formGroup]="organFunctionForm" class="flex flex-wrap items-end gap-2">
                 <select
                   formControlName="organId"
                   class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <option value="" disabled>Organ…</option>
+                  <option value="" disabled>{{ i18n.text('customer.selectOrgan') }}</option>
                   @for (item of organCatalog(); track item.id) {
                     <option [value]="item.id">{{ item.nameEn }}</option>
                   }
@@ -217,7 +216,7 @@
                   formControlName="organImpairmentLevelId"
                   class="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <option value="" disabled>Level…</option>
+                  <option value="" disabled>{{ i18n.text('customer.selectLevel') }}</option>
                   @for (item of organImpairmentLevelCatalog(); track item.id) {
                     <option [value]="item.id">{{ item.nameEn }}</option>
                   }
@@ -227,7 +226,7 @@
                   (click)="onAddOrganFunctionEntry()"
                   class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3 text-xs"
                 >
-                  Add
+                  {{ i18n.text('customer.add') }}
                 </button>
               </div>
               @if (organFunctionEntries().length > 0) {
@@ -261,14 +260,14 @@
           (click)="onClose()"
           class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-4 text-sm"
         >
-          Cancel
+          {{ i18n.text('customer.cancel') }}
         </button>
         <button
           type="submit"
           [disabled]="submitting()"
           class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm"
         >
-          {{ submitting() ? 'Saving…' : isEdit() ? 'Save changes' : 'Create customer' }}
+          {{ submitting() ? i18n.text('customer.saving') : isEdit() ? i18n.text('customer.save') : i18n.text('customer.create') }}
         </button>
       </div>
     </form>

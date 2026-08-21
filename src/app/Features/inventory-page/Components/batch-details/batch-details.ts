@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { InventoryService } from '../../Service/inventory_service';
 import { Spinner } from '../../../../Shared/Components/spinner/spinner';
 import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -28,7 +29,11 @@ export class BatchDetailsComponent {
   selectedBatch: any = null;
   newQuantity = 0;
 
-  constructor(private inventoryService: InventoryService) {}
+  constructor(private inventoryService: InventoryService, private i18n: I18nService) {}
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
+  }
 
   openEditQuantityDialog(batch: any) {
     this.selectedBatch = batch;
@@ -64,7 +69,7 @@ export class BatchDetailsComponent {
         },
         error: (err) => {
           console.error('Failed to update batch stock', err);
-          alert('Failed to update stock.');
+          alert(this.text('inventory.updateError'));
         },
       });
   }
@@ -93,11 +98,11 @@ export class BatchDetailsComponent {
           this.batches = this.batches.filter((batch) => batch !== this.selectedBatch);
           this.isDeleting = false;
           this.closeDeleteModal();
-          alert('Batch deleted successfully.');
+          alert(this.text('inventory.deleted'));
         },
         error: (err) => {
           console.error('Failed to delete batch', err);
-          alert('Failed to delete batch.');
+          alert(this.text('inventory.deleteError'));
         },
       });
   }

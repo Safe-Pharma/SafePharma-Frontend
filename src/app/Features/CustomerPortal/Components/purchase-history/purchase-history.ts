@@ -15,7 +15,7 @@ import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, success
 import {PortalSectionHeaderComponent  } from '../../Shared/portal-section-header.component';
 
 import { PortalStatusBadge } from '../../Shared/status-badge';
-import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
+import { receiptStatusTone } from '../../Shared/receipt-status';
 
 const PAGE_SIZE = 10;
 
@@ -44,7 +44,6 @@ export class PurchaseHistoryPage implements OnInit {
   readonly dateTo = signal('');
   readonly page = signal(1);
 
-  receiptStatusLabel = receiptStatusLabel;
   receiptStatusTone = receiptStatusTone;
 
   private searchDebounce: ReturnType<typeof setTimeout> | undefined;
@@ -64,7 +63,7 @@ export class PurchaseHistoryPage implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load your purchase history.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadPurchasesError')), 'error');
       },
     });
   }

@@ -8,6 +8,8 @@ import { ActivityFeedComponent } from '../../components/activity-feed/activity-f
 import { DetailCardComponent } from '../../components/detail-card/detail-card';
 import { DetailFieldComponent } from '../../components/detail-field/detail-field';
 import { EditUserDialogComponent } from '../../components/edit-user-dialog/edit-user-dialog';
+import { I18nService } from '../../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../../Shared/Components/page-header/page-header';
  
 @Component({
   selector: 'app-user-detail',
@@ -19,6 +21,7 @@ import { EditUserDialogComponent } from '../../components/edit-user-dialog/edit-
     DetailCardComponent,
     DetailFieldComponent,
     EditUserDialogComponent,
+    PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-details.html',
@@ -27,6 +30,7 @@ import { EditUserDialogComponent } from '../../components/edit-user-dialog/edit-
 export class UserDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
   protected readonly usersService = inject(UsersService);
  
   private readonly paramMap = toSignal(this.route.paramMap);

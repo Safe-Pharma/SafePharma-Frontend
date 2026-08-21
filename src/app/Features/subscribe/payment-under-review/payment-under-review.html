@@ -1,6 +1,6 @@
 <div class="grid min-h-screen place-items-center bg-background p-6">
   @if (isLoading()) {
-    <p class="text-sm text-muted-foreground">Loading…</p>
+    <p class="text-sm text-muted-foreground">{{ i18n.text('subscription.loading') }}</p>
   } @else if (verification(); as data) {
     <div class="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-elevated">
       <div class="grid size-12 place-items-center rounded-xl bg-success-soft text-success">
@@ -10,19 +10,16 @@
         </svg>
       </div>
 
-      <h1 class="mt-5 text-xl font-semibold tracking-tight">Your payment is under review</h1>
-      <p class="mt-2 text-sm text-muted-foreground">
-        Thanks — our team will verify your transfer and notify you once it's approved. This usually takes less than
-        one business day.
-      </p>
+      <h1 class="mt-5 text-xl font-semibold tracking-tight">{{ i18n.text('subscription.paymentUnderReview') }}</h1>
+      <p class="mt-2 text-sm text-muted-foreground">{{ i18n.text('subscription.reviewDescription') }}</p>
 
       <div class="mt-5 rounded-lg border border-dashed border-border-strong bg-muted/30 p-4 text-xs">
         <div class="flex items-center justify-between">
-          <span class="text-muted-foreground">Reference</span>
+          <span class="text-muted-foreground">{{ i18n.text('subscription.referenceShort') }}</span>
           <span class="font-mono font-semibold">{{ data.transactionReference }}</span>
         </div>
         <div class="mt-2 flex items-center justify-between">
-          <span class="text-muted-foreground">Status</span>
+          <span class="text-muted-foreground">{{ i18n.text('subscription.status') }}</span>
           <span
             class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
             [class]="statusClasses()"
@@ -38,13 +35,13 @@
         <a  [routerLink]="['/subscribe', subscriptionId, 'status']"
           class="inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
         >
-          Check status
+          {{ i18n.text('subscription.viewStatus') }}
         </a>
         
         <a  routerLink="/"
           class="inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
         >
-          Back to home
+          {{ i18n.text('subscription.backHome') }}
         </a>
       </div>
     </div>

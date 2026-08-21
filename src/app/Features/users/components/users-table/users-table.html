@@ -2,14 +2,14 @@
   <table class="users-table" (click)="closeMenu()">
     <thead>
       <tr>
-        <th class="sortable">NAME <span class="sort-arrow">↕</span></th>
-        <th>EMAIL</th>
-        <th>ROLE</th>
-        <th>PHONE</th>
-        <th>STATUS</th>
-        <th>LAST LOGIN</th>
-        <th>CREATED</th>
-        <th class="actions-col">ACTIONS</th>
+        <th class="sortable">{{ i18n.text('users.name') }} <span class="sort-arrow">↕</span></th>
+        <th>{{ i18n.text('users.email') }}</th>
+        <th>{{ i18n.text('users.role') }}</th>
+        <th>{{ i18n.text('users.phone') }}</th>
+        <th>{{ i18n.text('users.status') }}</th>
+        <th>{{ i18n.text('users.lastLogin') }}</th>
+        <th>{{ i18n.text('users.created') }}</th>
+        <th class="actions-col">{{ i18n.text('users.actions') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -41,7 +41,7 @@
               <button
                 class="menu-trigger"
                 (click)="toggleMenu(user.id, $event)"
-                aria-label="Row actions"
+                [attr.aria-label]="i18n.text('users.rowActions')"
               >⋯</button>
 
               @if (openMenuId() === user.id) {
@@ -50,12 +50,12 @@
                   [class.open-up]="menuOpenUp()"
                   (click)="$event.stopPropagation()"
                 >
-                  <button (click)="view.emit(user); closeMenu()">View details</button>
-                  <button (click)="edit.emit(user); closeMenu()">Edit user</button>
+                  <button (click)="view.emit(user); closeMenu()">{{ i18n.text('users.view') }}</button>
+                  <button (click)="edit.emit(user); closeMenu()">{{ i18n.text('users.edit') }}</button>
                   <button (click)="toggleStatus.emit(user); closeMenu()">
-                    {{ user.isActive ? 'Deactivate' : 'Activate' }}
+                    {{ user.isActive ? i18n.text('users.deactivate') : i18n.text('users.activate') }}
                   </button>
-                  <button class="danger" (click)="delete.emit(user); closeMenu()">Delete user</button>
+                  <button class="danger" (click)="delete.emit(user); closeMenu()">{{ i18n.text('users.delete') }}</button>
                 </div>
               }
             </div>
@@ -63,7 +63,7 @@
         </tr>
       } @empty {
         <tr>
-          <td colspan="8" class="empty-state">No users match your filters.</td>
+          <td colspan="8" class="empty-state">{{ i18n.text('users.noResults') }}</td>
         </tr>
       }
       }

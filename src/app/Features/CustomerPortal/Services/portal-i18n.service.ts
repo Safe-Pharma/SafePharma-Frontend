@@ -1,13 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 export type PortalLanguage = 'en' | 'ar';
-
-// Small, dependency-free i18n layer for the portal only. The staff app has no localization
-// need today, so this intentionally isn't a project-wide ngx-translate integration — just
-// enough to satisfy "the portal must support English/Arabic with RTL" without pulling in a
-// new dependency for a single feature. If localization later spreads to the rest of the
-// app, this is the seam to swap out for a proper i18n library.
-const STORAGE_KEY = 'portal_lang';
 
 const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
   en: {
@@ -18,6 +12,12 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'nav.relatives': 'Relatives',
     'nav.logout': 'Logout',
     'nav.backToParent': 'Back to parent',
+    'nav.patientPortal': 'Patient Portal',
+    'nav.openNavigation': 'Open navigation',
+    'nav.languageArabic': 'العربية',
+    'nav.languageEnglish': 'English',
+    'nav.portal': 'Portal',
+    'nav.receiptDetails': 'Receipt Details',
 
     // Common
     'common.retry': 'Retry',
@@ -29,6 +29,50 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'common.close': 'Close',
     'common.back': 'Back',
     'common.loading': 'Loading…',
+    'common.enterPhone': 'Mobile phone number',
+    'common.validPhone': 'Enter a valid mobile number.',
+    'common.whatsappHint': "We'll send a 6-digit code to this number on WhatsApp.",
+    'common.sendWhatsapp': 'Send code via WhatsApp',
+    'common.enterCode': 'Enter verification code',
+    'common.codeLabel': '6-digit code',
+    'common.codeHint': 'We sent a 6-digit code via WhatsApp to {phone}',
+    'common.invalidCode': 'Enter the 6-digit code.',
+    'common.verify': 'Verify',
+    'common.sending': 'Sending…',
+    'common.resendCode': "Didn't get a code? Resend",
+    'common.patientPortalSubtitle': 'Sign in with your mobile number to view your medical record',
+    'common.children': 'Children',
+    'common.childrenSubtitle': 'Open a child profile to view their details.',
+    'common.noChildren': 'No children linked to this customer yet.',
+    'common.view': 'View',
+    'common.backHome': 'Back to home',
+    'toast.sendCodeError': 'Could not send the code. Please try again.',
+    'toast.whatsappSent': 'We sent a WhatsApp code to your phone.',
+    'toast.invalidCode': 'Invalid or expired code. Please try again.',
+    'toast.welcome': 'Welcome back!',
+    'toast.resendError': 'Could not resend the code.',
+    'toast.codeSent': 'A new code was sent.',
+    'toast.loadDashboardError': 'Could not load your dashboard.',
+    'toast.loadRelativesError': 'Could not load your relatives.',
+    'toast.loadAllergiesError': 'Could not load allergies.',
+    'toast.addAllergyError': 'Could not add allergy.',
+    'toast.removeAllergyError': 'Could not remove allergy.',
+    'toast.allergyAdded': 'Allergy added.',
+    'toast.allergyRemoved': 'Allergy removed.',
+    'toast.loadChronicError': 'Could not load chronic conditions.',
+    'toast.addConditionError': 'Could not add condition.',
+    'toast.removeConditionError': 'Could not remove condition.',
+    'toast.conditionAdded': 'Condition added.',
+    'toast.conditionRemoved': 'Condition removed.',
+    'toast.loadOrganError': 'Could not load organ functions.',
+    'toast.updateOrganError': 'Could not update organ function.',
+    'toast.organUpdated': 'Organ function updated.',
+    'toast.loadProfileError': 'Could not load your profile.',
+    'toast.saveProfileError': 'Could not save your changes.',
+    'toast.profileUpdated': 'Profile updated.',
+    'toast.loadMedicineError': 'Could not load medicine history.',
+    'toast.loadReceiptError': 'Could not load this receipt.',
+    'toast.loadPurchasesError': 'Could not load your purchase history.',
 
     // Dashboard
     'dashboard.title': 'Welcome back',
@@ -204,6 +248,7 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     // Sale statuses (ASSUMPTION — confirm against the real SaleStatus enum)
     'status.pending': 'Pending',
     'status.completed': 'Completed',
+    'status.open': 'Open',
     'status.refunded': 'Refunded',
     'status.cancelled': 'Cancelled',
     'status.unknown': 'Unknown',
@@ -216,6 +261,12 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'nav.relatives': 'الأقارب',
     'nav.logout': 'تسجيل الخروج',
     'nav.backToParent': 'العودة إلى الحساب الرئيسي',
+    'nav.patientPortal': 'بوابة المريض',
+    'nav.openNavigation': 'فتح التنقل',
+    'nav.languageArabic': 'العربية',
+    'nav.languageEnglish': 'English',
+    'nav.portal': 'البوابة',
+    'nav.receiptDetails': 'تفاصيل الفاتورة',
 
     // Common
     'common.retry': 'إعادة المحاولة',
@@ -227,6 +278,50 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     'common.close': 'إغلاق',
     'common.back': 'رجوع',
     'common.loading': 'جارٍ التحميل…',
+    'common.enterPhone': 'رقم الهاتف المحمول',
+    'common.validPhone': 'أدخل رقم هاتف محمول صالحاً.',
+    'common.whatsappHint': 'سنرسل رمزاً مكوناً من ٦ أرقام إلى هذا الرقم عبر واتساب.',
+    'common.sendWhatsapp': 'إرسال الرمز عبر واتساب',
+    'common.enterCode': 'أدخل رمز التحقق',
+    'common.codeLabel': 'رمز مكون من ٦ أرقام',
+    'common.codeHint': 'أرسلنا رمزاً مكوناً من ٦ أرقام عبر واتساب إلى {phone}',
+    'common.invalidCode': 'أدخل الرمز المكون من ٦ أرقام.',
+    'common.verify': 'تحقق',
+    'common.sending': 'جارٍ الإرسال…',
+    'common.resendCode': 'لم يصلك الرمز؟ أعد الإرسال',
+    'common.patientPortalSubtitle': 'سجّل الدخول برقم هاتفك لعرض سجلك الطبي',
+    'common.children': 'الأبناء',
+    'common.childrenSubtitle': 'افتح ملف أحد الأبناء لعرض تفاصيله.',
+    'common.noChildren': 'لا يوجد أبناء مرتبطون بهذا العميل حتى الآن.',
+    'common.view': 'عرض',
+    'common.backHome': 'العودة إلى الرئيسية',
+    'toast.sendCodeError': 'تعذّر إرسال الرمز. حاول مرة أخرى.',
+    'toast.whatsappSent': 'أرسلنا رمز واتساب إلى هاتفك.',
+    'toast.invalidCode': 'الرمز غير صالح أو منتهي الصلاحية. حاول مرة أخرى.',
+    'toast.welcome': 'مرحباً بعودتك!',
+    'toast.resendError': 'تعذّر إعادة إرسال الرمز.',
+    'toast.codeSent': 'تم إرسال رمز جديد.',
+    'toast.loadDashboardError': 'تعذّر تحميل لوحة التحكم.',
+    'toast.loadRelativesError': 'تعذّر تحميل أقاربك.',
+    'toast.loadAllergiesError': 'تعذّر تحميل الحساسيات.',
+    'toast.addAllergyError': 'تعذّرت إضافة الحساسية.',
+    'toast.removeAllergyError': 'تعذّرت إزالة الحساسية.',
+    'toast.allergyAdded': 'تمت إضافة الحساسية.',
+    'toast.allergyRemoved': 'تمت إزالة الحساسية.',
+    'toast.loadChronicError': 'تعذّر تحميل الأمراض المزمنة.',
+    'toast.addConditionError': 'تعذّرت إضافة المرض.',
+    'toast.removeConditionError': 'تعذّرت إزالة المرض.',
+    'toast.conditionAdded': 'تمت إضافة المرض.',
+    'toast.conditionRemoved': 'تمت إزالة المرض.',
+    'toast.loadOrganError': 'تعذّر تحميل وظائف الأعضاء.',
+    'toast.updateOrganError': 'تعذّر تحديث وظيفة العضو.',
+    'toast.organUpdated': 'تم تحديث وظيفة العضو.',
+    'toast.loadProfileError': 'تعذّر تحميل ملفك الشخصي.',
+    'toast.saveProfileError': 'تعذّر حفظ تغييراتك.',
+    'toast.profileUpdated': 'تم تحديث الملف الشخصي.',
+    'toast.loadMedicineError': 'تعذّر تحميل سجل الأدوية.',
+    'toast.loadReceiptError': 'تعذّر تحميل هذه الفاتورة.',
+    'toast.loadPurchasesError': 'تعذّر تحميل سجل مشترياتك.',
 
     // Dashboard
     'dashboard.title': 'أهلاً بعودتك',
@@ -398,6 +493,7 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
     // Sale statuses (ASSUMPTION — confirm against the real SaleStatus enum)
     'status.pending': 'قيد الانتظار',
     'status.completed': 'مكتملة',
+    'status.open': 'مفتوحة',
     'status.refunded': 'مسترجعة',
     'status.cancelled': 'ملغاة',
     'status.unknown': 'غير معروفة',
@@ -406,31 +502,28 @@ const DICTIONARY: Record<PortalLanguage, Record<string, string>> = {
 
 @Injectable({ providedIn: 'root' })
 export class PortalI18nService {
-  private readonly langState = signal<PortalLanguage>(this.readInitialLanguage());
+  // The portal keeps its dictionary, but shares the application's language
+  // signal, storage key, persistence, and document direction with the staff
+  // and public areas.
+  private readonly appI18n = inject(I18nService);
 
-  readonly lang = computed(() => this.langState());
-  readonly dir = computed<'ltr' | 'rtl'>(() => (this.langState() === 'ar' ? 'rtl' : 'ltr'));
-  readonly isRtl = computed(() => this.langState() === 'ar');
-
-  constructor() {
-    this.applyDocumentDir(this.langState());
-  }
+  readonly lang = this.appI18n.lang;
+  readonly dir = this.appI18n.dir;
+  readonly isRtl = this.appI18n.isRtl;
 
   setLanguage(lang: PortalLanguage): void {
-    localStorage.setItem(STORAGE_KEY, lang);
-    this.langState.set(lang);
-    this.applyDocumentDir(lang);
+    this.appI18n.setLanguage(lang);
   }
 
   toggle(): void {
-    this.setLanguage(this.langState() === 'en' ? 'ar' : 'en');
+    this.setLanguage(this.lang() === 'en' ? 'ar' : 'en');
   }
 
   // Key lookup with optional {placeholder} interpolation, e.g.
   // t('purchases.showingSummary', { page: 1, totalPages: 3, total: 42 }). Falls back to
   // English, then to the raw key, so a missing translation never renders as blank text.
   t(key: string, params?: Record<string, string | number>): string {
-    const template = DICTIONARY[this.langState()][key] ?? DICTIONARY.en[key] ?? key;
+    const template = DICTIONARY[this.lang()][key] ?? DICTIONARY.en[key] ?? key;
     if (!params) return template;
     return Object.keys(params).reduce(
       (result, paramKey) => result.replace(`{${paramKey}}`, String(params[paramKey])),
@@ -441,16 +534,17 @@ export class PortalI18nService {
   // Picks the localized name off any {nameEn, nameAr} catalog item.
   localizedName(item: { nameEn: string; nameAr: string } | null | undefined): string {
     if (!item) return '';
-    return this.langState() === 'ar' ? item.nameAr || item.nameEn : item.nameEn || item.nameAr;
+    return this.lang() === 'ar' ? item.nameAr || item.nameEn : item.nameEn || item.nameAr;
   }
 
-  private readInitialLanguage(): PortalLanguage {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'ar' ? 'ar' : 'en';
-  }
-
-  private applyDocumentDir(lang: PortalLanguage): void {
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    document.documentElement.setAttribute('lang', lang);
+  statusLabel(status: string | number | null | undefined): string {
+    const normalized = status === null || status === undefined ? '' : String(status).trim().toLowerCase();
+    const key = normalized === '0' ? 'status.pending'
+      : normalized === '1' || normalized === 'completed' ? 'status.completed'
+      : normalized === '2' || normalized === 'open' ? 'status.open'
+      : normalized === '3' || normalized === 'cancelled' ? 'status.cancelled'
+      : normalized === 'refunded' ? 'status.refunded'
+      : 'status.unknown';
+    return this.t(key);
   }
 }

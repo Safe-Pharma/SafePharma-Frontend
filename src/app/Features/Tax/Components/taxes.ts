@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,8 @@ import {
 import { Tax, TaxCreateDto, TaxStats, TaxStatus, TaxUpdateDto } from '../Models/tax';
 import { TaxesService } from '../Services/tax';
 import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
 
 interface TaxFormModel {
   name: string;
@@ -24,10 +26,12 @@ interface TaxFormModel {
 @Component({
   selector: 'app-taxes',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalOverlayDirective],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, PageHeaderComponent],
   templateUrl: './taxes.html',
 })
 export class Taxes implements OnDestroy {
+  protected readonly i18n = inject(I18nService);
+  text(key: string): string { return this.i18n.text(key); }
   // ---- Reactive inputs: changing these re-fires the backend calls automatically ----
   search = signal('');
   /** bump this after any create/update/delete/toggle to refetch list + stats */
@@ -53,7 +57,7 @@ export class Taxes implements OnDestroy {
         tap(() => this.loading.set(false)),
         catchError(() => {
           this.loading.set(false);
-          this.errorMsg.set('An error occurred while loading taxes.');
+          this.errorMsg.set(this.text('tax.saveError'));
           return of<Tax[]>([]);
         })
       )
@@ -168,7 +172,7 @@ export class Taxes implements OnDestroy {
     const rate = Number(this.formModel.rate);
 
     if (!name || Number.isNaN(rate) || rate < 0 || rate > 100) {
-      this.formError.set('Please enter a valid name and a tax rate between 0 and 100.');
+      this.formError.set(this.text('tax.valid'));
       return;
     }
 
@@ -193,8 +197,8 @@ export class Taxes implements OnDestroy {
         this.formError.set(
           err?.error?.message ??
             (err?.status === 409
-              ? 'A tax with this name already exists.'
-              : 'An error occurred while saving. Please try again.')
+              ? this.text('tax.duplicate')
+              : this.text('tax.saveError'))
         );
       },
     });
@@ -205,7 +209,7 @@ export class Taxes implements OnDestroy {
     this.closeMenu();
     this.taxesService.toggleStatus(tax.id).subscribe({
       next: () => this.refresh(),
-      error: () => this.errorMsg.set('An error occurred while changing the tax status.'),
+      error: () => this.errorMsg.set(this.text('tax.statusError')),
     });
   }
 
@@ -232,7 +236,7 @@ export class Taxes implements OnDestroy {
       },
       error: () => {
         this.deleting.set(false);
-        this.errorMsg.set('An error occurred while deleting the tax.');
+        this.errorMsg.set(this.text('tax.deleteError'));
       },
     });
   }

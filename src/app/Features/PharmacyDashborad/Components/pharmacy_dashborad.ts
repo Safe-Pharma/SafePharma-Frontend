@@ -13,20 +13,24 @@ import { DashboardApiService } from '../Services/pharmacy_dashboard';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { getErrorMessage } from '../../../Shared/utils/get-error-message';
 import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
 
 const CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#e11d48', '#0891b2'];
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, EgpCurrencyPipe],
+  imports: [CommonModule, EgpCurrencyPipe, PageHeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pharmacy_dashborad.html',
+  styleUrl: './pharmacy_dashborad.css',
 })
 export class DashboardPage implements OnInit {
   private readonly api = inject(DashboardApiService);
   private readonly toast = inject(Toast);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   protected readonly loading = signal(true);
   protected readonly statsLoading = signal(true);
@@ -59,6 +63,22 @@ export class DashboardPage implements OnInit {
 
   protected readonly trendAreaPath = computed(() => this.buildAreaPath());
   protected readonly trendLinePath = computed(() => this.buildLinePath());
+  protected readonly trendPoints = computed(() => {
+    const points = this.trend();
+    if (points.length === 0) return [];
+
+    const width = 700;
+    const height = 200;
+    const max = this.trendMax();
+    const stepX = points.length > 1 ? width / (points.length - 1) : 0;
+
+    return points.map((point, index) => ({
+      ...point,
+      x: index * stepX,
+      y: height - (point.total / max) * (height - 20) - 10,
+      delay: 720 + index * 75,
+    }));
+  });
 
   protected readonly categoryMixWithColor = computed(() =>
     this.categoryMix().map((c, i) => ({ ...c, color: CATEGORY_COLORS[i % CATEGORY_COLORS.length] })),
@@ -75,6 +95,56 @@ export class DashboardPage implements OnInit {
     });
     return `conic-gradient(${stops.join(', ')})`;
   });
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
+  }
+
+  localizedMedicineName(medicine: PharmacyMedicineRow): string {
+    return this.i18n.localizedName({
+      nameEn: medicine.tradeNameEn,
+      nameAr: medicine.tradeNameAr ?? medicine.tradeNameEn,
+    });
+  }
+
+  localizedStockStatus(status: string): string {
+    return this.text(status === 'Out' ? 'dashboard.outOfStock' : 'dashboard.lowStock');
+  }
+
+  localizedActivityAction(action: string): string {
+    const key = action.trim().toLowerCase().replace(/[^a-z]+/g, '');
+    const known: Record<string, string> = {
+      create: 'dashboard.action.create', created: 'dashboard.action.create',
+      update: 'dashboard.action.update', updated: 'dashboard.action.update',
+      delete: 'dashboard.action.delete', deleted: 'dashboard.action.delete',
+      login: 'dashboard.action.login', loggedin: 'dashboard.action.login',
+      logout: 'dashboard.action.logout', loggedout: 'dashboard.action.logout',
+      receive: 'dashboard.action.receive', received: 'dashboard.action.receive',
+      pay: 'dashboard.action.pay', paid: 'dashboard.action.pay',
+    };
+    return known[key] ? this.text(known[key]) : action;
+  }
+
+  localizedActivityEntity(entity: string): string {
+    const key = entity.trim().toLowerCase().replace(/[^a-z]+/g, '');
+    const known: Record<string, string> = {
+      sale: 'dashboard.entity.sale', sales: 'dashboard.entity.sale',
+      purchase: 'dashboard.entity.purchase', purchases: 'dashboard.entity.purchase',
+      medicine: 'dashboard.entity.medicine', medicines: 'dashboard.entity.medicine',
+      customer: 'dashboard.entity.customer', customers: 'dashboard.entity.customer',
+      supplier: 'dashboard.entity.supplier', suppliers: 'dashboard.entity.supplier',
+      user: 'dashboard.entity.user', users: 'dashboard.entity.user',
+      invoice: 'dashboard.entity.invoice', invoices: 'dashboard.entity.invoice',
+      stock: 'dashboard.entity.stock',
+    };
+    return known[key] ? this.text(known[key]) : entity;
+  }
+
+  formatDay(date: string, fallback: string): string {
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return fallback;
+    return new Intl.DateTimeFormat(this.i18n.lang(), { weekday: 'short' }).format(parsed);
+  }
 
   ngOnInit(): void {
     this.loadAll();
@@ -93,7 +163,7 @@ export class DashboardPage implements OnInit {
       },
       error: (err) => {
         this.statsLoading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load KPIs.'), 'error');
+        this.toast.show(getErrorMessage(err, this.text('dashboard.errorKpis')), 'error');
       },
     });
 
@@ -104,7 +174,7 @@ export class DashboardPage implements OnInit {
       },
       error: (err) => {
         this.trendLoading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load the sales trend.'), 'error');
+        this.toast.show(getErrorMessage(err, this.text('dashboard.errorTrend')), 'error');
       },
     });
 
@@ -115,7 +185,7 @@ export class DashboardPage implements OnInit {
       },
       error: (err) => {
         this.categoryMixLoading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load category mix.'), 'error');
+        this.toast.show(getErrorMessage(err, this.text('dashboard.errorCategoryMix')), 'error');
       },
     });
 
@@ -123,7 +193,7 @@ export class DashboardPage implements OnInit {
       next: (res) => {
         if (res.success && res.data) this.activity.set(res.data);
       },
-      error: (err) => this.toast.show(getErrorMessage(err, 'Could not load recent activity.'), 'error'),
+      error: (err) => this.toast.show(getErrorMessage(err, this.text('dashboard.errorActivity')), 'error'),
     });
 
     this.api.getMedicines().subscribe({
@@ -133,7 +203,7 @@ export class DashboardPage implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load inventory data.'), 'error');
+        this.toast.show(getErrorMessage(err, this.text('dashboard.errorInventory')), 'error');
       },
     });
   }
@@ -142,19 +212,15 @@ export class DashboardPage implements OnInit {
     this.router.navigateByUrl('/app/pos');
   }
 
-  exportReport(): void {
-    this.toast.show('Export isn\u2019t available yet.', 'error');
-  }
-
   relativeTime(dateStr: string): string {
     const diffMs = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 1) return this.text('dashboard.justNow');
+    if (minutes < 60) return this.text('dashboard.minutesAgo', { count: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return this.text('dashboard.hoursAgo', { count: hours });
     const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    return this.text('dashboard.daysAgo', { count: days });
   }
 
   private buildAreaPath(): string {

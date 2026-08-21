@@ -5,7 +5,7 @@
     <button
       type="button"
       class="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted md:hidden"
-      aria-label="Open navigation"
+      [attr.aria-label]="i18n.t('nav.openNavigation')"
       (click)="openMobileNav.emit()"
     >
       <svg
@@ -32,10 +32,18 @@
     <!-- Language switch -->
     <button
       type="button"
-      class="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+      class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-primary/20 bg-primary-soft/70 px-3 text-xs font-semibold text-primary shadow-sm transition-all hover:border-primary/30 hover:bg-primary-soft active:scale-[.98] active:bg-primary-soft/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      [attr.aria-label]="i18n.lang() === 'en' ? i18n.t('nav.languageArabic') : i18n.t('nav.languageEnglish')"
+      [attr.title]="i18n.lang() === 'en' ? i18n.t('nav.languageArabic') : i18n.t('nav.languageEnglish')"
       (click)="i18n.toggle()"
     >
-      {{ i18n.lang() === 'en' ? 'العربية' : 'English' }}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M3 12h18"></path>
+        <path d="M12 3a14 14 0 0 1 0 18"></path>
+        <path d="M12 3a14 14 0 0 0 0 18"></path>
+      </svg>
+      {{ i18n.lang() === 'en' ? i18n.t('nav.languageArabic') : i18n.t('nav.languageEnglish') }}
     </button>
 
     <a

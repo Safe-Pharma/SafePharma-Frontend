@@ -3,14 +3,14 @@
   import { fadeSlideIn } from '../shared/portal-animations';
   @Component({ ..., animations: [fadeSlideIn] })
 -->
-<div class="mx-auto max-w-5xl space-y-5" @fadeSlideIn>
+<div class="portal-motion-page mx-auto max-w-5xl space-y-5" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('profile.title') }}</h2>
     <p class="text-sm text-muted-foreground">{{ i18n.t('profile.subtitle') }}</p>
   </div>
 
   <!-- Tab bar -->
-  <div class="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1" role="tablist">
+  <div class="portal-motion-tabs flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1" role="tablist">
     @for (tab of tabs; track tab.id) {
       <button
         type="button"

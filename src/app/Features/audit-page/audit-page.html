@@ -1,25 +1,14 @@
-<!-- Audit History Section -->
-<div class="bg-background px-2">
-  <!-- Header -->
-  <div
-    class="px-0 pt-4 pb-6 border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-  >
-    <div>
-      <h1 class="text-2xl px-0 sm:text-3xl font-bold text-gray-900">Audit History</h1>
-      <p class="text-sm text-gray-500 mt-1">
-        Full immutable activity log for compliance and forensics
-      </p>
-    </div>
-  </div>
-  <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+<div class="module-motion-page app-page">
+  <app-page-header class="module-motion-header" [icon]="'history'" [title]="text('audit.title')" [description]="text('audit.details')" />
+  <div class="module-motion-panel app-page-section bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
     <!-- Filters & Search -->
-    <div class="px-6 py-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+    <div class="module-motion-toolbar px-6 py-4">
+      <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-8">
         <!-- Search Input -->
-        <div class="lg:col-span-3">
+        <div class="min-w-0 lg:col-span-3">
           <div class="relative">
             <svg
-              class="absolute left-3 top-3 w-5 h-5 text-gray-600"
+              class="absolute start-3 top-3 w-5 h-5 text-gray-600"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -32,20 +21,20 @@
               type="text"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onFilterChange()"
-              placeholder="Search activity..."
-              class="w-full pl-10 pr-4 py-2.5 bg-background border rounded-lg text-sm border-gray-300 text-gray-600 placeholder-gray-600 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+              [placeholder]="text('audit.search')"
+              class="w-full ps-10 pe-4 py-2.5 bg-background border rounded-lg text-sm border-gray-300 text-gray-600 placeholder-gray-600 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
             />
           </div>
         </div>
 
         <!-- All Users Dropdown -->
-        <div class="lg:col-span-1">
+        <div class="min-w-0 lg:col-span-1">
           <select
             [(ngModel)]="selectedUser"
             (ngModelChange)="onFilterChange()"
             class="w-full bg-background px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
-            <option value="">All users</option>
+            <option value="">{{ text('audit.allUsers') }}</option>
             <option *ngFor="let log of getUniqueUsers(); let idx = index" [value]="log">
               {{ log }}
             </option>
@@ -53,36 +42,36 @@
         </div>
 
         <!-- All Actions Dropdown -->
-        <div class="lg:col-span-1">
+        <div class="min-w-0 lg:col-span-1">
           <select
             [(ngModel)]="selectedAction"
             (ngModelChange)="onFilterChange()"
             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-background hover:border-gray-400 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
-            <option value="">All actions</option>
+            <option value="">{{ text('audit.allActions') }}</option>
             <option *ngFor="let log of getUniqueActions(); let idx = index" [value]="log">
-              {{ log }}
+              {{ actionLabel(log) }}
             </option>
           </select>
         </div>
 
         <!-- All Entities Dropdown -->
-        <div class="lg:col-span-1">
+        <div class="min-w-0 lg:col-span-1">
           <select
             [(ngModel)]="selectedEntity"
             (ngModelChange)="onFilterChange()"
             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 bg-background hover:border-gray-400 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 cursor-pointer"
           >
-            <option value="">All entities</option>
+            <option value="">{{ text('audit.allEntities') }}</option>
 
             <option *ngFor="let log of getUniqueEntities(); let idx = index" [value]="log">
-              {{ log }}
+              {{ entityLabel(log) }}
             </option>
           </select>
         </div>
 
         <!-- Date Input -->
-        <div class="lg:col-span-1">
+        <div class="min-w-0 lg:col-span-1">
           <input
             type="date"
             [(ngModel)]="selectedDate"
@@ -95,7 +84,7 @@
           class="rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
           (click)="clearFilters()"
         >
-          Clear
+          {{ text('common.actions.clear') }}
         </button>
       </div>
     </div>
@@ -108,7 +97,7 @@
       aria-live="polite"
     >
       <app-spinner size="md"></app-spinner>
-      <span>Loading audit logs...</span>
+      <span>{{ text('audit.loading') }}</span>
     </div>
 
     <!-- Table Container - Responsive Wrapper -->
@@ -116,11 +105,11 @@
       <table class="min-w-[720px] w-full text-sm">
         <thead>
           <tr class="border-b border-t border-gray-300 bg-background">
-            <th class="px-6 py-4 text-left font-semibold text-gray-700">Date & Time</th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700">User</th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700">Action</th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700">Entity</th>
-            <th class="px-6 py-4 text-left font-semibold text-gray-700">Device</th>
+            <th class="px-6 py-4 text-start font-semibold text-gray-700">{{ text('audit.dateTime') }}</th>
+            <th class="px-6 py-4 text-start font-semibold text-gray-700">{{ text('audit.user') }}</th>
+            <th class="px-6 py-4 text-start font-semibold text-gray-700">{{ text('audit.action') }}</th>
+            <th class="px-6 py-4 text-start font-semibold text-gray-700">{{ text('audit.entity') }}</th>
+            <th class="px-6 py-4 text-start font-semibold text-gray-700">{{ text('audit.device') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -139,7 +128,7 @@
           <tr
             *ngFor="let log of filteredLogs(); let idx = index"
             (click)="openModal(log)"
-            class="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 hover:cursor-pointer"
+            class="module-motion-row border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 hover:cursor-pointer"
           >
             <td class="px-6 py-4 text-gray-700">{{ log.date | date: 'yyyy-MM-dd HH:mm' }}</td>
             <td class="px-6 py-4 text-gray-700 hidden sm:table-cell">{{ log.userFullName }}</td>
@@ -151,12 +140,12 @@
                 "
               >
                 <span
-                  [ngClass]="'w-2 h-2 rounded-full mr-2 ' + getActionDotColor(log.action)"
+                  [ngClass]="'w-2 h-2 rounded-full me-2 ' + getActionDotColor(log.action)"
                 ></span>
-                {{ log.action }}
+                {{ actionLabel(log.action) }}
               </span>
             </td>
-            <td class="px-6 py-4 text-gray-700">{{ log.entity }}</td>
+            <td class="px-6 py-4 text-gray-700">{{ entityLabel(log.entity) }}</td>
 
             <td class="px-6 py-4 text-gray-700">{{ log.device }}</td>
           </tr>
@@ -164,7 +153,7 @@
           <!-- Empty state -->
           <tr *ngIf="!loading() && filteredLogs().length === 0">
             <td [attr.colspan]="7" class="px-6 py-8 text-center text-gray-500">
-              No audit logs found matching your filters
+              {{ text('audit.noResults') }}
             </td>
           </tr>
         </tbody>

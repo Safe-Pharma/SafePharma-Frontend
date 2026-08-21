@@ -6,6 +6,7 @@ import { PortalSidebar } from './Sidebar/portal-sidebar';
 import { PortalTopbar } from './Topbar/portal-topbar';
 import { PortalAuthService } from '../Services/portal-auth.service';
 import { ToastComponent } from '../../../Shared/Toasts/toast/toast';
+import { PortalI18nService } from '../Services/portal-i18n.service';
 
 @Component({
   selector: 'app-portal-layout',
@@ -17,6 +18,7 @@ export class PortalLayout {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly portalAuth = inject(PortalAuthService);
+  readonly i18n = inject(PortalI18nService);
 
   readonly mobileNavOpen = signal(false);
 
@@ -36,7 +38,7 @@ export class PortalLayout {
   private readDeepestTitle(route: ActivatedRoute): string {
     try {
       let current: ActivatedRoute | undefined = route;
-      let title = 'Portal';
+      let title = 'nav.portal';
       while (current?.firstChild) {
         current = current.firstChild;
         const data = current?.snapshot?.data as { title?: string } | undefined;
@@ -44,7 +46,7 @@ export class PortalLayout {
       }
       return title;
     } catch {
-      return 'Portal';
+      return 'nav.portal';
     }
   }
 }

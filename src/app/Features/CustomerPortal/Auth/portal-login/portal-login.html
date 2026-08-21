@@ -8,14 +8,14 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-lg font-semibold text-foreground">Patient Portal</h1>
-        <p class="text-sm text-muted-foreground">Sign in with your mobile number to view your medical record</p>
+        <h1 class="text-lg font-semibold text-foreground">{{ i18n.t('nav.patientPortal') }}</h1>
+        <p class="text-sm text-muted-foreground">{{ i18n.t('common.patientPortalSubtitle') }}</p>
       </div>
     </div>
 
     <div class="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <form (ngSubmit)="submit()">
-        <label for="phone" class="mb-1.5 block text-sm font-medium text-foreground">Mobile phone number</label>
+        <label for="phone" class="mb-1.5 block text-sm font-medium text-foreground">{{ i18n.t('common.enterPhone') }}</label>
         <input
           id="phone"
           type="tel"
@@ -30,9 +30,9 @@
           autocomplete="tel"
         />
         @if (touched() && !phoneValid()) {
-          <p class="mt-1.5 text-xs text-destructive">Enter a valid mobile number.</p>
+          <p class="mt-1.5 text-xs text-destructive">{{ i18n.t('common.validPhone') }}</p>
         } @else {
-          <p class="mt-1.5 text-xs text-muted-foreground">We'll send a 6-digit code to this number on WhatsApp.</p>
+          <p class="mt-1.5 text-xs text-muted-foreground">{{ i18n.t('common.whatsappHint') }}</p>
         }
 
         <button
@@ -43,7 +43,7 @@
           @if (loading()) {
             <span class="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground"></span>
           }
-          Send code via WhatsApp
+          {{ i18n.t('common.sendWhatsapp') }}
         </button>
       </form>
     </div>

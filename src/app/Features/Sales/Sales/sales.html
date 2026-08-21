@@ -1,61 +1,46 @@
-<div class="mx-auto w-full max-w-7xl p-4 sm:p-6 md:p-8">
-  <!-- Header -->
-  <div class="mb-6 grid grid-cols-1 items-end gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-    <div>
-      <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Sales</h1>
-      <p class="mt-1 text-sm text-gray-500">Point-of-sale invoices, and refunds.</p>
+<div class="module-motion-page app-page">
+  <app-page-header class="module-motion-header" [icon]="'sales'" [title]="text('sales.title')" [description]="text('sales.subtitle')">
+    <div pageHeaderActions>
+      <button type="button" class="app-page-action app-page-action-primary" (click)="goToNewSale()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path><path d="M12 5v14"></path>
+        </svg>
+        {{ text('sales.newSale') }}
+      </button>
     </div>
-
-    <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-      <button
-      type="button"
-      class="inline-flex items-center gap-1.5 rounded-md border border-input bg-transparent px-3 py-2 text-xs font-medium hover:bg-accent"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
-      Export
-    </button>
-      <button
-      type="button"
-      class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow hover:bg-primary/90"
-      (click)="goToNewSale()"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-       New sale
-    </button>
-    </div>
-  </div>
+  </app-page-header>
 
   <!-- Statistics -->
-  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="module-motion-stats app-page-section grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Today</p>
+      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">{{ text('sales.today') }}</p>
       <div class="mt-2 flex items-center gap-2">
         @if (stats(); as currentStats) { <span class="text-2xl font-semibold">{{ currentStats.todayTotal | egpCurrency }}</span> } @else { <span class="h-8 w-24 animate-pulse rounded bg-muted"></span> }
-        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Live</span>
+        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{{ text('sales.live') }}</span>
       </div>
     </div>
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Completed Invoices</p>
+      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">{{ text('sales.completedInvoices') }}</p>
       <div class="mt-2 flex items-center gap-2">
         @if (stats(); as currentStats) { <span class="text-2xl font-semibold">{{ currentStats.completedCount }}</span> } @else { <span class="h-8 w-16 animate-pulse rounded bg-muted"></span> }
-        <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Live</span>
+        <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">{{ text('sales.live') }}</span>
       </div>
     </div>
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Cancelled Invoices</p>
+      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">{{ text('sales.cancelledInvoices') }}</p>
       <div class="mt-2 flex items-center gap-2">
         @if (stats(); as currentStats) { <span class="text-2xl font-semibold">{{ currentStats.cancelledCount }}</span> } @else { <span class="h-8 w-16 animate-pulse rounded bg-muted"></span> }
-        <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Live</span>
+        <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">{{ text('sales.live') }}</span>
       </div>
     </div>
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Avg basket</p>
+      <p class="text-xs font-medium uppercase tracking-wider text-gray-500">{{ text('sales.avgBasket') }}</p>
       <div class="mt-2 flex items-center gap-2">
         @if (stats(); as currentStats) { <span class="text-2xl font-semibold">{{ currentStats.averageBasket | egpCurrency }}</span> } @else { <span class="h-8 w-24 animate-pulse rounded bg-muted"></span> }
-        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Live</span>
+        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{{ text('sales.live') }}</span>
       </div>
     </div>
   </div>
@@ -67,16 +52,16 @@
   }
 
   <!-- Search -->
-  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+  <div class="module-motion-toolbar app-page-section flex flex-col gap-3 sm:flex-row sm:items-center">
     <div class="relative min-w-0 flex-1">
-      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg class="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.34-4.34" />
         <circle cx="11" cy="11" r="8" stroke-width="2" />
       </svg>
       <input
         type="text"
-        class="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        placeholder="Search by customer or invoice #…"
+        class="w-full rounded-lg border border-gray-300 py-2 ps-10 pe-3 text-sm shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        [placeholder]="text('sales.search')"
         [ngModel]="searchTerm()"
         (ngModelChange)="onSearchInput($event)"
       />
@@ -86,39 +71,39 @@
         class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none"
         [ngModel]="statusFilter()"
         (ngModelChange)="onStatusChange($event)"
-        aria-label="Filter sales by status"
+        [attr.aria-label]="text('sales.filterStatus')"
       >
-        <option [ngValue]="null">All statuses</option>
-        <option [ngValue]="0">Open</option>
-        <option [ngValue]="1">Completed</option>
-        <option [ngValue]="2">Cancelled</option>
+        <option [ngValue]="null">{{ text('sales.allStatuses') }}</option>
+        <option [ngValue]="0">{{ text('sales.open') }}</option>
+        <option [ngValue]="1">{{ text('sales.completed') }}</option>
+        <option [ngValue]="2">{{ text('sales.cancelled') }}</option>
       </select>
       @if (searchTerm() || statusFilter() !== null) {
-        <button type="button" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100" (click)="clearFilters()">Clear</button>
+        <button type="button" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100" (click)="clearFilters()">{{ text('sales.clear') }}</button>
       }
     </div>
   </div>
 
   <!-- Table -->
-  <div class="relative rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div class="module-motion-panel relative rounded-xl border border-gray-200 bg-white shadow-sm">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-gray-500">
+          <tr class="border-b border-gray-200 bg-slate-50 text-start text-xs uppercase tracking-wider text-gray-500">
             <th class="w-8 px-5 py-3"></th>
-            <th class="px-5 py-3 font-medium">Invoice</th>
-            <th class="px-5 py-3 font-medium">Date</th>
-            <th class="px-5 py-3 font-medium">Customer</th>
-            <th class="px-5 py-3 font-medium">Items</th>
-            <th class="px-5 py-3 font-medium">Total</th>
-            <th class="px-5 py-3 font-medium">Status</th>
+            <th class="px-5 py-3 font-medium">{{ text('sales.invoice') }}</th>
+            <th class="px-5 py-3 font-medium">{{ text('sales.date') }}</th>
+            <th class="px-5 py-3 font-medium">{{ text('sales.customer') }}</th>
+            <th class="px-5 py-3 font-medium">{{ text('sales.items') }}</th>
+            <th class="px-5 py-3 font-medium">{{ text('sales.total') }}</th>
+            <th class="px-5 py-3 font-medium">{{ text('sales.status') }}</th>
           </tr>
         </thead>
 
         <tbody>
           @for (sale of sales(); track sale.id) {
             <tr
-              class="cursor-pointer border-b border-gray-200 transition-colors hover:bg-slate-50"
+              class="module-motion-row cursor-pointer border-b border-gray-200 transition-colors hover:bg-slate-50"
               (click)="toggleExpand(sale)"
             >
               <td class="px-5 py-4 text-gray-400">
@@ -132,7 +117,7 @@
               </td>
               <td class="px-5 py-4 font-mono text-xs">{{ sale.invoiceNumber }}</td>
               <td class="px-5 py-4 text-gray-500">{{ sale.createdAt | date: 'yyyy-MM-dd' }}</td>
-              <td class="px-5 py-4 font-medium">{{ sale.customerName || 'Walk-in' }}</td>
+              <td class="px-5 py-4 font-medium">{{ sale.customerName || text('sales.walkIn') }}</td>
               <td class="px-5 py-4">{{ sale.items.length }}</td>
               <td class="px-5 py-4 font-semibold">{{ sale.grandTotal | egpCurrency }}</td>
               <td class="px-5 py-4">
@@ -146,35 +131,35 @@
             @if (expandedSaleId() === sale.id) {
               <tr class="border-b border-gray-200 bg-slate-50/60">
                 <td colspan="7" class="p-0">
-                  <div class="sales-detail-panel px-5 py-3">
-                    <table class="w-full text-xs">
+                  <div class="sales-detail-panel overflow-x-auto px-5 py-3">
+                    <table class="w-full min-w-[760px] table-fixed text-xs">
                       <thead>
-                        <tr class="text-left uppercase tracking-wider text-gray-400">
-                          <th class="py-2 pr-4 font-medium">Medicine</th>
-                          <th class="py-2 pr-4 font-medium">Batch #</th>
-                          <th class="py-2 pr-4 font-medium">Qty</th>
-                          <th class="py-2 pr-4 font-medium">Unit Price</th>
-                          <th class="py-2 pr-4 text-right font-medium">Line Total</th>
+                        <tr class="text-start uppercase tracking-wider text-gray-400">
+                          <th class="w-[36%] py-2 pe-4 text-start font-medium">{{ text('sales.medicine') }}</th>
+                          <th class="w-[18%] py-2 pe-4 text-start font-medium">{{ text('sales.batch') }}</th>
+                          <th class="w-[12%] py-2 pe-4 text-start font-medium">{{ text('sales.quantity') }}</th>
+                          <th class="w-[17%] py-2 pe-4 text-start font-medium">{{ text('sales.unitPrice') }}</th>
+                          <th class="w-[17%] py-2 pe-4 text-end font-medium">{{ text('sales.lineTotal') }}</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (item of sale.items; track item.id) {
                           <tr class="border-t border-gray-200">
-                            <td class="py-2 pr-4 font-medium text-gray-700">{{ item.medicineName }}</td>
-                            <td class="py-2 pr-4 font-mono text-gray-500">{{ item.batchNumber }}</td>
-                            <td class="py-2 pr-4 text-gray-500">{{ item.quantity }}</td>
-                            <td class="py-2 pr-4 text-gray-500">{{ item.unitPrice | egpCurrency }}</td>
-                            <td class="py-2 pr-4 text-right font-semibold text-gray-700">{{ item.lineTotal | egpCurrency }}</td>
+                            <td class="py-2 pe-4 text-start font-medium text-gray-700">{{ item.medicineName }}</td>
+                            <td class="py-2 pe-4 text-start font-mono text-gray-500">{{ item.batchNumber }}</td>
+                            <td class="py-2 pe-4 text-start text-gray-500">{{ item.quantity }}</td>
+                            <td class="py-2 pe-4 text-start text-gray-500">{{ item.unitPrice | egpCurrency }}</td>
+                            <td class="py-2 pe-4 text-end font-semibold text-gray-700">{{ item.lineTotal | egpCurrency }}</td>
                           </tr>
                         }
                       </tbody>
                     </table>
 
-                    <div class="mt-3 flex justify-end gap-6 border-t border-gray-200 pt-2 text-xs text-gray-500">
-                      <span>Sub total: <strong class="text-gray-700">{{ sale.subTotal | egpCurrency }}</strong></span>
-                      <span>Discount: <strong class="text-gray-700">{{ sale.discount | egpCurrency }}</strong></span>
-                      <span>Tax: <strong class="text-gray-700">{{ sale.tax | egpCurrency }}</strong></span>
-                      <span>Grand total: <strong class="text-slate-900">{{ sale.grandTotal | egpCurrency }}</strong></span>
+                    <div class="mt-3 flex flex-wrap justify-end gap-x-6 gap-y-1 border-t border-gray-200 pt-2 text-end text-xs text-gray-500">
+                      <span>{{ text('sales.subtotal') }}: <strong class="text-gray-700">{{ sale.subTotal | egpCurrency }}</strong></span>
+                      <span>{{ text('sales.discount') }}: <strong class="text-gray-700">{{ sale.discount | egpCurrency }}</strong></span>
+                      <span>{{ text('sales.tax') }}: <strong class="text-gray-700">{{ sale.tax | egpCurrency }}</strong></span>
+                      <span>{{ text('sales.grandTotal') }}: <strong class="text-slate-900">{{ sale.grandTotal | egpCurrency }}</strong></span>
                     </div>
                   </div>
                 </td>
@@ -183,7 +168,7 @@
           } @empty {
             @if (!loading()) {
               <tr>
-                <td colspan="7" class="py-10 text-center text-gray-400">No sales found.</td>
+                <td colspan="7" class="py-10 text-center text-gray-400">{{ text('sales.noResults') }}</td>
               </tr>
             }
           }
@@ -206,7 +191,7 @@
         </tbody>
       </table>
       @if (loading() && sales().length > 0) {
-        <app-loading-overlay label="Updating sales…" />
+        <app-loading-overlay [label]="text('sales.updating')" />
       }
     </div>
   </div>

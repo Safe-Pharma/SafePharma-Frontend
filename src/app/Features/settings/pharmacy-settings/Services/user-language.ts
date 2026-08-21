@@ -1,68 +1,32 @@
-import { HttpClient } from '@angular/common/http';
-import { DOCUMENT } from '@angular/common';
-import { computed, inject, Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Injectable, computed, inject } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { AppLanguage, I18nService } from '../../../../Core/Services/i18n.service';
 
-export type UserLanguageCode = 'en' | 'ar';
+export type UserLanguageCode = AppLanguage;
 
-@Injectable({
-  providedIn: 'root',
-})
+/** Backwards-compatible adapter; I18nService is now the single source of truth. */
+@Injectable({ providedIn: 'root' })
 export class UserLanguage {
-  private apiUrl = 'https://localhost:7259/api/UserLanguage';
-  private readonly document = inject(DOCUMENT);
-  private readonly savedLanguageState = signal<UserLanguageCode>('en');
-  private readonly previewLanguageState = signal<UserLanguageCode | null>(null);
+  private readonly i18n = inject(I18nService);
 
-  readonly savedLanguage = computed(() => this.savedLanguageState());
-  readonly language = computed(
-    () => this.previewLanguageState() ?? this.savedLanguageState(),
-  );
-  readonly direction = computed<'ltr' | 'rtl'>(() =>
-    this.language() === 'ar' ? 'rtl' : 'ltr',
-  );
+  readonly savedLanguage = computed(() => this.i18n.userOverride() ?? this.i18n.tenantDefault());
+  readonly language = this.i18n.lang;
+  readonly direction = this.i18n.dir;
 
-  constructor(private http: HttpClient) {}
-
-  getLanguage(): Observable<any> {
-    return this.http.get(this.apiUrl).pipe(
-      tap((response: any) => {
-        const language = this.normalizeLanguage(response?.message ?? response?.data?.language ?? response?.language);
-        this.savedLanguageState.set(language);
-        this.previewLanguageState.set(null);
-        this.applyDocumentLanguage(language);
-      }),
-    );
+  getLanguage(): Observable<{ language: UserLanguageCode }> {
+    this.i18n.initializeForCurrentSession();
+    return of({ language: this.savedLanguage() });
   }
 
-  updateLanguage(language: string): Observable<any> {
-    const normalized = this.normalizeLanguage(language);
-    return this.http.put(this.apiUrl, { language: normalized }).pipe(
-      tap(() => {
-        this.savedLanguageState.set(normalized);
-        this.previewLanguageState.set(null);
-        this.applyDocumentLanguage(normalized);
-      }),
-    );
+  updateLanguage(language: string): Observable<{ language: UserLanguageCode }> {
+    const normalized = this.i18n.normalize(language) ?? 'en';
+    this.i18n.setUserLanguage(normalized);
+    return of({ language: normalized });
   }
 
   preview(language: string): void {
-    const normalized = this.normalizeLanguage(language);
-    this.previewLanguageState.set(normalized);
-    this.applyDocumentLanguage(normalized);
+    this.i18n.setLanguage(this.i18n.normalize(language) ?? 'en', false);
   }
 
-  restoreSaved(): void {
-    this.previewLanguageState.set(null);
-    this.applyDocumentLanguage(this.savedLanguageState());
-  }
-
-  private normalizeLanguage(value: unknown): UserLanguageCode {
-    return String(value).toLowerCase() === 'ar' ? 'ar' : 'en';
-  }
-
-  private applyDocumentLanguage(language: UserLanguageCode): void {
-    this.document.documentElement.setAttribute('lang', language);
-    this.document.documentElement.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
-  }
+  restoreSaved(): void { this.i18n.restoreResolvedLanguage(); }
 }
