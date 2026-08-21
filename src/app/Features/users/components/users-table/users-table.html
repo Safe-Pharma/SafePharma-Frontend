@@ -44,20 +44,6 @@
                 [attr.aria-label]="i18n.text('users.rowActions')"
               >⋯</button>
 
-              @if (openMenuId() === user.id) {
-                <div
-                  class="menu"
-                  [class.open-up]="menuOpenUp()"
-                  (click)="$event.stopPropagation()"
-                >
-                  <button (click)="view.emit(user); closeMenu()">{{ i18n.text('users.view') }}</button>
-                  <button (click)="edit.emit(user); closeMenu()">{{ i18n.text('users.edit') }}</button>
-                  <button (click)="toggleStatus.emit(user); closeMenu()">
-                    {{ user.isActive ? i18n.text('users.deactivate') : i18n.text('users.activate') }}
-                  </button>
-                  <button class="danger" (click)="delete.emit(user); closeMenu()">{{ i18n.text('users.delete') }}</button>
-                </div>
-              }
             </div>
           </td>
         </tr>
@@ -70,3 +56,22 @@
     </tbody>
   </table>
 </div>
+
+@if (menuUser(); as user) {
+  @if (menuPosition(); as pos) {
+    <div appModalOverlay class="fixed inset-0 z-40" (click)="closeMenu()">
+      <div #menuEl
+        class="menu-float"
+        [style.top.px]="pos.top" [style.left.px]="pos.left"
+        [style.visibility]="menuVisible() ? 'visible' : 'hidden'"
+        (click)="$event.stopPropagation()">
+        <button (click)="view.emit(user); closeMenu()">{{ i18n.text('users.view') }}</button>
+        <button (click)="edit.emit(user); closeMenu()">{{ i18n.text('users.edit') }}</button>
+        <button (click)="toggleStatus.emit(user); closeMenu()">
+          {{ user.isActive ? i18n.text('users.deactivate') : i18n.text('users.activate') }}
+        </button>
+        <button class="danger" (click)="delete.emit(user); closeMenu()">{{ i18n.text('users.delete') }}</button>
+      </div>
+    </div>
+  }
+}

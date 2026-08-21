@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { PurchaseOrderApiService } from '../Services/purchase-order-api';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +21,8 @@ interface PurchaseLineErrors {
   lineDiscount?: string;
   taxAmount?: string;
 }
+
+type PurchaseLineField = keyof PurchaseLineErrors;
 
 @Component({
   selector: 'app-purchase-order-page',
@@ -258,6 +260,14 @@ export class PurchaseOrderPage implements OnInit {
     this.showCreateModal = false;
   }
 
+  @HostListener('document:click', ['$event'])
+  closeSupplierOptionsOnOutsideClick(event: MouseEvent): void {
+    const target = event.target;
+    if (!(target instanceof Element) || !target.closest('#po-supplier')) {
+      this.showSupplierOptions = false;
+    }
+  }
+
   addLine() {
     this.purchaseOrder.items.push(this.emptyPurchaseLine());
   }
@@ -275,8 +285,62 @@ export class PurchaseOrderPage implements OnInit {
   }
   removeLine(index: number) {
     if (index < 0 || index >= this.purchaseOrder.items.length) return;
-    this.purchaseOrder.items[index] = this.emptyPurchaseLine();
-    delete this.lineErrors[index];
+    this.purchaseOrder.items.splice(index, 1);
+
+    const shiftedErrors: Record<number, PurchaseLineErrors> = {};
+    for (const [key, errors] of Object.entries(this.lineErrors)) {
+      const errorIndex = Number(key);
+      if (errorIndex < index) shiftedErrors[errorIndex] = errors;
+      if (errorIndex > index) shiftedErrors[errorIndex - 1] = errors;
+    }
+    this.lineErrors = shiftedErrors;
+  }
+
+  onLineFieldChange(index: number, field: PurchaseLineField): void {
+    const line = this.purchaseOrder.items[index];
+    if (!line || !this.lineErrors[index]) return;
+
+    if (this.isLineFieldValid(line, field)) {
+      this.clearLineFieldError(index, field);
+    }
+
+    // A quantity or unit-cost change can make an existing discount error valid.
+    if (
+      (field === 'quantity' || field === 'unitPrice') &&
+      this.lineErrors[index]?.lineDiscount &&
+      this.isLineFieldValid(line, 'lineDiscount')
+    ) {
+      this.clearLineFieldError(index, 'lineDiscount');
+    }
+  }
+
+  private isLineFieldValid(line: any, field: PurchaseLineField): boolean {
+    switch (field) {
+      case 'medicine':
+        return !!line.pharmacyMedicineId;
+      case 'quantity':
+        return Number.isFinite(Number(line.quantityOrdered)) && Number(line.quantityOrdered) > 0;
+      case 'unitPrice':
+        return Number.isFinite(Number(line.unitPrice)) && Number(line.unitPrice) > 0;
+      case 'lineDiscount': {
+        const lineGross = Number(line.quantityOrdered || 0) * Number(line.unitPrice || 0);
+        return (
+          Number.isFinite(Number(line.lineDiscount)) &&
+          Number(line.lineDiscount) >= 0 &&
+          Number(line.lineDiscount) <= lineGross
+        );
+      }
+      case 'taxAmount':
+        return Number.isFinite(Number(line.taxAmount)) && Number(line.taxAmount) >= 0;
+    }
+  }
+
+  private clearLineFieldError(index: number, field: PurchaseLineField): void {
+    const errors = this.lineErrors[index];
+    if (!errors) return;
+
+    delete errors[field];
+    if (Object.keys(errors).length === 0) delete this.lineErrors[index];
   }
 
   onMedicineChange(line: any) {
@@ -298,6 +362,39 @@ export class PurchaseOrderPage implements OnInit {
     this.purchaseOrder.supplierId = supplier.id;
     this.supplierQuery = supplier.name ?? '';
     this.showSupplierOptions = false;
+    this.supplierFieldError = null;
+  }
+
+  onOrderDateChange(): void {
+    if (this.purchaseOrder.orderDate) this.orderDateError = null;
+    this.clearValidExpectedDateError();
+  }
+
+  onExpectedDateChange(): void {
+    if (
+      this.purchaseOrder.expectedDate &&
+      (!this.purchaseOrder.orderDate || this.purchaseOrder.expectedDate >= this.purchaseOrder.orderDate)
+    ) {
+      this.expectedDateError = null;
+    }
+  }
+
+  private clearValidExpectedDateError(): void {
+    if (
+      this.purchaseOrder.expectedDate &&
+      this.purchaseOrder.orderDate &&
+      this.purchaseOrder.expectedDate >= this.purchaseOrder.orderDate
+    ) {
+      this.expectedDateError = null;
+    }
+  }
+
+  onDiscountChange(): void {
+    const discount = Number(this.purchaseOrder.discountAmount);
+    const maximumDiscount = this.subtotal - this.lineDiscountTotal;
+    if (Number.isFinite(discount) && discount >= 0 && discount <= maximumDiscount) {
+      this.discountError = null;
+    }
   }
 
   onMedicineQuery(value: string): void {
@@ -329,23 +426,34 @@ export class PurchaseOrderPage implements OnInit {
   }
 
   addMedicineResult(medicine: MedicineSearchResult): void {
+    const medicineDetails = this.Medicines.find(
+      (item) => item.pharmacyMedicineId === medicine.pharmacyMedicineId,
+    );
+    const purchasePrice = medicine.purchasePrice ?? medicineDetails?.purchasePrice ?? 0;
+    const sellingPrice = medicine.sellingPrice ?? medicineDetails?.sellingPrice ?? 0;
+
     const existing = this.purchaseOrder.items.find(
       (line) => line.pharmacyMedicineId === medicine.pharmacyMedicineId,
     );
     if (existing) {
       existing.quantityOrdered += 1;
+      existing.unitPrice = purchasePrice;
+      existing.sellingPrice = sellingPrice;
     } else {
       const emptyLineIndex = this.purchaseOrder.items.findIndex((line) => !line.pharmacyMedicineId);
       const nextLine = {
         pharmacyMedicineId: medicine.pharmacyMedicineId,
-        medicineName: medicine.tradeNameEn,
+        medicineName: medicine.tradeNameEn || medicine.tradeNameAr || medicineDetails?.tradeNameEn || '',
         quantityOrdered: 1,
-        unitPrice: 0,
-        sellingPrice: medicine.sellingPrice ?? 0,
+        unitPrice: purchasePrice,
+        sellingPrice,
         lineDiscount: 0,
         taxAmount: 0,
       };
-      if (emptyLineIndex >= 0) this.purchaseOrder.items[emptyLineIndex] = nextLine;
+      if (emptyLineIndex >= 0) {
+        this.purchaseOrder.items[emptyLineIndex] = nextLine;
+        delete this.lineErrors[emptyLineIndex];
+      }
       else this.purchaseOrder.items.push(nextLine);
     }
     this.medicineQuery = '';

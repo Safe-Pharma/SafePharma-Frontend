@@ -89,9 +89,8 @@
   &:hover { background: #f1f2f4; }
 }
 
-.menu {
-  position: absolute;
-  inset-inline-end: 0;
+.menu-float {
+  position: fixed;
   z-index: 50;
   min-width: 155px;
   background: #fff;
@@ -101,16 +100,6 @@
   padding: 4px;
   display: flex;
   flex-direction: column;
-
-  /* Default: open downward */
-  top: calc(100% + 4px);
-  bottom: auto;
-
-  /* Flip: open upward when near bottom of viewport */
-  &.open-up {
-    top: auto;
-    bottom: calc(100% + 4px);
-  }
 
   button {
     text-align: start;

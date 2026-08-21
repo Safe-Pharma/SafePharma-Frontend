@@ -104,7 +104,7 @@
             </td>
             <td class="px-4 py-3 text-end">
               <div class="relative inline-block">
-                <button type="button" (click)="onToggleMenu(customer.id)"
+                <button type="button" (click)="onToggleMenu(customer.id, $event)"
                   class="inline-flex items-center justify-center rounded-md text-sm font-medium cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
@@ -112,24 +112,6 @@
                   </svg>
                 </button>
 
-                @if (openMenuId() === customer.id) {
-                <div class="absolute end-0 z-10 mt-1 w-44 rounded-md border border-border bg-card py-1 shadow-card">
-                  <a [routerLink]="['/app/customers', customer.id]"
-                    class="block px-3 py-2 text-start text-xs hover:bg-accent">{{ text('customer.view') }}</a>
-                  <button type="button" (click)="onOpenEditDialog(customer)"
-                    class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">{{ text('customer.edit') }}</button>
-                  <button type="button" (click)="onToggleStatus(customer)"
-                    class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">
-                    {{ customer.status === 'Active' ? text('customer.deactivate') : text('customer.activate') }}
-                  </button>
-                  @if (isOwner()) {
-                  <button type="button" (click)="onDelete(customer)"
-                    class="block w-full px-3 py-2 text-start text-xs text-destructive hover:bg-destructive-soft">
-                    {{ text('customer.delete') }}
-                  </button>
-                  }
-                </div>
-                }
               </div>
             </td>
           </tr>
@@ -145,6 +127,32 @@
     }
   </div>
 </div>
+
+@if (menuCustomer(); as customer) {
+  @if (menuPosition(); as pos) {
+    <div class="fixed inset-0 z-40" (click)="closeMenu()"></div>
+    <div #menuEl
+      class="fixed z-50 w-44 overflow-hidden rounded-md border border-border bg-popover py-1 text-start shadow-popover"
+      [style.top.px]="pos.top" [style.left.px]="pos.left"
+      [style.visibility]="menuVisible() ? 'visible' : 'hidden'"
+      (click)="$event.stopPropagation()">
+      <a [routerLink]="['/app/customers', customer.id]" (click)="closeMenu()"
+        class="block px-3 py-2 text-start text-xs hover:bg-accent">{{ text('customer.view') }}</a>
+      <button type="button" (click)="onOpenEditDialog(customer)"
+        class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">{{ text('customer.edit') }}</button>
+      <button type="button" (click)="onToggleStatus(customer)"
+        class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">
+        {{ customer.status === 'Active' ? text('customer.deactivate') : text('customer.activate') }}
+      </button>
+      @if (isOwner()) {
+        <button type="button" (click)="onDelete(customer)"
+          class="block w-full px-3 py-2 text-start text-xs text-destructive hover:bg-destructive-soft">
+          {{ text('customer.delete') }}
+        </button>
+      }
+    </div>
+  }
+}
 
 @if (showAddDialog()) {
 <app-add-edit-customer-dialog [customer]="editingCustomer()" (closed)="onCloseAddDialog()" (saved)="onCustomerCreated()" />

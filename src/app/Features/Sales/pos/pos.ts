@@ -423,7 +423,7 @@ export class Pos implements OnInit, AfterViewInit {
     this.searchOpen.set(false);
 
     const target = event.target as HTMLElement | null;
-    if (target && this.isInsidePos(target) && !this.isTextEntry(target)) {
+    if (target && this.isInsidePos(target) && !this.isTextEntry(target) && !this.hasOpenOverlay()) {
       this.restoreScannerFocus();
     }
   }
@@ -445,6 +445,7 @@ export class Pos implements OnInit, AfterViewInit {
     const target = event.target as HTMLElement | null;
     const next = event.relatedTarget as HTMLElement | null;
     if (!target || !this.isInsidePos(target) || !this.isTextEntry(target)) return;
+    if (this.hasOpenOverlay()) return;
 
     if (!next || !this.isInsidePos(next) || !this.isTextEntry(next)) {
       this.restoreScannerFocus();
@@ -453,6 +454,16 @@ export class Pos implements OnInit, AfterViewInit {
 
   private isInsidePos(target: HTMLElement): boolean {
     return Boolean(target.closest('[data-pos-root]'));
+  }
+
+  private hasOpenOverlay(): boolean {
+    return (
+      this.showPaymentModal() ||
+      this.showSafetyModal() ||
+      this.showSafetyReminder() ||
+      this.showCreateCustomerModal() ||
+      this.showCustomerSearchModal()
+    );
   }
 
   @HostListener('document:keydown', ['$event'])
