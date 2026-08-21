@@ -16,7 +16,7 @@
       <label class="block text-sm font-medium text-foreground mb-1">{{ text('auth.email') }}</label>
       <input
         type="email"
-        placeholder="you@medirx.io"
+        [placeholder]="text('auth.emailPlaceholder')"
         class="input"
         [class.border-destructive]="email.invalid && email.touched"
         formControlName="email"
