@@ -2,12 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { PharmacyReadDto } from '../Models/pharmacy-read.dto';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PharmacyService {
-  private readonly baseUrl = 'https://localhost:7259/api/Pharmacy';
+  private readonly baseUrl = `${environment.apiUrl}/Pharmacy`;
 
   constructor(private http: HttpClient) {}
 
