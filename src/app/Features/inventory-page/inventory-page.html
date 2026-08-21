@@ -53,16 +53,12 @@
       <div
         class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200"
       >
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-          On-Hand Value
-        </p>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Items</p>
         <div class="flex items-center gap-3">
           @if (loading()) {
             <span class="h-9 w-28 animate-pulse rounded bg-gray-200"></span>
           } @else {
-            <span class="text-3xl font-bold text-gray-900">{{
-              getOnHandValue() | egpCurrency
-            }}</span>
+            <span class="text-3xl font-bold text-gray-900">{{ getOnHandValue() }}</span>
           }
           <span
             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"
@@ -195,7 +191,7 @@
             <th
               class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
             >
-              On Hand
+              Total Items
             </th>
             <th
               class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -308,7 +304,7 @@
                         <th
                           class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
                         >
-                          Quantity
+                          Batch Quantity
                         </th>
                         <th
                           class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
