@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../../environments/environment';
 import { Sale, SaleStats, SaleStatus } from '../../pos/Model/pos.models';
 import { GeneralResult } from '../../../../Core/Models/general-result.model';
+import { environment } from '../../../../../environments/environment.production';
 
 
 @Injectable({

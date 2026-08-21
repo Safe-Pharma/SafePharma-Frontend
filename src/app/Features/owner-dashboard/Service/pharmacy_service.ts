@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { GeneralResult } from '../../../Core/Models/general-result.model';
 import { PharmacyReadDto } from '../Models/pharmacy-read.dto';
 import { environment } from '../../../../environments/environment.production';

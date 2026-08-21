@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../../environments/environment';
 import { GeneralResult } from '../../../../Core/Models/general-result.model';
 import {
   ApplySaleDiscountDto,
@@ -18,6 +17,7 @@ import {
   StockAvailability,
   UpdateSaleItemDto,
 } from '../Model/pos.models';
+import { environment } from '../../../../../environments/environment.production';
 
 @Injectable({ providedIn: 'root' })
 export class PosService {

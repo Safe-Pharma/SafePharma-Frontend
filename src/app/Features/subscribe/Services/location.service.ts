@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { GeneralResult } from '../../../Core/Models/general-result.model';
 import { CountryWithCities } from '../Models/country-with-cities.model';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({
   providedIn: 'root',

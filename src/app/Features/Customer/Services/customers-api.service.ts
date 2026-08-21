@@ -2,7 +2,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../../environments/environment';
 import {
   Customer,
   CustomerStats,
@@ -22,6 +21,7 @@ import {
   CustomerRelative,
   CreateCustomerRelativeDto,
 } from '../Models/customer.model';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({ providedIn: 'root' })
 export class CustomersApiService {

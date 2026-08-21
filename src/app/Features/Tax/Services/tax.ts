@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { Tax, TaxCreateDto, TaxStats, TaxUpdateDto } from '../Models/tax';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({ providedIn: 'root' })
 export class TaxesService {
