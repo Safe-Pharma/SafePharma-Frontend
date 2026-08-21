@@ -1,8 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { PortalApiService } from './portal-api.service';
-import { environment } from '../../../../environments/environment';
-
+import { environment } from '../../../../environments/environment.production';
 describe('PortalApiService', () => {
   let service: PortalApiService;
   let httpMock: HttpTestingController;

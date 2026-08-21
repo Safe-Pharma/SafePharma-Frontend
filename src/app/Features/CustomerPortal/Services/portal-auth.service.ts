@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { SessionScopeService } from '../../../Core/Services/session-scope.service';
 import {
   OtpEnvelope,
@@ -10,6 +9,7 @@ import {
   VerifyOtpData,
   VerifyOtpRequest,
 } from '../Models/portal-auth.model';
+import { environment } from '../../../../environments/environment.production';
 
 // Deliberately separate from Core/Services/auth-session.service.ts and uses its own
 // localStorage key. A patient session and a staff (pharmacist) session are different

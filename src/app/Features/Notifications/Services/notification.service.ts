@@ -2,11 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, catchError, map, switchMap, tap, timer } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 // ASSUMPTION: GeneralResult lives at Core/Models/general-result.model.ts —
 // point this at wherever it actually is in your project.
 import { GeneralResult } from '../../../Core/Models/general-result.model';
 import { Notification, NotificationCount } from '../Models/notification.model';
+import { environment } from '../../../../environments/environment.production';
 
 const POLL_INTERVAL_MS = 30000;
 
