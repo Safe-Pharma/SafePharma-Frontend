@@ -20,8 +20,13 @@
 .owner-pharmacy-toolbar select { width: auto; min-width: 9rem; padding: 0.5rem 0.75rem; }
 .owner-search-field input:focus, .owner-pharmacy-toolbar select:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 15%, transparent); }
 .owner-table-scroll { overflow-x: auto; }
-.owner-table-scroll table { --owner-action-column-width: 7.5rem; width: 100%; min-width: 62rem; border-collapse: separate; border-spacing: 0; text-align: start; }
-.owner-table-scroll th, .owner-table-scroll td { border-block-end: 1px solid var(--border); padding: 0.85rem 1rem; color: var(--foreground); font-size: 0.8125rem; text-align: start; white-space: nowrap; }
+.owner-table-scroll table { --owner-action-column-width: 5.5rem; width: 100%; min-width: 0; border-collapse: separate; border-spacing: 0; text-align: start; }
+.owner-table-scroll col.owner-column-city { width: 6.25rem; }
+.owner-table-scroll col.owner-column-country { width: 6.75rem; }
+.owner-table-scroll col.owner-column-phone { width: 7.75rem; }
+.owner-table-scroll col.owner-column-status { width: 6.25rem; }
+.owner-table-scroll col.owner-column-activation { width: var(--owner-action-column-width); }
+.owner-table-scroll th, .owner-table-scroll td { border-block-end: 1px solid var(--border); padding: 0.65rem 0.625rem; color: var(--foreground); font-size: 0.8125rem; text-align: start; white-space: nowrap; }
 .owner-table-scroll th { color: var(--muted-foreground); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .owner-table-scroll tbody tr:hover { background: var(--muted); }
 .owner-table-scroll th.owner-action-cell, .owner-table-scroll td.owner-action-cell {
