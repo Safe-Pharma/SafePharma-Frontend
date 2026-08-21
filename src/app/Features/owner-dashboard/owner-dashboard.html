@@ -21,13 +21,28 @@
     <div class="owner-stat-grid">
       @for (stat of stats(); track stat.label) {
         <article class="owner-stat-card">
-          <div class="owner-stat-icon" [class.owner-stat-icon-active]="stat.icon === 'active'" [class.owner-stat-icon-inactive]="stat.icon === 'inactive'" aria-hidden="true">
+          <div
+            class="owner-stat-icon"
+            [class.owner-stat-icon-active]="stat.icon === 'active'"
+            [class.owner-stat-icon-inactive]="stat.icon === 'inactive'"
+            aria-hidden="true"
+          >
             @if (stat.icon === 'building') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M3 22h18M10 6h.01M14 6h.01M10 10h.01M14 10h.01M10 14h.01M14 14h.01"></path></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path
+                  d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M3 22h18M10 6h.01M14 6h.01M10 10h.01M14 10h.01M10 14h.01M14 14h.01"
+                ></path>
+              </svg>
             } @else if (stat.icon === 'active') {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"></path><circle cx="12" cy="12" r="9"></circle></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="m5 12 4 4L19 6"></path>
+                <circle cx="12" cy="12" r="9"></circle>
+              </svg>
             } @else {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M10 9v6M14 9v6"></path>
+              </svg>
             }
           </div>
           <span>{{ i18n.text(stat.label) }}</span>
@@ -39,7 +54,16 @@
     <section class="owner-pharmacy-panel" [attr.aria-label]="i18n.text('ownerDashboard.title')">
       <div class="owner-pharmacy-toolbar">
         <div class="owner-search-field">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
           <input
             type="search"
             [ngModel]="searchQuery()"
@@ -62,14 +86,14 @@
       <div class="owner-table-scroll">
         <table>
           <colgroup>
-            <col class="owner-column-pharmacy">
-            <col class="owner-column-email">
-            <col class="owner-column-city">
-            <col class="owner-column-address">
-            <col class="owner-column-country">
-            <col class="owner-column-phone">
-            <col class="owner-column-status">
-            <col class="owner-column-activation">
+            <col class="owner-column-pharmacy" />
+            <col class="owner-column-email" />
+            <col class="owner-column-city" />
+            <col class="owner-column-address" />
+            <col class="owner-column-country" />
+            <col class="owner-column-phone" />
+            <col class="owner-column-status" />
+            <col class="owner-column-activation" />
           </colgroup>
           <thead>
             <tr>
@@ -80,7 +104,9 @@
               <th>{{ i18n.text('ownerDashboard.country') }}</th>
               <th>{{ i18n.text('ownerDashboard.phone') }}</th>
               <th>{{ i18n.text('ownerDashboard.status') }}</th>
-              <th class="owner-action-cell" scope="col">{{ i18n.text('ownerDashboard.activation') }}</th>
+              <th class="owner-action-cell" scope="col">
+                {{ i18n.text('ownerDashboard.activation') }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -88,7 +114,11 @@
               <tr>
                 <td>
                   <div class="owner-pharmacy-name">
-                    <span class="owner-pharmacy-avatar" [style.background-color]="pharmacy.avatarColor">{{ pharmacy.initials }}</span>
+                    <span
+                      class="owner-pharmacy-avatar"
+                      [style.background-color]="pharmacy.avatarColor"
+                      >{{ pharmacy.initials }}</span
+                    >
                     <strong>{{ pharmacy.name }}</strong>
                   </div>
                 </td>
@@ -97,7 +127,11 @@
                 <td>{{ pharmacy.address || '—' }}</td>
                 <td>{{ pharmacy.country || '—' }}</td>
                 <td>{{ pharmacy.phone || '—' }}</td>
-                <td><span class="owner-status" [class.owner-status-active]="pharmacy.isActive"><span></span>{{ statusLabel(pharmacy.status) }}</span></td>
+                <td>
+                  <span class="owner-status" [class.owner-status-active]="pharmacy.isActive"
+                    ><span></span>{{ statusLabel(pharmacy.status) }}</span
+                  >
+                </td>
                 <td class="owner-action-cell">
                   <button
                     type="button"
@@ -107,11 +141,17 @@
                     [attr.aria-label]="statusLabel(pharmacy.status)"
                     [disabled]="updatingPharmacyId() !== null"
                     (click)="toggleActivation(pharmacy)"
-                  ><span></span></button>
+                  >
+                    <span></span>
+                  </button>
                 </td>
               </tr>
             } @empty {
-              <tr><td class="owner-empty-state" colspan="8">{{ i18n.text('ownerDashboard.noResults') }}</td></tr>
+              <tr>
+                <td class="owner-empty-state" colspan="8">
+                  {{ i18n.text('ownerDashboard.noResults') }}
+                </td>
+              </tr>
             }
           </tbody>
         </table>
