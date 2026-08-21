@@ -1,9 +1,14 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, finalize, of, tap } from 'rxjs';
+import { environment } from '../../../../../environments/environment.production';
 
 export interface PharmacySettingsData {
   name: string;
+  /** Tenant-wide default. It is intentionally separate from a user's personal override. */
+  preferredLanguage?: string | null;
+  defaultLanguage?: string | null;
+  language?: string | null;
   logoUrl?: string | null;
   address?: string | null;
   city?: string | null;
@@ -16,7 +21,7 @@ export interface PharmacySettingsData {
   providedIn: 'root',
 })
 export class PharmacySettings {
-  private apiUrl = 'https://localhost:7259/api/PharmacySettings';
+  private apiUrl = `${environment.apiUrl}/PharmacySettings`;
   readonly settings = signal<PharmacySettingsData | null>(null);
   readonly loading = signal(false);
   /** Undefined means there is no unsaved logo preview; null means the draft removed it. */
@@ -76,6 +81,9 @@ export class PharmacySettings {
           ...current,
           ...(responseData && typeof responseData === 'object' ? responseData : {}),
           ...(typeof name === 'string' ? { name } : {}),
+          ...(typeof data.get('PreferredLanguage') === 'string'
+            ? { preferredLanguage: data.get('PreferredLanguage') as string }
+            : {}),
         });
         this.loaded = true;
       }),

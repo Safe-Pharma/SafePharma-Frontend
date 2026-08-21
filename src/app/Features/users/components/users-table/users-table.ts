@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { User } from '../../models/user.model';
 import { UserAvatarComponent } from '../user-avatar/user-avatar';
 import { RoleBadgeComponent } from '../role-badge/role-badge';
 import { StatusBadgeComponent } from '../status-badge/status-badge';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-users-table',
@@ -14,6 +15,7 @@ import { StatusBadgeComponent } from '../status-badge/status-badge';
   styleUrl: './users-table.css',
 })
 export class UsersTableComponent {
+  protected readonly i18n = inject(I18nService);
   users = input.required<User[]>();
   loading = input(false);
  

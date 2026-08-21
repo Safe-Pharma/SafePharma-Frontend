@@ -4,9 +4,7 @@
 }
 
 .users-page {
-  padding: 32px;
-  background: #f7f8fa;
-  min-height: 100%;
+  min-width: 0;
 }
 
 .page-header {

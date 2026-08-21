@@ -7,7 +7,7 @@ import {
   SupplierStats,
   SupplierUpdateDto,
 } from '../Models/Supplier';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({ providedIn: 'root' })
 export class SuppliersService {

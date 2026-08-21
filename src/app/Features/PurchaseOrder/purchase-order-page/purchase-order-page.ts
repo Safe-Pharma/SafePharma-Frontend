@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PurchaseOrderApiService } from '../Services/purchase-order-api';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,8 @@ import { ModalShellComponent } from '../../users/components/modal-shell/modal-sh
 import { PosService } from '../../Sales/pos/Services/pos-service';
 import { MedicineSearchResult } from '../../Sales/pos/Model/pos.models';
 import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
 
 interface PurchaseLineErrors {
   medicine?: string;
@@ -23,11 +25,23 @@ interface PurchaseLineErrors {
 @Component({
   selector: 'app-purchase-order-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, Spinner, LoadingOverlay, ModalShellComponent, EgpCurrencyPipe],
+  imports: [CommonModule, FormsModule, Spinner, LoadingOverlay, ModalShellComponent, EgpCurrencyPipe, PageHeaderComponent],
   templateUrl: './purchase-order-page.html',
   styleUrl: './purchase-order-page.css',
 })
 export class PurchaseOrderPage implements OnInit {
+  protected readonly i18n = inject(I18nService);
+  text(key: string): string { return this.i18n.text(key); }
+
+  medicineDisplayName(medicine: MedicineSearchResult): string {
+    return this.i18n.lang() === 'ar' ? medicine.tradeNameAr || medicine.tradeNameEn : medicine.tradeNameEn || medicine.tradeNameAr;
+  }
+
+  medicineLineDisplayName(line: any): string {
+    const medicine = this.Medicines.find((item) => item.pharmacyMedicineId === line?.pharmacyMedicineId);
+    if (medicine) return this.medicineDisplayName(medicine);
+    return line?.medicineName || line?.pharmacyMedicineId || this.text('purchase.chooseFromSearch');
+  }
   purchaseOrders: any[] = [];
   loading = true;
   errorMessage: string | null = null;
@@ -119,7 +133,7 @@ export class PurchaseOrderPage implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = 'Could not load purchase orders.';
+        this.errorMessage = this.text('purchase.errorLoad');
         console.error(err);
       },
     });
@@ -136,7 +150,7 @@ export class PurchaseOrderPage implements OnInit {
       },
       error: (err) => {
         this.supplierLoading = false;
-        this.supplierError = 'Could not load suppliers.';
+        this.supplierError = this.text('purchase.errorSuppliers');
         console.error(err);
         this.cdr.detectChanges();
       },
@@ -307,7 +321,7 @@ export class PurchaseOrderPage implements OnInit {
         },
         error: () => {
           this.medicineSearching = false;
-          this.medicineSearchError = 'Could not search medicines.';
+          this.medicineSearchError = this.text('purchase.errorSearch');
           this.cdr.detectChanges();
         },
       });
@@ -348,7 +362,7 @@ export class PurchaseOrderPage implements OnInit {
       next: (res) => {
         const data = res.data;
         if (!data?.pharmacyMedicineId) {
-          this.medicineSearchError = 'Barcode did not resolve to a purchasable medicine.';
+          this.medicineSearchError = this.text('purchase.barcodeNotFound');
         } else {
           this.addMedicineResult({
             pharmacyMedicineId: data.pharmacyMedicineId,
@@ -365,7 +379,7 @@ export class PurchaseOrderPage implements OnInit {
       },
       error: () => {
         this.barcodeSearching = false;
-        this.medicineSearchError = 'Could not resolve this barcode.';
+        this.medicineSearchError = this.text('purchase.errorBarcode');
         this.cdr.detectChanges();
       },
     });
@@ -390,43 +404,43 @@ export class PurchaseOrderPage implements OnInit {
     this.lineErrors = {};
 
     if (!this.purchaseOrder.supplierId) {
-      this.supplierFieldError = 'Select a supplier before creating the order.';
+      this.supplierFieldError = this.text('purchase.selectSupplier');
     }
 
     if (!this.purchaseOrder.orderDate) {
-      this.orderDateError = 'Select an order date.';
+      this.orderDateError = this.text('purchase.selectOrderDate');
     }
     if (!this.purchaseOrder.expectedDate) {
       this.expectedDateError = 'Select an expected date.';
     } else if (this.purchaseOrder.orderDate && this.purchaseOrder.expectedDate < this.purchaseOrder.orderDate) {
-      this.expectedDateError = 'Expected date cannot be before the order date.';
+      this.expectedDateError = this.text('purchase.expectedBeforeOrder');
     }
 
     if (this.purchaseOrder.items.length === 0) {
-      this.formError = 'Add at least one medicine line.';
+      this.formError = this.text('purchase.addLine');
     }
 
     for (const [index, item] of this.purchaseOrder.items.entries()) {
       const errors: PurchaseLineErrors = {};
       if (!item.pharmacyMedicineId) {
-        errors.medicine = 'Select a medicine.';
+        errors.medicine = this.text('purchase.selectMedicine');
       }
 
       if (!Number.isFinite(Number(item.quantityOrdered)) || Number(item.quantityOrdered) <= 0) {
-        errors.quantity = 'Quantity must be greater than 0.';
+        errors.quantity = this.text('purchase.quantityPositive');
       }
 
       if (!Number.isFinite(Number(item.unitPrice)) || Number(item.unitPrice) <= 0) {
-        errors.unitPrice = 'Unit cost must be greater than 0.';
+        errors.unitPrice = this.text('purchase.unitCostPositive');
       }
 
       const lineGross = Number(item.quantityOrdered || 0) * Number(item.unitPrice || 0);
       if (!Number.isFinite(Number(item.lineDiscount)) || Number(item.lineDiscount) < 0 || Number(item.lineDiscount) > lineGross) {
-        errors.lineDiscount = 'Discount must be between 0 and the line amount.';
+        errors.lineDiscount = this.text('purchase.discountRange');
       }
 
       if (!Number.isFinite(Number(item.taxAmount)) || Number(item.taxAmount) < 0) {
-        errors.taxAmount = 'Tax cannot be negative.';
+        errors.taxAmount = this.text('purchase.taxNegative');
       }
 
       if (Object.keys(errors).length > 0) {
@@ -435,7 +449,7 @@ export class PurchaseOrderPage implements OnInit {
     }
 
     if (this.purchaseOrder.discountAmount < 0 || this.purchaseOrder.discountAmount > this.subtotal - this.lineDiscountTotal) {
-      this.discountError = 'Supplier discount cannot exceed the order amount.';
+      this.discountError = this.text('purchase.supplierDiscountLimit');
     }
 
     if (this.supplierFieldError || this.orderDateError || this.expectedDateError || this.discountError || Object.keys(this.lineErrors).length > 0) {
@@ -463,7 +477,7 @@ export class PurchaseOrderPage implements OnInit {
       next: (res) => {
         this.isCreatingOrder = false;
 
-        this.toast.show('Order Created Successfully!', 'success');
+        this.toast.show(this.text('purchase.success'), 'success');
         this.resetForm();
         this.closeCreateModal();
         this.loadPurchaseOrders();
@@ -471,7 +485,7 @@ export class PurchaseOrderPage implements OnInit {
       error: (err) => {
         this.isCreatingOrder = false;
 
-        this.toast.show('Failed to create Purchase Order', 'error');
+        this.toast.show(this.text('purchase.createError'), 'error');
       },
     });
   }
@@ -510,7 +524,7 @@ export class PurchaseOrderPage implements OnInit {
         next: (res: any) => prepareReceipt(res.data ?? res),
         error: () => {
           this.receivingOrderLoading = false;
-          this.receiptError = 'Could not load purchase order lines. Close and try again.';
+          this.receiptError = this.text('purchase.errorReceiptLines');
           this.cdr.detectChanges();
         },
       });
@@ -523,37 +537,37 @@ export class PurchaseOrderPage implements OnInit {
     this.receiptError = null;
     this.receiptItemErrors = {};
     if (!this.receipt.invoiceNumber || this.receipt.invoiceNumber.trim() === '') {
-      this.receiptError = 'Invoice number is required.';
+      this.receiptError = this.text('purchase.invoiceNumberRequired');
       return;
     }
 
     if (!this.receipt.invoiceDate) {
-      this.receiptError = 'Invoice date is required.';
+      this.receiptError = this.text('purchase.invoiceDateRequired');
       return;
     }
 
     if (!this.receipt.invoiceTotal || this.receipt.invoiceTotal <= 0) {
-      this.receiptError = 'Invoice total must be greater than 0.';
+      this.receiptError = this.text('purchase.invoiceTotalPositive');
       return;
     }
 
     if (!this.receipt.items || this.receipt.items.length === 0) {
-      this.receiptError = 'At least one receipt line is required.';
+      this.receiptError = this.text('purchase.receiptLineRequired');
       return;
     }
 
     for (const [index, item] of this.receipt.items.entries()) {
       if (!item.quantity || item.quantity <= 0) {
-        this.receiptItemErrors[index] = 'Enter a quantity greater than 0.';
+        this.receiptItemErrors[index] = this.text('purchase.receiptQuantityPositive');
         return;
       }
       if (!item.batchNumber || item.batchNumber.trim() === '') {
-        this.receiptItemErrors[index] = 'Batch number is required.';
+        this.receiptItemErrors[index] = this.text('purchase.batchRequired');
         return;
       }
 
       if (!item.expiryDate) {
-        this.receiptItemErrors[index] = 'Expiry date is required.';
+        this.receiptItemErrors[index] = this.text('purchase.expiryRequired');
         return;
       }
 
@@ -563,7 +577,7 @@ export class PurchaseOrderPage implements OnInit {
       today.setHours(0, 0, 0, 0);
 
       if (expiryDate < today) {
-        this.receiptItemErrors[index] = 'Expiry date cannot be in the past.';
+        this.receiptItemErrors[index] = this.text('purchase.expiryPast');
         return;
       }
     }
@@ -580,7 +594,7 @@ export class PurchaseOrderPage implements OnInit {
       next: (res) => {
         this.isReceiving = false;
 
-        this.toast.show('Receipt created successfully', 'success');
+        this.toast.show(this.text('purchase.receiptCreated'), 'success');
 
         this.showReceiveModal = false;
 
@@ -593,7 +607,7 @@ export class PurchaseOrderPage implements OnInit {
 
         console.log(err);
 
-        this.toast.show('Failed to receive goods', 'error');
+        this.toast.show(this.text('purchase.receiveError'), 'error');
       },
     });
   }
@@ -615,7 +629,7 @@ export class PurchaseOrderPage implements OnInit {
       },
       error: (err) => {
         this.receiptHistoryLoading = false;
-        this.receiptHistoryError = 'Could not load receipt history.';
+        this.receiptHistoryError = this.text('purchase.errorReceipts');
         console.log(err);
         this.cdr.detectChanges();
       },
@@ -643,7 +657,7 @@ export class PurchaseOrderPage implements OnInit {
       next: () => {
         this.isSavingPrices = false;
 
-        this.toast.show('Prices updated successfully', 'success');
+        this.toast.show(this.text('purchase.pricesUpdated'), 'success');
 
         this.showReceiptDetailsModal = false;
         this.cdr.detectChanges();
@@ -655,7 +669,7 @@ export class PurchaseOrderPage implements OnInit {
         this.isSavingPrices = false;
 
         console.log(err);
-        this.toast.show('Failed to update prices', 'error');
+        this.toast.show(this.text('purchase.pricesError'), 'error');
       },
     });
   }

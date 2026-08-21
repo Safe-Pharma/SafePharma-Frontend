@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { AddManufacturerBarcodeDto, AddPharmacyBarcodeDto, GlobalMedicineSearchResult, LinkExistingMedicineDto, Medicine, MedicineCreateDto, MedicineDetails, MedicineStats, PharmacyMedicineUpdateDto } from '../Models/medicine.model';
 import { GeneralResult } from '../../../Core/Models/general-result.model';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({ providedIn: 'root' })
 export class MedicinesApiService {

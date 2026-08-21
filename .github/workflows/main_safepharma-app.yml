@@ -1,0 +1,66 @@
+name: Build and deploy ASP.Net Core app to Azure Web App - safepharma-app
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build Angular app (production)
+        run: npm run build -- --configuration production
+
+      - name: Copy Angular build output into StaticHost/wwwroot
+        run: Copy-Item -Path "dist/front/browser/*" -Destination "StaticHost/wwwroot" -Recurse -Force
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Build with dotnet
+        run: dotnet build StaticHost/StaticHost.csproj --configuration Release
+      - name: dotnet publish
+        run: dotnet publish StaticHost/StaticHost.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2C6BE736096E4EB9BA695FE4BF619CEB }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4996A69CCDA0437BA984258CD9730C87 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6B6DBDF45FC947639D0815B355C39527 }}
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'safepharma-app'
+          slot-name: 'Production'
+          package: .

@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { GeneralResult } from '../../../Core/Models/general-result.model';
 import { PaymentInstructions } from '../Models/payment-instructions.model';
 import { PaymentVerificationRead, SubmitPaymentProofRequest } from '../Models/payment-verification.model';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({
   providedIn: 'root',

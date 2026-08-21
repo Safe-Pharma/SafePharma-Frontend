@@ -63,7 +63,7 @@ export class AllergiesSection implements OnChanges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load allergies.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadAllergiesError')), 'error');
       },
     });
   }
@@ -88,11 +88,11 @@ export class AllergiesSection implements OnChanges {
         ]);
         this.saving.set(false);
         this.pickerOpen.set(false);
-        this.toast.show('Allergy added.', 'success');
+        this.toast.show(this.i18n.t('toast.allergyAdded'), 'success');
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not add allergy.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.addAllergyError')), 'error');
       },
     });
   }
@@ -116,11 +116,11 @@ export class AllergiesSection implements OnChanges {
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.allergyId !== id));
         this.pendingRemoveId.set(null);
-        this.toast.show('Allergy removed.', 'success');
+        this.toast.show(this.i18n.t('toast.allergyRemoved'), 'success');
       },
       error: (err) => {
         this.pendingRemoveId.set(null);
-        this.toast.show(getErrorMessage(err, 'Could not remove allergy.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.removeAllergyError')), 'error');
       },
     });
   }

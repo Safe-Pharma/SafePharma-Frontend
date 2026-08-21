@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   PatientSafetyResult,
@@ -7,6 +7,8 @@ import {
   SafetyIssueSeverity,
 } from '../../Model/patient-safety.models';
 import { ModalOverlayDirective } from '../../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../../Core/Services/i18n.service';
+import { POS_DICT } from '../../pos.i18n';
 
 type SafetyTone = 'ok' | 'warn' | 'danger';
 
@@ -36,6 +38,7 @@ const SEVERITY_WEIGHT: Record<SafetyIssueSeverity, number> = { Minor: 1, Moderat
   templateUrl: './safety-result-modal.html',
 })
 export class SafetyResultModalComponent {
+  private readonly i18n = inject(I18nService);
   results = input.required<PatientSafetyResult[]>();
   patientNames = input<Record<string, string>>({});
   medicines = input<SafetyCheckedMedicine[]>([]);
@@ -53,7 +56,7 @@ export class SafetyResultModalComponent {
       );
       return {
         result,
-        patientName: this.patientNames()[result.patientRef] || 'Customer',
+        patientName: this.patientNames()[result.patientRef] || this.t('toast.customerFallback'),
         decisionTone: this.toneFor(result),
         medicines: patientMedicines.map((medicine) => this.medicineView(result, medicine)),
       };
@@ -69,8 +72,10 @@ export class SafetyResultModalComponent {
   }
 
   protected toneLabel(tone: SafetyTone): string {
-    return tone === 'ok' ? 'Safe' : tone === 'danger' ? 'High Risk' : 'Warning';
+    return tone === 'ok' ? this.t('safety.safe') : tone === 'danger' ? this.t('safety.highRisk') : this.t('safety.warning');
   }
+
+  protected t(key: string, params?: Record<string, string | number>): string { return this.i18n.t(POS_DICT, key, params); }
 
   protected severityWeight(severity: SafetyIssueSeverity): number {
     return SEVERITY_WEIGHT[severity] ?? 0;
@@ -82,7 +87,7 @@ export class SafetyResultModalComponent {
     );
     const tone = issues.length > 0 ? this.toneForIssues(result, issues) : this.toneFor(result);
     const conclusion = issues[0]?.reason ||
-      (result.checkSucceeded ? 'No patient-specific issues detected.' : result.failureReason || 'The safety check could not be completed.');
+      (result.checkSucceeded ? this.t('safety.noIssues') : result.failureReason || this.t('safety.couldNotComplete'));
 
     return {
       key: `${result.patientRef}:${medicine.id}`,

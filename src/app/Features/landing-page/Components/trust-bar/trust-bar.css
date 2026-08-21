@@ -1,0 +1,23 @@
+.landing-trust-list > div {
+  animation: landing-trust-in 500ms ease-out both;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.landing-trust-list > div:nth-child(1) { animation-delay: 80ms; }
+.landing-trust-list > div:nth-child(2) { animation-delay: 140ms; }
+.landing-trust-list > div:nth-child(3) { animation-delay: 200ms; }
+.landing-trust-list > div:nth-child(4) { animation-delay: 260ms; }
+
+.landing-trust-list > div:hover {
+  color: var(--foreground);
+  transform: translateY(-2px);
+}
+
+@keyframes landing-trust-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-trust-list > div { animation: none; }
+}

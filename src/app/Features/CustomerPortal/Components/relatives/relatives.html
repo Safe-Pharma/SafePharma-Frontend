@@ -3,7 +3,7 @@
   import { fadeSlideIn, staggerList, listItem } from '../shared/portal-animations';
   @Component({ ..., animations: [fadeSlideIn, staggerList, listItem] })
 -->
-<div class="mx-auto max-w-4xl space-y-5" @fadeSlideIn>
+<div class="portal-motion-page mx-auto max-w-4xl space-y-5" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">
       {{ i18n.t('relatives.title') }}
@@ -41,7 +41,7 @@
       </portal-empty-state>
     </div>
   } @else {
-    <div class="grid gap-3 sm:grid-cols-2" [@staggerList]="relatives().length">
+    <div class="portal-motion-grid grid gap-3 sm:grid-cols-2" [@staggerList]="relatives().length">
       @for (r of relatives(); track r.id) {
         <div
           class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:bg-muted/30"
@@ -61,11 +61,11 @@
     </div>
   }
 
-  <div class="rounded-xl border border-border bg-card p-4" @fadeSlideIn>
+  <div class="portal-motion-panel rounded-xl border border-border bg-card p-4" @fadeSlideIn>
     <div class="mb-3 flex items-center justify-between">
       <div>
-        <h3 class="text-sm font-semibold text-foreground">Children</h3>
-        <p class="text-xs text-muted-foreground">Open a child profile to view their details.</p>
+        <h3 class="text-sm font-semibold text-foreground">{{ i18n.t('common.children') }}</h3>
+        <p class="text-xs text-muted-foreground">{{ i18n.t('common.childrenSubtitle') }}</p>
       </div>
     </div>
 
@@ -77,14 +77,14 @@
       </div>
     } @else if (children().length === 0) {
       <div class="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-        No children linked to this customer yet.
+        {{ i18n.t('common.noChildren') }}
       </div>
     } @else {
-      <div class="grid gap-3 sm:grid-cols-2" [@staggerList]="children().length">
+      <div class="portal-motion-grid grid gap-3 sm:grid-cols-2" [@staggerList]="children().length">
         @for (child of children(); track child.relativeId) {
           <button
             type="button"
-            class="flex items-center hover:cursor-pointer justify-between rounded-lg border border-border bg-background/70 p-3 text-left transition-colors duration-150 hover:bg-muted/40"
+            class="flex items-center hover:cursor-pointer justify-between rounded-lg border border-border bg-background/70 p-3 text-start transition-colors duration-150 hover:bg-muted/40"
             @listItem
             (click)="openChildProfile(child.relativeId)"
           >
@@ -93,7 +93,7 @@
                 {{ child.relativeName }}
               </div>
             </div>
-            <span class="text-xs font-medium text-primary">View</span>
+            <span class="text-xs font-medium text-primary">{{ i18n.t('common.view') }}</span>
           </button>
         }
       </div>
@@ -102,7 +102,7 @@
 
   <!-- Pharmacy-only linking notice — relatives can never be added from inside the portal. -->
   <div
-    class="flex flex-col items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft p-4 sm:flex-row sm:items-center"
+    class="portal-motion-panel flex flex-col items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft p-4 sm:flex-row sm:items-center"
     @fadeSlideIn
   >
     <span

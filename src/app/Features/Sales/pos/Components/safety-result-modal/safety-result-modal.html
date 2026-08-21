@@ -7,7 +7,7 @@
       type="button"
       class="absolute right-4 top-4 rounded-sm text-slate-400 opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
       (click)="onClose()"
-      aria-label="Close safety check"
+      [attr.aria-label]="t('safety.close')"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
         <path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>
@@ -15,8 +15,8 @@
     </button>
 
     <div>
-      <h2 class="text-lg font-semibold leading-none tracking-tight text-slate-900">Medicine safety check</h2>
-      <p class="mt-1.5 text-sm text-slate-500">Grounded in official drug labeling (OpenFDA / DailyMed).</p>
+      <h2 class="text-lg font-semibold leading-none tracking-tight text-slate-900">{{ t('safety.title') }}</h2>
+      <p class="mt-1.5 text-sm text-slate-500">{{ t('safety.source') }}</p>
     </div>
 
     @if (loading()) {
@@ -25,7 +25,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
         </svg>
-        <p class="text-sm">Checking current medicines…</p>
+        <p class="text-sm">{{ t('safety.checking') }}</p>
       </div>
     } @else if (errorMessage()) {
       <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ errorMessage() }}</div>
@@ -77,7 +77,7 @@
                   }
                 </article>
               } @empty {
-                <p class="rounded-lg bg-white/70 px-3 py-3 text-sm text-slate-600">No medicine-level details were returned for this patient.</p>
+          <p class="rounded-lg bg-white/70 px-3 py-3 text-sm text-slate-600">{{ t('safety.noMedicineDetails') }}</p>
               }
             </div>
 
@@ -88,13 +88,13 @@
             @if (card.result.sources.length > 0) { <p class="mt-2 text-[11px] uppercase tracking-wide text-slate-400">Sources: {{ card.result.sources.join(', ') }}</p> }
           </section>
         } @empty {
-          <p class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">No safety result was returned.</p>
+          <p class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{{ t('safety.noResult') }}</p>
         }
       </div>
     }
 
     <div class="flex justify-end">
-      <button type="button" (click)="onClose()" class="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">Close</button>
+      <button type="button" (click)="onClose()" class="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">{{ t('safety.closeButton') }}</button>
     </div>
   </div>
 </div>

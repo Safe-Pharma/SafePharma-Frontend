@@ -3,26 +3,26 @@
   <div class="flex items-center justify-between rounded-md border border-input px-3 py-2 text-sm">
     <span>{{ sel.name }}</span>
     <button type="button" (click)="onClearSelection()"
-      class="cursor-pointer text-xs text-muted-foreground hover:text-foreground">Change</button>
+      class="cursor-pointer text-xs text-muted-foreground hover:text-foreground">{{ text('shared.change') }}</button>
   </div>
   } @else {
   <div class="relative">
-    <input type="text" [value]="query()" placeholder="Search customers by name or phone…"
+    <input type="text" [value]="query()" [placeholder]="text('shared.searchCustomers')"
       (input)="onQueryInput($any($event.target).value)" (focus)="onFocus()" (blur)="onBlur()"
       class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
 
     @if (showDropdown()) {
     <div class="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-border bg-card py-1 shadow-card">
       @if (searching()) {
-      <div class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"><app-spinner size="sm" /> Searching…</div>
+      <div class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"><app-spinner size="sm" /> {{ text('shared.searching') }}</div>
       } @else if (showNoResults()) {
       <div class="px-3 py-2 text-xs text-muted-foreground">
-        No customers found. If they're not registered yet, add them as a new customer first.
+        {{ text('shared.noCustomers') }}
       </div>
       } @else {
       @for (customer of results(); track customer.id) {
       <button type="button" (mousedown)="onSelect(customer)"
-        class="block w-full px-3 py-2 text-left text-xs hover:bg-accent">
+        class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">
         <span class="font-medium">{{ customer.name }}</span>
         <span class="text-muted-foreground"> — {{ customer.phone }}</span>
       </button>

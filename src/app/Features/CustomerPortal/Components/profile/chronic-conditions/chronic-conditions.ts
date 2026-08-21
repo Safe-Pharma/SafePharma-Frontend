@@ -63,7 +63,7 @@ export class ChronicConditionsSection implements OnChanges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load chronic conditions.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadChronicError')), 'error');
       },
     });
   }
@@ -88,11 +88,11 @@ export class ChronicConditionsSection implements OnChanges {
         ]);
         this.saving.set(false);
         this.pickerOpen.set(false);
-        this.toast.show('Condition added.', 'success');
+        this.toast.show(this.i18n.t('toast.conditionAdded'), 'success');
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not add condition.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.addConditionError')), 'error');
       },
     });
   }
@@ -116,11 +116,11 @@ export class ChronicConditionsSection implements OnChanges {
       next: () => {
         this.assigned.update((list) => list.filter((a) => a.chronicConditionId !== id));
         this.pendingRemoveId.set(null);
-        this.toast.show('Condition removed.', 'success');
+        this.toast.show(this.i18n.t('toast.conditionRemoved'), 'success');
       },
       error: (err) => {
         this.pendingRemoveId.set(null);
-        this.toast.show(getErrorMessage(err, 'Could not remove condition.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.removeConditionError')), 'error');
       },
     });
   }

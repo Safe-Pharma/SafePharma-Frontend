@@ -3,8 +3,8 @@
     class="relative grid w-full max-w-md gap-4 rounded-lg border border-border bg-background p-6 shadow-lg"
     (click)="$event.stopPropagation()">
     <button type="button"
-      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
-      (click)="onClose()" aria-label="Close">
+      class="absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      (click)="onClose()" [attr.aria-label]="text('common.actions.close')">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
         <path d="M18 6 6 18"></path>
@@ -13,8 +13,8 @@
     </button>
 
     <div>
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Add {{ type() === 'manufacturer' ? 'manufacturer' : 'pharmacy' }} barcode</h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">{{ type() === 'manufacturer' ? 'Used by the medicine manufacturer and shared across pharmacies.' : 'Assigned by this pharmacy for local scanning.' }}</p>
+      <h2 class="text-lg font-semibold leading-none tracking-tight">{{ text('medicine.add') }} {{ type() === 'manufacturer' ? text('medicine.manufacturerBarcode') : text('medicine.pharmacyBarcode') }}</h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">{{ type() === 'manufacturer' ? text('medicine.sharedBarcodes') : text('medicine.localBarcode') }}</p>
     </div>
 
     @if (isOwner()) {
@@ -22,12 +22,12 @@
         <button type="button" (click)="setType('pharmacy')"
           class="rounded-md px-3 py-1.5 font-medium transition-colors"
           [ngClass]="type() === 'pharmacy' ? 'bg-background shadow' : 'text-muted-foreground'">
-          Pharmacy barcode
+          {{ text('medicine.pharmacyBarcode') }}
         </button>
         <button type="button" (click)="setType('manufacturer')"
           class="rounded-md px-3 py-1.5 font-medium transition-colors"
           [ngClass]="type() === 'manufacturer' ? 'bg-background shadow' : 'text-muted-foreground'">
-          Manufacturer barcode
+          {{ text('medicine.manufacturerBarcode') }}
         </button>
       </div>
     }
@@ -35,19 +35,19 @@
     <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
       <div class="space-y-2">
         <label class="text-sm font-medium" for="barcode-value">
-          Barcode {{ type() === 'pharmacy' ? '(optional — auto-generated if left blank)' : '' }}
+          {{ type() === 'pharmacy' ? text('medicine.barcodeOptional') : text('medicine.barcodes') }}
         </label>
         <input id="barcode-value" formControlName="barcode"
           class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm h-9"
-          placeholder="e.g. 6221031012345" autocomplete="off" />
+          [placeholder]="text('medicine.barcodePlaceholder')" autocomplete="off" />
         @if (form.controls.barcode.invalid && form.controls.barcode.touched) {
-          <p class="text-xs text-destructive">Barcode is required.</p>
+          <p class="text-xs text-destructive">{{ text('medicine.barcodeRequired') }}</p>
         }
       </div>
 
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" formControlName="isPrimary" class="size-4 rounded border-input" />
-        Set as primary barcode
+        {{ text('medicine.setPrimaryBarcode') }}
       </label>
 
       @if (errorMsg(); as msg) {
@@ -57,11 +57,11 @@
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" (click)="onClose()"
           class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-3 h-9 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-          Cancel
+          {{ text('common.actions.cancel') }}
         </button>
         <button type="submit" [disabled]="submitting()"
           class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ submitting() ? 'Adding…' : 'Add ' + (type() === 'manufacturer' ? 'manufacturer' : 'pharmacy') + ' barcode' }}
+          {{ submitting() ? text('medicine.adding') : text('medicine.added', { type: type() === 'manufacturer' ? text('medicine.manufacturerBarcode') : text('medicine.pharmacyBarcode') }) }}
         </button>
       </div>
     </form>

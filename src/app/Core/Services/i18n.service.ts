@@ -1,6 +1,9 @@
+import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthSessionService } from './auth-session.service';
 
 export type AppLanguage = 'en' | 'ar';
 
@@ -8,6 +11,418 @@ export type AppLanguage = 'en' | 'ar';
 export type Dictionary = Record<AppLanguage, Record<string, string>>;
 
 const STORAGE_KEY = 'app_lang';
+const LEGACY_PORTAL_STORAGE_KEY = 'portal_lang';
+
+const APP_TEXT: Dictionary = {
+  en: {
+    'brand.name': 'SafePharma', 'auth.emailPlaceholder': 'you@safepharma.com', 'subscribe.pharmacyNamePlaceholder': 'SafePharma Pharmacy',
+    'subscription.backHome': 'Back to home', 'subscribe.perMonth': '/mo', 'subscribe.perYear': '/yr', 'subscribe.gulfTime': '(GMT+4) Gulf Standard Time', 'subscribe.arabiaTime': '(GMT+3) Arabia Standard Time', 'subscribe.europeTime': '(GMT+2) Eastern European Time', 'subscribe.copy': 'Copy {value}',
+    'landing.trusted': 'Trusted by 2,400+ pharmacies across MENA', 'landing.heroTitle': 'Complete ERP Solution for', 'landing.modernPharmacies': 'Modern Pharmacies', 'landing.heroDescription': 'Run inventory, POS, purchasing, sales, reporting, users and audit tracking from a single, secure platform — designed for the pace of pharmacy operations.', 'landing.startTrial': 'Start Free Trial', 'landing.bookDemo': 'Book a Demo', 'landing.dashboardUrl': 'app.safepharma.io / dashboard', 'landing.revenueMtd': 'Revenue MTD', 'landing.orders': 'Orders', 'landing.lowStock': 'Low Stock', 'landing.branches': 'Branches', 'landing.salesLast7Days': 'Sales — Last 7 days', 'landing.total': 'Total {amount}', 'landing.capabilities': 'Capabilities', 'landing.capabilitiesTitle': 'Everything you need to run a modern pharmacy', 'landing.capabilitiesDescription': 'Ten purpose-built modules that work as one. No more spreadsheets, no more swivel-chair workflows.', 'landing.inventory': 'Inventory Management', 'landing.inventoryDescription': 'Real-time stock across branches, batches, expiry tracking and auto-reorder.', 'landing.salesPos': 'Sales & POS', 'landing.salesPosDescription': 'Fast checkout, insurance claims, loyalty and integrated payments.', 'landing.purchasing': 'Purchasing', 'landing.purchasingDescription': 'RFQs, purchase orders, GRNs and supplier price lists in one flow.', 'landing.suppliers': 'Suppliers', 'landing.suppliersDescription': 'Vendor catalog, performance and contract terms at your fingertips.', 'landing.customers': 'Customers', 'landing.customersDescription': 'Patient profiles, prescription history and segmentation.', 'landing.reports': 'Reports', 'landing.reportsDescription': 'Pre-built dashboards plus a no-code report builder.', 'landing.userManagement': 'User Management', 'landing.userManagementDescription': 'Granular role-based access for every team member and branch.', 'landing.auditLogs': 'Audit Logs', 'landing.auditLogsDescription': 'Tamper-proof history of every action — who, what, when, where.', 'landing.multiBranch': 'Multi-Branch', 'landing.multiBranchDescription': 'Consolidated reporting with branch-level autonomy.', 'landing.secureCloud': 'Secure Cloud', 'landing.secureCloudDescription': 'SOC 2 aligned, encrypted at rest and in transit.', 'landing.pricing': 'Pricing', 'landing.pricingTitle': 'Simple plans that scale with you', 'landing.pricingDescription': 'Start with a 14-day free trial. No credit card required.', 'landing.starter': 'Starter', 'landing.starterDescription': 'For single-branch independent pharmacies.', 'landing.perMonth': '/ month', 'landing.oneBranch': '1 branch', 'landing.upTo5Users': 'Up to 5 users', 'landing.inventoryPos': 'Inventory + POS', 'landing.emailSupport': 'Email support', 'landing.mostPopular': 'Most popular', 'landing.professional': 'Professional', 'landing.professionalDescription': 'Everything growing chains need.', 'landing.upTo5Branches': 'Up to 5 branches', 'landing.unlimitedUsers': 'Unlimited users', 'landing.purchasingSuppliers': 'Purchasing + Suppliers', 'landing.advancedReports': 'Advanced reports', 'landing.prioritySupport': 'Priority support', 'landing.enterprise': 'Enterprise', 'landing.enterpriseDescription': 'For large networks with custom needs.', 'landing.custom': 'Custom', 'landing.unlimitedBranches': 'Unlimited branches', 'landing.ssoSaml': 'SSO + SAML', 'landing.customIntegrations': 'Custom integrations', 'landing.dedicatedCsm': 'Dedicated CSM', 'landing.sla': '99.95% SLA', 'landing.contactSales': 'Contact Sales', 'landing.soc2': 'SOC 2 aligned', 'landing.uptime': '99.95% uptime', 'landing.auditTrail': 'Full audit trail', 'landing.multiBranchReady': 'Multi-branch ready',
+    'ownerDashboard.navigation': 'Owner dashboard navigation', 'ownerDashboard.portal': 'Owner Portal', 'ownerDashboard.logout': 'Logout', 'ownerDashboard.title': 'Owner Dashboard', 'ownerDashboard.subtitle': 'Manage pharmacies and activation status.', 'ownerDashboard.loading': 'Loading pharmacies…', 'ownerDashboard.totalPharmacies': 'Total Pharmacies', 'ownerDashboard.activePharmacies': 'Active Pharmacies', 'ownerDashboard.inactive': 'Inactive', 'ownerDashboard.searchPlaceholder': 'Search pharmacies, owners, cities...', 'ownerDashboard.allStatuses': 'All statuses', 'ownerDashboard.active': 'Active', 'ownerDashboard.inactiveStatus': 'Inactive', 'ownerDashboard.pharmacy': 'Pharmacy', 'ownerDashboard.businessEmail': 'Business email', 'ownerDashboard.city': 'City', 'ownerDashboard.address': 'Address', 'ownerDashboard.country': 'Country', 'ownerDashboard.phone': 'Phone', 'ownerDashboard.status': 'Status', 'ownerDashboard.activation': 'Activation', 'ownerDashboard.noResults': 'No pharmacies found matching your filters.',
+    'ownerPaymentVerifications.title': 'Payment Verifications', 'ownerPaymentVerifications.subtitle': 'Review and verify pharmacy subscription payments.', 'ownerPaymentVerifications.views': 'Payment verification views', 'ownerPaymentVerifications.pending': 'Pending', 'ownerPaymentVerifications.all': 'All Verifications', 'ownerPaymentVerifications.loading': 'Loading payment verifications…', 'ownerPaymentVerifications.loadError': 'Could not load payment verifications.', 'ownerPaymentVerifications.retry': 'Try again', 'ownerPaymentVerifications.emptyPending': 'No pending payment verifications.', 'ownerPaymentVerifications.emptyAll': 'No payment verifications found.', 'ownerPaymentVerifications.reference': 'Reference', 'ownerPaymentVerifications.pharmacy': 'Pharmacy', 'ownerPaymentVerifications.plan': 'Plan', 'ownerPaymentVerifications.amount': 'Amount', 'ownerPaymentVerifications.paymentMethod': 'Payment method', 'ownerPaymentVerifications.paymentDate': 'Payment date', 'ownerPaymentVerifications.status': 'Status', 'ownerPaymentVerifications.actions': 'Actions', 'ownerPaymentVerifications.review': 'Review', 'ownerPaymentVerifications.statusPending': 'Pending', 'ownerPaymentVerifications.statusApproved': 'Approved', 'ownerPaymentVerifications.statusRejected': 'Rejected', 'ownerPaymentVerifications.unknownStatus': 'Unknown status', 'ownerPaymentVerifications.reviewTitle': 'Payment Verification', 'ownerPaymentVerifications.pharmacySubscription': 'Pharmacy & Subscription', 'ownerPaymentVerifications.subscription': 'Subscription ID', 'ownerPaymentVerifications.planTier': 'Plan tier', 'ownerPaymentVerifications.billingCycle': 'Billing cycle', 'ownerPaymentVerifications.paymentInformation': 'Payment Information', 'ownerPaymentVerifications.paidAmount': 'Paid amount', 'ownerPaymentVerifications.transactionReference': 'Transaction reference', 'ownerPaymentVerifications.receipt': 'Receipt', 'ownerPaymentVerifications.receiptPreview': 'Payment receipt preview', 'ownerPaymentVerifications.receiptLoading': 'Loading receipt…', 'ownerPaymentVerifications.receiptCouldNotLoad': 'Receipt could not be loaded.', 'ownerPaymentVerifications.noReceipt': 'No receipt was submitted.', 'ownerPaymentVerifications.openReceipt': 'Open receipt', 'ownerPaymentVerifications.verificationInformation': 'Verification Information', 'ownerPaymentVerifications.submittedAt': 'Submitted at', 'ownerPaymentVerifications.reviewedAt': 'Reviewed at', 'ownerPaymentVerifications.rejectionReason': 'Rejection reason', 'ownerPaymentVerifications.approve': 'Approve', 'ownerPaymentVerifications.approving': 'Approving…', 'ownerPaymentVerifications.approveTitle': 'Approve Payment Verification', 'ownerPaymentVerifications.approveDescription': 'Confirm that this payment verification should be approved.', 'ownerPaymentVerifications.confirmApproval': 'Confirm approval', 'ownerPaymentVerifications.approveError': 'Could not approve this payment verification.', 'ownerPaymentVerifications.reject': 'Reject', 'ownerPaymentVerifications.rejecting': 'Rejecting…', 'ownerPaymentVerifications.rejectTitle': 'Reject Payment Verification', 'ownerPaymentVerifications.rejectDescription': 'Provide a reason for rejecting this payment verification.', 'ownerPaymentVerifications.rejectionReasonPlaceholder': 'Explain why this payment verification is being rejected.', 'ownerPaymentVerifications.rejectionReasonRequired': 'A rejection reason is required.', 'ownerPaymentVerifications.rejectError': 'Could not reject this payment verification.', 'ownerPaymentVerifications.zoomIn': 'Zoom in', 'ownerPaymentVerifications.zoomOut': 'Zoom out', 'ownerPaymentVerifications.resetZoom': 'Reset zoom',
+    'subscribe.title': 'Create your SafePharma account', 'subscribe.subtitle': "Three quick sections and you're in. 14-day free trial included.", 'subscribe.selectPlan': 'Select your plan', 'subscribe.planDescription': "Switch anytime. You won't be charged until your trial ends.", 'subscribe.monthly': 'monthly', 'subscribe.yearly': 'yearly', 'subscribe.loadingPlans': 'Loading plans…', 'subscribe.pharmacyInformation': 'Pharmacy information', 'subscribe.businessDescription': 'Tell us about your business.', 'subscribe.pharmacyName': 'Pharmacy name', 'subscribe.pharmacyLogo': 'Pharmacy logo', 'subscribe.uploading': 'Uploading…', 'subscribe.clickToUploadLogo': 'Click to upload (PNG, SVG)', 'subscribe.taxNumber': 'Tax number', 'subscribe.commercialRegistration': 'Commercial registration', 'subscribe.address': 'Address', 'subscribe.country': 'Country', 'subscribe.city': 'City', 'subscribe.phone': 'Phone', 'subscribe.email': 'Email', 'subscribe.numberOfBranches': 'Number of branches', 'subscribe.preferredLanguage': 'Preferred language', 'subscribe.timeZone': 'Time zone', 'subscribe.primaryContact': 'Primary contact', 'subscribe.primaryContactDescription': 'This person will be your account admin.', 'subscribe.fullName': 'Full name', 'subscribe.mobile': 'Mobile', 'subscribe.password': 'Password', 'subscribe.requiredPassword': 'At least 8 characters', 'subscribe.selectCountry': 'Select a country', 'subscribe.searchCountries': 'Search countries…', 'subscribe.selectCity': 'Select a city', 'subscribe.searchCities': 'Search cities…', 'subscribe.selectLanguage': 'Select a language', 'subscribe.searchLanguages': 'Search languages…', 'subscribe.selectTimeZone': 'Select a time zone', 'subscribe.searchTimeZones': 'Search time zones…', 'subscribe.terms': 'By subscribing you agree to our Terms and Privacy Policy.', 'subscribe.submitting': 'Submitting…', 'subscribe.submit': 'Subscribe now', 'subscribe.locationsError': 'Could not load locations.', 'subscribe.plansError': 'Could not load subscription plans.', 'subscribe.logoUploadFailed': 'Logo upload failed.', 'subscribe.logoUploadRetry': 'Logo upload failed. Please try again.', 'subscribe.fixFields': 'Please fix the highlighted fields before submitting.', 'subscribe.genericError': 'Something went wrong. Please try again.', 'subscribe.required': 'This field is required.', 'subscribe.invalidEmail': 'Please enter a valid email address.', 'subscribe.minLength': 'Must be at least {value} characters.', 'subscribe.maxLength': 'Must not exceed {value} characters.', 'subscribe.min': 'Must be at least {value}.', 'subscribe.max': 'Must not exceed {value}.', 'subscribe.invalidPhone': 'Enter a valid international number (e.g. +971501234567).', 'subscribe.invalidName': 'Only letters, spaces, hyphens, or apostrophes are allowed.', 'subscribe.invalidFormat': 'Must be 5–20 characters: letters, numbers, or hyphens only.', 'subscribe.missingUppercase': 'Password must contain at least one uppercase letter.', 'subscribe.missingLowercase': 'Password must contain at least one lowercase letter.', 'subscribe.missingDigit': 'Password must contain at least one digit.', 'subscribe.missingSpecialChar': 'Password must contain at least one special character.', 'subscribe.invalidFormatShort': 'Invalid format.', 'subscribe.invalidValue': 'Invalid value.',
+    'subscription.completePayment': 'Complete your payment', 'subscription.reference': 'Subscription reference', 'subscription.plan': 'Plan', 'subscription.amountDue': 'Amount due', 'subscription.paymentInstructions': 'Use one of the methods below to transfer the amount, then submit your receipt.', 'subscription.includeReference': 'Include your reference in the transfer description.', 'subscription.madePayment': "I've made the payment — submit proof", 'subscription.viewStatus': 'View status', 'subscription.loading': 'Loading…', 'subscription.paymentUnderReview': 'Your payment is under review', 'subscription.reviewDescription': "Thanks — our team will verify your transfer and notify you once it's approved. This usually takes less than 1 business day.", 'subscription.status': 'Status', 'subscription.referenceShort': 'Reference', 'subscription.backToStatus': 'Back to status', 'subscription.subscriptionStatus': 'Subscription status', 'subscription.statusDescription': 'Track the payment verification for reference {reference}.', 'subscription.submissionHistory': 'Submission history', 'subscription.noSubmissions': 'No submissions found for this subscription.', 'subscription.paymentMethod': 'Payment method', 'subscription.transactionReference': 'Transaction reference', 'subscription.paymentDate': 'Payment date', 'subscription.paidAmount': 'Paid amount (EGP)', 'subscription.receipt': 'Receipt / screenshot', 'subscription.uploadReceipt': 'Click to upload (PNG, JPG, PDF · max 5MB)', 'subscription.confirmDetails': 'By submitting, you confirm the details are accurate.', 'subscription.submittingProof': 'Submitting…', 'subscription.submitVerification': 'Submit for verification', 'subscription.submitProof': 'Submit payment proof', 'subscription.approved': 'Approved', 'subscription.rejected': 'Rejected', 'subscription.pendingVerification': 'Pending Verification', 'subscription.rejectedDescription': 'Your payment proof was rejected. Please submit a new proof.', 'subscription.approvedDescription': 'Your payment has been verified. We will activate your account shortly.', 'subscription.pendingDescription': "Your payment proof is under review. You'll be notified once it's verified — usually within 1 business day.", 'subscription.submitted': 'Submitted {created} · Paid on {paid} · {amount}', 'subscription.resubmit': 'Submit new proof', 'subscription.continue': 'Continue', 'subscription.loadInstructionsError': 'Could not load payment instructions.', 'subscription.loadDetailsError': 'Could not load payment details.', 'subscription.loadStatusError': 'Could not load subscription status.', 'subscription.receiptUploadFailed': 'Receipt upload failed.', 'subscription.receiptUploadRetry': 'Receipt upload failed. Please try again.', 'subscription.submitProofError': 'Could not submit payment proof.', 'subscription.fileTypeError': 'File must be a JPG, PNG, or PDF.', 'subscription.fileSizeError': 'File must be under 5MB.',
+    'common.actions.save': 'Save', 'common.actions.cancel': 'Cancel', 'common.actions.close': 'Close',
+    'common.actions.edit': 'Edit', 'common.actions.delete': 'Delete', 'common.actions.retry': 'Retry',
+    'common.actions.search': 'Search', 'common.actions.clear': 'Clear', 'common.actions.logout': 'Logout', 'common.loading': 'Loading…',
+    'common.saving': 'Saving…', 'common.selectLanguage': 'Select a language', 'common.searchLanguages': 'Search languages…',
+    'common.required': 'This field is required.', 'common.invalid': 'Invalid value.',
+    'language.english': 'English', 'language.arabic': 'Arabic', 'language.switchToEnglish': 'Switch to English',
+    'language.switchToArabic': 'Switch to Arabic', 'nav.dashboard': 'Dashboard', 'nav.sales': 'Sales',
+    'nav.pos': 'POS', 'nav.purchases': 'Purchases', 'nav.inventory': 'Inventory', 'nav.medicines': 'Medicines',
+    'nav.taxes': 'Taxes', 'nav.suppliers': 'Suppliers', 'nav.customers': 'Customers', 'nav.reports': 'Reports',
+    'nav.users': 'Users', 'nav.settings': 'Settings', 'nav.profile': 'Profile', 'nav.audit': 'Audit History',
+    'nav.changePassword': 'Change Password', 'nav.finance': 'Finance', 'nav.accountsPayable': 'Accounts Payable',
+    'nav.accountsReceivable': 'Accounts Receivable', 'nav.invoices': 'Invoices', 'nav.items': 'Items',
+    'nav.pharmacy': 'Pharmacy', 'nav.details': 'Details', 'nav.openNavigation': 'Open navigation',
+    'nav.closeSidebar': 'Close sidebar', 'nav.toggleSidebar': 'Toggle sidebar', 'nav.breadcrumb': 'Breadcrumb',
+    'settings.title': 'Settings', 'settings.subtitle': 'Manage your pharmacy profile, localization and platform preferences.',
+    'settings.profile': 'Pharmacy profile', 'settings.profileDescription': 'Public-facing pharmacy details.',
+    'settings.localization': 'Localization', 'settings.localizationDescription': 'Language and regional defaults.',
+    'settings.pharmacyName': 'Pharmacy name', 'settings.logo': 'Logo', 'settings.uploadLogo': 'Upload PNG or SVG',
+    'settings.removeLogo': 'Remove', 'settings.street': 'Street', 'settings.country': 'Country', 'settings.city': 'City', 'settings.governorate': 'Governorate',
+    'settings.selectCountry': 'Select a country', 'settings.searchCountries': 'Search countries…', 'settings.selectCity': 'Select a city', 'settings.searchCities': 'Search cities…', 'settings.selectGovernorate': 'Select a governorate',
+    'settings.searchGovernorates': 'Search governorates…', 'settings.taxNumber': 'Tax number', 'settings.phone': 'Phone',
+    'settings.defaultLanguage': 'Default language', 'settings.defaultLanguageDescription': 'Default language for users without a personal preference.',
+    'settings.saveSuccess': 'Settings saved successfully!', 'settings.saveFallback': 'Settings saved. Refresh to confirm the latest logo.',
+    'settings.loadError': 'Could not load pharmacy settings.', 'settings.locationError': 'Could not load locations.',
+    'settings.validationError': 'Please fix the errors below.', 'common.somethingWentWrong': 'Something went wrong.',
+    'auth.signInTitle': 'Sign in to SafePharma', 'auth.signInDescription': 'Welcome back. Enter your details to continue.',
+    'auth.email': 'Email', 'auth.password': 'Password', 'auth.forgotPassword': 'Forgot password?',
+    'auth.remember': 'Remember me for 30 days', 'auth.signIn': 'Sign in', 'auth.signingIn': 'Signing in…',
+    'auth.noAccount': 'No account yet?', 'auth.startTrial': 'Start free trial', 'auth.invalidEmail': 'Please enter a valid email address.',
+    'auth.passwordMin': 'Must be at least {count} characters.', 'auth.passwordUpper': 'Password must contain at least one uppercase letter.',
+    'auth.passwordLower': 'Password must contain at least one lowercase letter.', 'auth.passwordDigit': 'Password must contain at least one number.',
+    'auth.passwordSpecial': 'Password must contain at least one special character.', 'auth.fixFields': 'Please fix the highlighted fields before signing in.',
+    'auth.loginResponseError': 'The login response did not include an access token.', 'auth.unableSignIn': 'Unable to sign in. Please try again.',
+    'auth.welcome': 'Welcome back — you are signed in.', 'public.features': 'Features', 'public.pricing': 'Pricing',
+    'public.contact': 'Contact', 'public.login': 'Login', 'public.subscribe': 'Subscribe', 'public.back': 'Back',
+    'public.pharmacyErp': 'Pharmacy ERP', 'public.company': 'Company', 'public.legal': 'Legal', 'public.follow': 'Follow',
+    'public.about': 'About', 'public.careers': 'Careers', 'public.privacy': 'Privacy Policy', 'public.terms': 'Terms',
+    'public.dpa': 'DPA', 'public.allRightsReserved': 'All rights reserved.', 'public.tagline': 'Pharmacy ERP for ambitious operators.'
+    , 'shared.change': 'Change', 'shared.catalog': 'Catalog', 'shared.searchCustomers': 'Search customers by name or phone…',
+    'shared.searching': 'Searching…', 'shared.noCustomers': 'No customers found. If they\'re not registered yet, add them as a new customer first.',
+    'shared.searchMedicine': 'Search medicine…', 'shared.medicineName': 'Medicine name…', 'shared.scientificName': 'Scientific name…',
+    'shared.searchInstead': 'Search instead', 'shared.noCatalogMatches': 'No matches in the catalog.', 'shared.addManually': 'Can\'t find it? Add manually',
+    'shared.loading': 'Loading', 'shared.searchOptions': 'Search options', 'shared.loadingOptions': 'Loading options…', 'shared.noOptions': 'No options found.',
+    'shared.retry': 'Retry',
+    'dashboard.title': 'Dashboard', 'dashboard.subtitle': 'A live view of pharmacy operations.', 'dashboard.export': 'Export',
+    'dashboard.newSale': 'New sale', 'dashboard.today': 'Today', 'dashboard.invoices': 'Invoices', 'dashboard.cancelled': 'Cancelled',
+    'dashboard.avgBasket': 'Avg basket', 'dashboard.salesLast7Days': 'Sales — last 7 days', 'dashboard.total': 'Total {amount}',
+    'dashboard.noSales': 'No sales yet.', 'dashboard.categoryMix': 'Category mix', 'dashboard.shareRevenue': 'Share of revenue',
+    'dashboard.noCompletedSales': 'No completed sales yet.', 'dashboard.topProductsByStock': 'Top products by stock',
+    'dashboard.noProducts': 'No products yet.', 'dashboard.inStock': '{quantity} in stock', 'dashboard.recentActivity': 'Recent activity',
+    'dashboard.noRecentActivity': 'No recent activity.', 'dashboard.lowStockTitle': 'Low / out-of-stock items',
+    'dashboard.acrossPharmacy': 'Across this pharmacy', 'dashboard.everythingStocked': 'Everything is well stocked.',
+    'dashboard.sku': 'SKU', 'dashboard.product': 'Product', 'dashboard.category': 'Category', 'dashboard.stock': 'Stock',
+    'dashboard.status': 'Status', 'dashboard.outOfStock': 'Out of stock', 'dashboard.lowStock': 'Low stock',
+    'dashboard.loading': 'Loading…', 'dashboard.errorKpis': 'Could not load KPIs.', 'dashboard.errorTrend': 'Could not load the sales trend.',
+    'dashboard.errorCategoryMix': 'Could not load category mix.', 'dashboard.errorActivity': 'Could not load recent activity.',
+    'dashboard.errorInventory': 'Could not load inventory data.', 'dashboard.exportUnavailable': 'Export isn’t available yet.',
+    'dashboard.justNow': 'just now', 'dashboard.minutesAgo': '{count}m ago', 'dashboard.hoursAgo': '{count}h ago',
+    'dashboard.daysAgo': '{count}d ago', 'dashboard.activityItem': '{action} {entity}', 'dashboard.action.create': 'Created',
+    'dashboard.action.update': 'Updated', 'dashboard.action.delete': 'Deleted', 'dashboard.action.login': 'Logged in',
+    'dashboard.action.logout': 'Logged out', 'dashboard.action.receive': 'Received', 'dashboard.action.pay': 'Paid',
+    'dashboard.entity.sale': 'sale', 'dashboard.entity.purchase': 'purchase', 'dashboard.entity.medicine': 'medicine',
+    'dashboard.entity.customer': 'customer', 'dashboard.entity.supplier': 'supplier', 'dashboard.entity.user': 'user',
+    'dashboard.entity.invoice': 'invoice', 'dashboard.entity.stock': 'stock'
+    , 'customer.title': 'Customers', 'customer.subtitle': 'Shared across every pharmacy — payments and status below are specific to yours.',
+    'customer.new': 'New customer', 'customer.refresh': 'Refresh', 'customer.total': 'Total customers', 'customer.active': 'Active',
+    'customer.inactive': 'Inactive', 'customer.paidHere': 'Paid at your pharmacy', 'customer.search': 'Search by name, phone or email…',
+    'customer.noResults': 'No customers found.', 'customer.customer': 'Customer', 'customer.phone': 'Phone', 'customer.email': 'Email',
+    'customer.paid': 'Paid here', 'customer.status': 'Status', 'customer.actions': 'Actions', 'customer.view': 'View details',
+    'customer.edit': 'Edit', 'customer.activate': 'Activate', 'customer.deactivate': 'Deactivate', 'customer.delete': 'Delete',
+    'customer.refreshing': 'Refreshing customers…', 'customer.loadingError': 'Could not load customers.', 'customer.statusError': 'Could not update status.',
+    'customer.deleteError': 'Could not delete customer.', 'customer.deleteConfirm': 'Delete "{name}"? This removes them and their full medicine history everywhere.',
+    'customer.unknown': 'Unknown'
+    , 'medicine.title': 'Medicines', 'medicine.subtitle': 'Master medicine catalog with pricing, units, minimum stock and barcodes.',
+    'medicine.new': 'New medicine', 'medicine.refresh': 'Refresh', 'medicine.active': 'Active medicines',
+    'medicine.inactive': 'Inactive', 'medicine.belowMin': 'Below min stock', 'medicine.categories': 'Categories',
+    'medicine.search': 'Search by name, SKU or barcode…', 'medicine.showInactive': 'Show inactive only',
+    'medicine.manageTaxes': 'Manage taxes →', 'medicine.noResults': 'No medicines found.', 'medicine.refreshing': 'Refreshing medicines…',
+    'medicine.sku': 'SKU', 'medicine.medicine': 'Medicine', 'medicine.category': 'Category', 'medicine.unit': 'Unit',
+    'medicine.price': 'Price', 'medicine.stockMin': 'Stock / Min', 'medicine.taxes': 'Taxes', 'medicine.barcodes': 'Barcodes',
+    'medicine.status': 'Status', 'medicine.actions': 'Actions', 'medicine.batches': '{count} batches',
+    'medicine.inStock': 'In Stock', 'medicine.low': 'Low', 'medicine.out': 'Out', 'medicine.updateStatusError': 'Could not update status.', 'medicine.errorAdd': 'Could not add this medicine to your pharmacy.', 'medicine.errorCreate': 'Could not create this medicine.',
+    'medicine.deleteConfirm': 'Delete "{name}"?', 'medicine.deleteError': 'Could not delete medicine.', 'medicine.errorLoad': 'Could not load this medicine.',
+    'medicine.add': 'Add medicine', 'medicine.create': 'Create new medicine', 'medicine.searchMedicine': 'Search Medicine',
+    'medicine.searchCatalog': 'Search by name, category or barcode…', 'medicine.alreadyInPharmacy': 'Already in your pharmacy',
+    'medicine.pharmacySettings': 'Set your pharmacy-specific price, minimum stock and taxes.', 'medicine.tradeNameEn': 'Trade name (EN)',
+    'medicine.tradeNameAr': 'Trade name (AR)', 'medicine.scientificName': 'Scientific name', 'medicine.unitOfSale': 'Unit of sale',
+    'medicine.unitsPerPackage': 'Units per package', 'medicine.dosageForm': 'Dosage form', 'medicine.strength': 'Strength', 'medicine.prescriptionRequired': 'Prescription required', 'medicine.controlled': 'Controlled substance',
+    'medicine.manufacturer': 'Manufacturer', 'medicine.countryOrigin': 'Country of origin', 'medicine.purchasePrice': 'Purchase price',
+    'medicine.sellingPrice': 'Selling price', 'medicine.minStock': 'Min stock level', 'medicine.skuOptional': 'SKU (optional — auto-generated if left blank)',
+    'medicine.loadingTaxes': 'Loading taxes…', 'medicine.noActiveTaxes': 'No active taxes configured.', 'medicine.save': 'Save medicine', 'medicine.creating': 'Creating…', 'medicine.createGlobal': 'Create global medicine', 'medicine.createLocal': 'Create local medicine',
+    'medicine.editPharmacy': 'Edit pharmacy information', 'medicine.pharmacyOnly': 'These values apply only to your pharmacy. Global fields are read-only.',
+    'medicine.sellPrice': 'Sell price', 'medicine.purchasePriceRequired': 'Purchase price is required.', 'medicine.sellPriceRequired': 'Sell price is required.', 'medicine.errorSave': 'Could not save these changes.',
+    'medicine.minimumStock': 'Minimum stock', 'medicine.minimumStockRequired': 'Minimum stock is required.', 'medicine.addBarcode': 'Add barcode',
+    'medicine.manufacturerBarcode': 'Manufacturer barcode', 'medicine.pharmacyBarcode': 'Pharmacy barcode', 'medicine.barcodeRequired': 'Barcode is required.', 'medicine.errorBarcode': 'Could not add this barcode.',
+    'medicine.barcodeOptional': 'Barcode (optional — auto-generated if left blank)', 'medicine.barcodePlaceholder': 'e.g. 6221031012345', 'medicine.skuPlaceholder': 'RX-1001', 'medicine.setPrimaryBarcode': 'Set as primary barcode',
+    'medicine.adding': 'Adding…', 'medicine.added': 'Add {type} barcode', 'medicine.noManufacturerBarcodes': 'No manufacturer barcodes.',
+    'medicine.noPharmacyBarcodes': 'No pharmacy-specific barcodes.', 'medicine.globalInfo': 'Global medicine information',
+    'medicine.sharedAllPharmacies': 'Shared across all pharmacies.', 'medicine.tradeName': 'Trade name', 'medicine.form': 'Form',
+    'medicine.globalStatus': 'Global status', 'medicine.storage': 'Storage', 'medicine.sharedBarcodes': 'Medicine/manufacturer identifiers shared across pharmacies.',
+    'medicine.localBarcode': 'Barcode assigned locally by this pharmacy.', 'medicine.totalStock': 'Total stock', 'medicine.availableQty': 'Available qty',
+    'medicine.expiringSoon': 'Expiring soon', 'medicine.localBarcodes': 'Local barcodes', 'medicine.mfrBarcodes': 'Mfr barcodes',
+    'medicine.general': 'General', 'medicine.pharmacy': 'Pharmacy', 'medicine.inventory': 'Inventory', 'medicine.back': 'Back', 'medicine.backArrow': '←',
+    'medicine.edit': 'Edit', 'medicine.activate': 'Activate', 'medicine.deactivate': 'Deactivate', 'medicine.perBatchUnavailable': 'Per-batch details (expiry dates, received quantities) are not wired up yet.',
+    'inventory.title': 'Inventory', 'inventory.subtitle': 'Real-time stock per medicine with batch and expiry visibility.',
+    'inventory.loading': 'Loading inventory…', 'inventory.onHandValue': 'On-Hand Value', 'inventory.activeSkus': 'Active SKUs',
+    'inventory.belowMin': 'Below Min Stock', 'inventory.expiring30': 'Expiring ≤30D', 'inventory.live': 'Live', 'inventory.search': 'Search medicines…',
+    'inventory.sku': 'SKU', 'inventory.medicine': 'Medicine', 'inventory.category': 'Category', 'inventory.batches': 'Batches',
+    'inventory.onHand': 'On Hand', 'inventory.min': 'Min', 'inventory.status': 'Status', 'inventory.actions': 'Actions',
+    'inventory.adjust': 'Adjust', 'inventory.delete': 'Delete', 'inventory.adjustStock': 'Adjust Stock', 'inventory.newQuantity': 'New quantity',
+    'inventory.save': 'Save', 'inventory.cancel': 'Cancel', 'inventory.deleteExpired': 'Delete expired batch', 'inventory.deleteConfirm': 'Delete this expired batch?',
+    'inventory.noResults': 'No medicines found matching your search.', 'inventory.batch': 'Batch #', 'inventory.quantity': 'Quantity',
+    'inventory.expiry': 'Expiry', 'inventory.daysLeft': 'Days Left', 'inventory.error': 'Could not load inventory.',
+    'inventory.updateError': 'Failed to update stock.', 'inventory.deleteError': 'Failed to delete batch.', 'inventory.missingBatch': 'Batch identifier is missing.',
+    'inventory.deleted': 'Batch deleted successfully.', 'inventory.unknownMedicine': 'Unknown medicine', 'inventory.inStock': 'In Stock', 'inventory.low': 'Low', 'inventory.out': 'Out',
+    'inventory.viewAlerts': 'View alerts →', 'inventory.close': 'Close', 'inventory.confirmDelete': 'Delete',
+    'supplier.title': 'Suppliers', 'supplier.subtitle': 'Vendor profiles, tax details, and account balances.', 'supplier.new': 'New supplier',
+    'supplier.refresh': 'Refresh', 'supplier.total': 'Total suppliers', 'supplier.active': 'Active suppliers', 'supplier.payments': 'Payments recorded',
+    'supplier.countries': 'Countries', 'supplier.live': 'Live', 'supplier.search': 'Search suppliers…', 'supplier.supplier': 'Supplier',
+    'supplier.contact': 'Contact', 'supplier.tax': 'Tax #', 'supplier.country': 'Country', 'supplier.outstanding': 'Outstanding',
+    'supplier.status': 'Status', 'supplier.actions': 'Actions', 'supplier.noResults': 'No suppliers found.', 'supplier.date': 'Date', 'supplier.paymentHistory': 'Payment history',
+    'supplier.amount': 'Amount', 'supplier.method': 'Method', 'supplier.reference': 'Reference', 'supplier.noPayments': 'No payments recorded yet.',
+    'supplier.edit': 'Edit', 'supplier.activate': 'Activate', 'supplier.deactivate': 'Deactivate', 'supplier.recordPayment': 'Record payment',
+    'supplier.delete': 'Delete', 'supplier.create': 'Create supplier', 'supplier.editTitle': 'Edit supplier', 'supplier.createTitle': 'Create supplier',
+    'supplier.updateDescription': 'Update this supplier\'s details.', 'supplier.createDescription': 'Add a new supplier vendor profile.',
+    'supplier.name': 'Supplier name', 'supplier.contactPerson': 'Contact person', 'supplier.phone': 'Phone', 'supplier.email': 'Email', 'supplier.namePlaceholder': 'e.g. MedSupply Co.', 'supplier.contactPlaceholder': 'e.g. Ahmed Najjar', 'supplier.phonePlaceholder': '+971 4 555 1000', 'supplier.emailPlaceholder': 'sales@supplier.com', 'supplier.addressPlaceholder': 'Street, city', 'supplier.taxPlaceholder': 'e.g. 100-234-556',
+    'supplier.address': 'Address', 'supplier.taxNumber': 'Tax number', 'supplier.balance': 'Outstanding balance (EGP)', 'supplier.selectCountry': 'Select a country',
+    'supplier.statusActive': 'Active', 'supplier.statusInactive': 'Inactive', 'supplier.cancel': 'Cancel', 'supplier.saveChanges': 'Save changes',
+    'supplier.deleteQuestion': 'Delete this supplier?', 'supplier.deleteWarning': 'This will remove "{name}" and its record permanently. This action cannot be undone.',
+    'supplier.paymentTo': 'Recording payment to', 'supplier.currentBalance': 'current balance:', 'supplier.paymentAmount': 'Amount (EGP)',
+    'supplier.paymentDate': 'Date', 'supplier.paymentMethod': 'Method', 'supplier.paymentReference': 'Reference (optional)',
+    'supplier.paymentPlaceholder': 'TRX ID, cheque #, notes…', 'supplier.errorLoad': 'Could not load suppliers.', 'supplier.errorStatus': 'Could not update supplier status.', 'supplier.duplicate': 'A supplier with this name already exists.', 'supplier.amountTooHigh': 'Amount cannot exceed the outstanding balance ({amount}).', 'supplier.bankTransfer': 'Bank Transfer', 'supplier.cash': 'Cash', 'supplier.cheque': 'Cheque', 'supplier.card': 'Card',
+    'supplier.errorDelete': 'Could not delete supplier.', 'supplier.errorSave': 'Could not save supplier.', 'supplier.errorPayment': 'Could not record payment.'
+    , 'sales.title': 'Sales', 'sales.subtitle': 'Point-of-sale invoices and refunds.', 'sales.export': 'Export',
+    'sales.newSale': 'New sale', 'sales.today': 'Today', 'sales.completedInvoices': 'Completed invoices',
+    'sales.cancelledInvoices': 'Cancelled invoices', 'sales.avgBasket': 'Avg basket', 'sales.live': 'Live',
+    'sales.search': 'Search by customer or invoice #…', 'sales.filterStatus': 'Filter sales by status', 'sales.allStatuses': 'All statuses',
+    'sales.open': 'Open', 'sales.completed': 'Completed', 'sales.cancelled': 'Cancelled', 'sales.clear': 'Clear',
+    'sales.invoice': 'Invoice', 'sales.date': 'Date', 'sales.customer': 'Customer', 'sales.items': 'Items', 'sales.total': 'Total',
+    'sales.status': 'Status', 'sales.medicine': 'Medicine', 'sales.batch': 'Batch #', 'sales.quantity': 'Qty',
+    'sales.unitPrice': 'Unit price', 'sales.lineTotal': 'Line total', 'sales.subtotal': 'Subtotal', 'sales.discount': 'Discount',
+    'sales.tax': 'Tax', 'sales.grandTotal': 'Grand total', 'sales.walkIn': 'Walk-in', 'sales.noResults': 'No sales found.',
+    'sales.updating': 'Updating sales…', 'sales.loadingError': 'An error occurred while loading sales.', 'sales.unknownStatus': 'Unknown',
+    'customer.back': 'Back to customers', 'customer.editTitle': 'Edit customer', 'customer.newTitle': 'New customer',
+    'customer.sharedDescription': 'Customers are shared across every pharmacy on the platform.', 'customer.name': 'Name',
+    'customer.dateOfBirth': 'Date of birth', 'customer.notes': 'Notes', 'customer.parent': 'Parent customer',
+    'customer.parentDescription': 'Choose an existing customer to link as this customer’s parent. Access to the parent will be enabled automatically.',
+    'customer.requiredWithoutParent': 'Required when no parent customer is selected.', 'customer.optionalExtras': 'Optional details added after the customer is created.',
+    'customer.medicineHistory': 'Medicine history', 'customer.historyDescription': 'Shared across every pharmacy this customer has visited.',
+    'customer.all': 'All', 'customer.currentlyTaking': 'Currently taking', 'customer.addMedicine': 'Add medicine', 'customer.add': 'Add', 'customer.medicine': 'Medicine',
+    'customer.quantity': 'Quantity', 'customer.currentlyTakingThis': 'Currently taking this', 'customer.catalog': 'Catalog',
+    'customer.freeText': 'Free text', 'customer.stopped': 'Stopped', 'customer.source': 'Source', 'customer.date': 'Date',
+    'customer.remove': 'Remove', 'customer.noHistory': 'No medicine history yet.', 'customer.noAllergies': 'No matching allergies.',
+    'customer.noConditions': 'No matching conditions.', 'customer.allergies': 'Allergies', 'customer.conditions': 'Chronic conditions',
+    'customer.organFunction': 'Organ function', 'customer.organDescription': 'One entry per organ — recording a new level for an organ already listed updates it.',
+    'customer.organ': 'Organ', 'customer.level': 'Impairment level', 'customer.selectOrgan': 'Select an organ…', 'customer.selectLevel': 'Select a level…',
+    'customer.noOrganFunction': 'No organ function recorded.', 'customer.relatives': 'Relatives', 'customer.relativesDescription': 'A relative is another customer on the platform. Not registered yet? Add them as a new customer first.',
+    'customer.addRelative': 'Add relative', 'customer.adding': 'Adding…', 'customer.makeChild': 'Make this relative a child', 'customer.noRelatives': 'No relatives linked yet.',
+    'customer.paidDescription': 'From completed sales — not entered manually.', 'customer.save': 'Save', 'customer.saving': 'Saving…', 'customer.create': 'Create customer',
+    'customer.cancel': 'Cancel', 'customer.enterValidEmail': 'Enter a valid email address.', 'customer.nameRequired': 'Name is required.',
+    'customer.nameTooLong': 'Name is too long.', 'customer.invalidName': 'Enter a valid name (letters only).', 'customer.invalidPhone': 'Use international format, e.g. +201001234567.',
+    'customer.medicineRequired': 'Select a medicine from the catalog, or enter it manually with both a name and scientific name.',
+    'customer.finishMedicine': 'Finish entering the medicine name and scientific name, or clear that field.', 'customer.errorLoad': 'Could not load customer.',
+    'customer.errorHistory': 'Could not load medicine history.', 'customer.errorAddHistory': 'Could not add medicine history.', 'customer.errorUpdate': 'Could not update.',
+    'customer.errorDeleteHistory': 'Could not delete history entry.', 'customer.errorSave': 'Could not save customer.', 'customer.errorCreate': 'Could not create customer.',
+    'customer.deleteHistoryConfirm': 'Remove “{name}” from this customer’s history?', 'customer.addedHistory': '{name} added to medicine history.',
+    'customer.updatedHistory': '{name} was already in this customer’s history — updated it.', 'customer.updatingHistory': 'Updating medicine history…',
+    'customer.backToCustomers': 'Back to customers',
+    'users.title': 'Users', 'users.subtitle': 'Manage staff access, roles and branches.', 'users.create': 'Create user', 'users.createTitle': 'Create new user',
+    'users.createSubtitle': 'Invite a team member and assign role and branch.', 'users.editTitle': 'Edit user', 'users.editSubtitle': 'Update {name}’s role, branch, and contact details.',
+    'users.name': 'Name', 'users.email': 'Email', 'users.role': 'Role', 'users.phone': 'Phone', 'users.status': 'Status', 'users.lastLogin': 'Last login',
+    'users.created': 'Created', 'users.actions': 'Actions', 'users.view': 'View details', 'users.edit': 'Edit user', 'users.delete': 'Delete user',
+    'users.activate': 'Activate', 'users.deactivate': 'Deactivate', 'users.noResults': 'No users match your filters.', 'users.search': 'Search by name or email…',
+    'users.allRoles': 'All roles', 'users.allStatuses': 'All statuses', 'users.active': 'Active', 'users.inactive': 'Inactive', 'users.loading': 'Loading roles…',
+    'users.updating': 'Updating users…', 'users.cancel': 'Cancel', 'users.creating': 'Creating…', 'users.saving': 'Saving…', 'users.saveChanges': 'Save changes',
+    'users.firstName': 'First name', 'users.lastName': 'Last name', 'users.password': 'Password', 'users.confirmPassword': 'Confirm password',
+    'users.branch': 'Branch', 'users.personalInfo': 'Personal information', 'users.contactInfo': 'Contact information', 'users.account': 'Account',
+    'users.recentActivity': 'Recent activity', 'users.memberSince': 'Member since', 'users.back': 'Back', 'users.notFound': 'User not found.',
+    'users.noActivity': 'No recent activity.', 'users.close': 'Close', 'users.rowActions': 'Row actions', 'users.required': 'This field is required.',
+    'users.validEmail': 'Enter a valid email address.', 'users.minCharacters': 'Minimum {count} characters.', 'users.invalid': 'Invalid value.',
+    'users.role.Admin': 'Admin', 'users.role.Pharmacist': 'Pharmacist', 'users.role.Cashier': 'Cashier', 'users.role.Inventory Manager': 'Inventory Manager', 'users.role.Accountant': 'Accountant',
+    'users.branch.Main Branch': 'Main Branch', 'users.branch.Downtown': 'Downtown', 'users.branch.North Plaza': 'North Plaza', 'users.branch.Westside': 'Westside', 'users.branch.Airport Mall': 'Airport Mall',
+    'users.passwordsMismatch': 'Passwords do not match.', 'users.failedRoles': 'Failed to load roles.',
+    'tax.title': 'Taxes', 'tax.subtitle': 'Manage the taxes that can be applied to products.', 'tax.export': 'Export', 'tax.new': 'New tax', 'tax.total': 'Total taxes', 'tax.active': 'Active', 'tax.inactive': 'Inactive', 'tax.averageRate': 'Average rate', 'tax.live': 'Live', 'tax.search': 'Search taxes…', 'tax.name': 'Name', 'tax.rate': 'Rate', 'tax.status': 'Status', 'tax.actions': 'Actions', 'tax.noResults': 'No taxes found.', 'tax.loading': 'Loading…', 'tax.edit': 'Edit', 'tax.activate': 'Activate', 'tax.deactivate': 'Deactivate', 'tax.delete': 'Delete', 'tax.editTitle': 'Edit tax', 'tax.createTitle': 'Create tax', 'tax.updateDescription': 'Update the details of this tax.', 'tax.createDescription': 'Define a tax that can be applied to products.', 'tax.nameLabel': 'Tax name', 'tax.rateLabel': 'Tax rate (%)', 'tax.namePlaceholder': 'e.g. Standard VAT', 'tax.valid': 'Please enter a valid name and a tax rate between 0 and 100.', 'tax.duplicate': 'A tax with this name already exists.', 'tax.saveError': 'An error occurred while saving. Please try again.', 'tax.statusError': 'An error occurred while changing the tax status.', 'tax.deleteError': 'An error occurred while deleting the tax.', 'tax.deleteTitle': 'Delete this tax?', 'tax.deleteWarning': 'This action cannot be undone.',
+    'audit.title': 'Audit History', 'audit.search': 'Search activity…', 'audit.allUsers': 'All users', 'audit.allActions': 'All actions', 'audit.allEntities': 'All entities', 'audit.dateTime': 'Date & Time', 'audit.user': 'User', 'audit.action': 'Action', 'audit.entity': 'Entity', 'audit.device': 'Device', 'audit.loading': 'Loading audit logs…', 'audit.noResults': 'No audit records found.', 'audit.details': 'Audit details', 'audit.timestamp': 'Timestamp', 'audit.newValue': 'New value', 'audit.oldValue': 'Old value', 'audit.close': 'Close', 'audit.error': 'Could not load audit history.', 'audit.actionCreate': 'Create', 'audit.actionUpdate': 'Update', 'audit.actionDelete': 'Delete', 'audit.actionLogin': 'Login', 'audit.actionLogout': 'Logout', 'audit.entityTax': 'Tax', 'audit.entityBatch': 'Batch', 'audit.entityCategory': 'Category', 'audit.entityProduct': 'Product', 'audit.entityOrder': 'Order', 'audit.entityMedicine': 'Medicine', 'audit.entityUser': 'User', 'audit.entityCustomer': 'Customer', 'audit.entitySupplier': 'Supplier',
+    'report.title': 'Reports', 'report.sales': 'Sales performance', 'report.salesDescription': 'Review invoices, totals, and recent point-of-sale activity.', 'report.inventory': 'Inventory snapshot', 'report.inventoryDescription': 'Inspect stock levels, batches, and expiry visibility.', 'report.audit': 'Audit activity', 'report.auditDescription': 'Trace operational changes and compliance events.', 'report.open': 'Open report',
+    'purchase.title': 'Purchase orders', 'purchase.procurement': 'Procurement', 'purchase.subtitle': 'Create supplier orders, track expected deliveries, and receive stock.', 'purchase.new': 'New purchase order', 'purchase.retry': 'Retry', 'purchase.activity': 'Purchase order activity', 'purchase.activityDescription': 'Review received orders and supplier receipts.', 'purchase.receiptHistory': 'Receipt history', 'purchase.poNumber': 'PO number', 'purchase.supplier': 'Supplier', 'purchase.orderDate': 'Order date', 'purchase.expectedDate': 'Expected date', 'purchase.lines': 'Lines', 'purchase.total': 'Total', 'purchase.status': 'Status', 'purchase.actions': 'Actions', 'purchase.receive': 'Receive', 'purchase.received': 'Received', 'purchase.unknown': 'Unknown', 'purchase.noOrders': 'No purchase orders found.', 'purchase.supplierInfo': 'Supplier & order information', 'purchase.supplierInfoDescription': 'Choose the vendor and delivery dates.', 'purchase.step1': 'Step 1', 'purchase.searchSupplier': 'Search name, code or phone', 'purchase.noSuppliers': 'No suppliers found.', 'purchase.selected': 'Selected', 'purchase.items': 'Items', 'purchase.itemsDescription': 'Search, select, then keep adding medicines without opening another dialog.', 'purchase.step2': 'Step 2', 'purchase.searchMedicine': 'Search or scan medicine', 'purchase.searchMedicinePlaceholder': 'Search or scan medicine by name, barcode, code or active ingredient…', 'purchase.noMatchingMedicine': 'No matching medicine found. Press Enter to try barcode lookup.', 'purchase.add': 'Add', 'purchase.stock': 'Stock', 'purchase.medicine': 'Medicine', 'purchase.quantity': 'Qty', 'purchase.unitCost': 'Unit cost (EGP)', 'purchase.lineDiscount': 'Line discount (EGP)', 'purchase.tax': 'Tax (EGP)', 'purchase.lineTotal': 'Line total (EGP)', 'purchase.clearLine': 'Clear line', 'purchase.searchFirst': 'Search above to add the first medicine.', 'purchase.additional': 'Additional information', 'purchase.additionalDescription': 'Apply an order-level supplier/document discount if one was agreed.', 'purchase.discount': 'Supplier / document discount', 'purchase.subtotal': 'Subtotal', 'purchase.lineDiscounts': 'Line discounts', 'purchase.supplierDiscount': 'Supplier discount', 'purchase.financialSummary': 'Financial summary', 'purchase.cancel': 'Cancel', 'purchase.create': 'Create purchase order', 'purchase.creating': 'Creating…', 'purchase.receiving': 'Receiving…', 'purchase.confirmReceipt': 'Confirm receipt', 'purchase.invoiceNumber': 'Invoice number', 'purchase.invoiceDate': 'Invoice date', 'purchase.invoiceTotal': 'Invoice total (EGP)', 'purchase.receiveQuantity': 'Receive qty', 'purchase.batch': 'Batch', 'purchase.expiry': 'Expiry', 'purchase.receiptHistoryDescription': 'Received purchase orders and supplier invoices.', 'purchase.noReceipts': 'No receipts found.', 'purchase.updatingReceipts': 'Updating receipt history…', 'purchase.receiptDetails': 'Receipt', 'purchase.reviewPrices': 'Review received batch prices.', 'purchase.purchasePrice': 'Purchase price (EGP)', 'purchase.sellingPrice': 'Selling price (EGP)', 'purchase.savePrices': 'Save prices', 'purchase.saving': 'Saving…', 'purchase.errorLoad': 'Could not load purchase orders.', 'purchase.errorSuppliers': 'Could not load suppliers.', 'purchase.errorSearch': 'Could not search medicines.', 'purchase.errorBarcode': 'Could not resolve this barcode.', 'purchase.errorReceiptLines': 'Could not load purchase order lines. Close and try again.', 'purchase.errorReceipts': 'Could not load receipt history.', 'purchase.success': 'Order created successfully!', 'purchase.createError': 'Failed to create purchase order.', 'purchase.notFound': 'Purchase order not found', 'purchase.notFoundDescription': 'The order may have been removed or you may not have access to it.', 'purchase.back': 'Back to purchase orders', 'purchase.details': 'Purchase order details', 'purchase.unable': 'Unable to load purchase order', 'purchase.noItems': 'No items returned for this order.', 'purchase.purchaseLines': 'purchase lines', 'purchase.orderExpected': 'Order / expected', 'purchase.discountSummary': 'Discount',
+    'purchase.openOrders': 'Open POs', 'purchase.totalValue': 'Total value', 'purchase.suppliersCount': 'Suppliers', 'purchase.totalLines': 'Total lines', 'purchase.updatingOrders': 'Updating purchase orders…', 'purchase.newDescription': 'Add a supplier order in a few focused steps.', 'purchase.loadingSuppliers': 'Loading suppliers', 'purchase.searching': 'Searching medicines…', 'purchase.catalogMedicine': 'Catalog medicine', 'purchase.chooseFromSearch': 'Choose from search above', 'purchase.loadingLines': 'Loading the receivable order lines…', 'purchase.receiveDescription': 'Record invoice and batch details for every received line.', 'purchase.batchPlaceholder': 'BATCH-###', 'purchase.qtyBatch': 'Qty {quantity} · Batch {batch}', 'purchase.receiptItemCount': '{count} items', 'purchase.receiptCreated': 'Receipt created successfully', 'purchase.receiveError': 'Failed to receive goods', 'purchase.pricesUpdated': 'Prices updated successfully', 'purchase.pricesError': 'Failed to update prices', 'purchase.barcodeNotFound': 'Barcode did not resolve to a purchasable medicine.', 'purchase.selectSupplier': 'Select a supplier before creating the order.', 'purchase.selectOrderDate': 'Select an order date.', 'purchase.expectedBeforeOrder': 'Expected date cannot be before the order date.', 'purchase.addLine': 'Add at least one medicine line.', 'purchase.selectMedicine': 'Select a medicine.', 'purchase.quantityPositive': 'Quantity must be greater than 0.', 'purchase.unitCostPositive': 'Unit cost must be greater than 0.', 'purchase.discountRange': 'Discount must be between 0 and the line amount.', 'purchase.taxNegative': 'Tax cannot be negative.', 'purchase.supplierDiscountLimit': 'Supplier discount cannot exceed the order amount.', 'purchase.invoiceNumberRequired': 'Invoice number is required.', 'purchase.invoiceDateRequired': 'Invoice date is required.', 'purchase.invoiceTotalPositive': 'Invoice total must be greater than 0.', 'purchase.receiptLineRequired': 'At least one receipt line is required.', 'purchase.receiptQuantityPositive': 'Enter a quantity greater than 0.', 'purchase.batchRequired': 'Batch number is required.', 'purchase.expiryRequired': 'Expiry date is required.', 'purchase.expiryPast': 'Expiry date cannot be in the past.', 'notification.title': 'Notifications', 'notification.markAll': 'Mark all as read', 'notification.loading': 'Loading notifications…', 'notification.empty': 'No notifications yet', 'notification.aria': 'Notifications', 'notification.lowStock': 'Low Stock', 'notification.expiry90': 'Expiring in 90 days', 'notification.expiry60': 'Expiring in 60 days', 'notification.expiry30': 'Expiring in 30 days', 'notification.expired': 'Batch Expired', 'notification.generic': 'Notification'
+  },
+  ar: {
+    'brand.name': 'SafePharma', 'auth.emailPlaceholder': 'you@safepharma.com', 'subscribe.pharmacyNamePlaceholder': 'صيدلية SafePharma',
+    'subscription.backHome': 'العودة إلى الرئيسية', 'subscribe.perMonth': '/شهرياً', 'subscribe.perYear': '/سنوياً', 'subscribe.gulfTime': '(GMT+4) توقيت الخليج الرسمي', 'subscribe.arabiaTime': '(GMT+3) التوقيت العربي الرسمي', 'subscribe.europeTime': '(GMT+2) توقيت شرق أوروبا', 'subscribe.copy': 'نسخ {value}',
+    'landing.trusted': 'يثق بنا أكثر من ٢٤٠٠ صيدلية في منطقة الشرق الأوسط وشمال أفريقيا', 'landing.heroTitle': 'حل ERP متكامل لـ', 'landing.modernPharmacies': 'الصيدليات الحديثة', 'landing.heroDescription': 'أدر المخزون ونقطة البيع والمشتريات والمبيعات والتقارير والمستخدمين وسجل التدقيق من منصة واحدة آمنة، مصممة لسرعة عمليات الصيدلية.', 'landing.startTrial': 'ابدأ التجربة المجانية', 'landing.bookDemo': 'احجز عرضاً تجريبياً', 'landing.dashboardUrl': 'app.safepharma.io / dashboard', 'landing.revenueMtd': 'إيرادات الشهر حتى الآن', 'landing.orders': 'الطلبات', 'landing.lowStock': 'مخزون منخفض', 'landing.branches': 'الفروع', 'landing.salesLast7Days': 'المبيعات — آخر ٧ أيام', 'landing.total': 'الإجمالي {amount}', 'landing.capabilities': 'الإمكانات', 'landing.capabilitiesTitle': 'كل ما تحتاجه لإدارة صيدلية حديثة', 'landing.capabilitiesDescription': 'عشر وحدات مصممة للعمل معاً. لا مزيد من الجداول وسير العمل المتنقل بين الأدوات.', 'landing.inventory': 'إدارة المخزون', 'landing.inventoryDescription': 'مخزون لحظي عبر الفروع والتشغيلات وتتبع الانتهاء وإعادة الطلب تلقائياً.', 'landing.salesPos': 'المبيعات ونقطة البيع', 'landing.salesPosDescription': 'دفع سريع ومطالبات تأمين وولاء ومدفوعات متكاملة.', 'landing.purchasing': 'المشتريات', 'landing.purchasingDescription': 'طلبات عروض الأسعار وأوامر الشراء وإيصالات الاستلام وقوائم أسعار الموردين في مسار واحد.', 'landing.suppliers': 'الموردون', 'landing.suppliersDescription': 'دليل الموردين وأداؤهم وشروط العقود في متناول يدك.', 'landing.customers': 'العملاء', 'landing.customersDescription': 'ملفات المرضى وسجل الوصفات وتقسيم العملاء.', 'landing.reports': 'التقارير', 'landing.reportsDescription': 'لوحات معلومات جاهزة مع منشئ تقارير دون برمجة.', 'landing.userManagement': 'إدارة المستخدمين', 'landing.userManagementDescription': 'صلاحيات دقيقة قائمة على الأدوار لكل عضو وفرع.', 'landing.auditLogs': 'سجلات التدقيق', 'landing.auditLogsDescription': 'سجل موثوق لكل إجراء: من وماذا ومتى وأين.', 'landing.multiBranch': 'متعدد الفروع', 'landing.multiBranchDescription': 'تقارير موحدة مع استقلالية على مستوى الفرع.', 'landing.secureCloud': 'سحابة آمنة', 'landing.secureCloudDescription': 'متوافق مع SOC 2 مع تشفير البيانات أثناء التخزين والنقل.', 'landing.pricing': 'الأسعار', 'landing.pricingTitle': 'خطط بسيطة تنمو معك', 'landing.pricingDescription': 'ابدأ تجربة مجانية لمدة ١٤ يوماً دون الحاجة إلى بطاقة ائتمان.', 'landing.starter': 'الأساسية', 'landing.starterDescription': 'للصيدليات المستقلة ذات الفرع الواحد.', 'landing.perMonth': '/ شهرياً', 'landing.oneBranch': 'فرع واحد', 'landing.upTo5Users': 'حتى ٥ مستخدمين', 'landing.inventoryPos': 'المخزون ونقطة البيع', 'landing.emailSupport': 'دعم عبر البريد', 'landing.mostPopular': 'الأكثر شيوعاً', 'landing.professional': 'الاحترافية', 'landing.professionalDescription': 'كل ما تحتاجه السلاسل النامية.', 'landing.upTo5Branches': 'حتى ٥ فروع', 'landing.unlimitedUsers': 'مستخدمون غير محدودين', 'landing.purchasingSuppliers': 'المشتريات والموردون', 'landing.advancedReports': 'تقارير متقدمة', 'landing.prioritySupport': 'دعم ذو أولوية', 'landing.enterprise': 'المؤسسات', 'landing.enterpriseDescription': 'للشبكات الكبيرة ذات الاحتياجات المخصصة.', 'landing.custom': 'مخصصة', 'landing.unlimitedBranches': 'فروع غير محدودة', 'landing.ssoSaml': 'SSO + SAML', 'landing.customIntegrations': 'تكاملات مخصصة', 'landing.dedicatedCsm': 'مدير نجاح مخصص', 'landing.sla': 'اتفاقية مستوى خدمة ٩٩٫٩٥٪', 'landing.contactSales': 'تواصل مع المبيعات', 'landing.soc2': 'متوافق مع SOC 2', 'landing.uptime': 'تشغيل بنسبة ٩٩٫٩٥٪', 'landing.auditTrail': 'سجل تدقيق كامل', 'landing.multiBranchReady': 'جاهز للفروع المتعددة',
+    'ownerDashboard.navigation': 'التنقل في لوحة المالك', 'ownerDashboard.portal': 'بوابة المالك', 'ownerDashboard.logout': 'تسجيل الخروج', 'ownerDashboard.title': 'لوحة تحكم المالك', 'ownerDashboard.subtitle': 'إدارة الصيدليات وحالة التفعيل.', 'ownerDashboard.loading': 'جارٍ تحميل الصيدليات…', 'ownerDashboard.totalPharmacies': 'إجمالي الصيدليات', 'ownerDashboard.activePharmacies': 'الصيدليات النشطة', 'ownerDashboard.inactive': 'غير نشطة', 'ownerDashboard.searchPlaceholder': 'ابحث عن الصيدليات أو الملاك أو المدن...', 'ownerDashboard.allStatuses': 'كل الحالات', 'ownerDashboard.active': 'نشطة', 'ownerDashboard.inactiveStatus': 'غير نشطة', 'ownerDashboard.pharmacy': 'الصيدلية', 'ownerDashboard.businessEmail': 'البريد الإلكتروني للنشاط', 'ownerDashboard.city': 'المدينة', 'ownerDashboard.address': 'العنوان', 'ownerDashboard.country': 'الدولة', 'ownerDashboard.phone': 'الهاتف', 'ownerDashboard.status': 'الحالة', 'ownerDashboard.activation': 'التفعيل', 'ownerDashboard.noResults': 'لا توجد صيدليات تطابق عوامل التصفية.',
+    'ownerPaymentVerifications.title': 'التحقق من المدفوعات', 'ownerPaymentVerifications.subtitle': 'مراجعة والتحقق من مدفوعات اشتراكات الصيدليات.', 'ownerPaymentVerifications.views': 'طرق عرض التحقق من المدفوعات', 'ownerPaymentVerifications.pending': 'قيد الانتظار', 'ownerPaymentVerifications.all': 'كل عمليات التحقق', 'ownerPaymentVerifications.loading': 'جارٍ تحميل عمليات التحقق من المدفوعات…', 'ownerPaymentVerifications.loadError': 'تعذّر تحميل عمليات التحقق من المدفوعات.', 'ownerPaymentVerifications.retry': 'حاول مرة أخرى', 'ownerPaymentVerifications.emptyPending': 'لا توجد عمليات تحقق من المدفوعات قيد الانتظار.', 'ownerPaymentVerifications.emptyAll': 'لم يتم العثور على عمليات تحقق من المدفوعات.', 'ownerPaymentVerifications.reference': 'المرجع', 'ownerPaymentVerifications.pharmacy': 'الصيدلية', 'ownerPaymentVerifications.plan': 'الخطة', 'ownerPaymentVerifications.amount': 'المبلغ', 'ownerPaymentVerifications.paymentMethod': 'طريقة الدفع', 'ownerPaymentVerifications.paymentDate': 'تاريخ الدفع', 'ownerPaymentVerifications.status': 'الحالة', 'ownerPaymentVerifications.actions': 'الإجراءات', 'ownerPaymentVerifications.review': 'مراجعة', 'ownerPaymentVerifications.statusPending': 'قيد الانتظار', 'ownerPaymentVerifications.statusApproved': 'تمت الموافقة', 'ownerPaymentVerifications.statusRejected': 'مرفوض', 'ownerPaymentVerifications.unknownStatus': 'حالة غير معروفة', 'ownerPaymentVerifications.reviewTitle': 'التحقق من الدفع', 'ownerPaymentVerifications.pharmacySubscription': 'الصيدلية والاشتراك', 'ownerPaymentVerifications.subscription': 'معرّف الاشتراك', 'ownerPaymentVerifications.planTier': 'فئة الخطة', 'ownerPaymentVerifications.billingCycle': 'دورة الفوترة', 'ownerPaymentVerifications.paymentInformation': 'معلومات الدفع', 'ownerPaymentVerifications.paidAmount': 'المبلغ المدفوع', 'ownerPaymentVerifications.transactionReference': 'مرجع المعاملة', 'ownerPaymentVerifications.receipt': 'الإيصال', 'ownerPaymentVerifications.receiptPreview': 'معاينة إيصال الدفع', 'ownerPaymentVerifications.receiptLoading': 'جارٍ تحميل الإيصال…', 'ownerPaymentVerifications.receiptCouldNotLoad': 'تعذّر تحميل الإيصال.', 'ownerPaymentVerifications.noReceipt': 'لم يتم تقديم إيصال.', 'ownerPaymentVerifications.openReceipt': 'فتح الإيصال', 'ownerPaymentVerifications.verificationInformation': 'معلومات التحقق', 'ownerPaymentVerifications.submittedAt': 'تاريخ الإرسال', 'ownerPaymentVerifications.reviewedAt': 'تاريخ المراجعة', 'ownerPaymentVerifications.rejectionReason': 'سبب الرفض', 'ownerPaymentVerifications.approve': 'موافقة', 'ownerPaymentVerifications.approving': 'جارٍ الاعتماد…', 'ownerPaymentVerifications.approveTitle': 'اعتماد التحقق من الدفع', 'ownerPaymentVerifications.approveDescription': 'أكد أن طلب التحقق من الدفع هذا يجب اعتماده.', 'ownerPaymentVerifications.confirmApproval': 'تأكيد الاعتماد', 'ownerPaymentVerifications.approveError': 'تعذّر اعتماد التحقق من الدفع.', 'ownerPaymentVerifications.reject': 'رفض', 'ownerPaymentVerifications.rejecting': 'جارٍ الرفض…', 'ownerPaymentVerifications.rejectTitle': 'رفض التحقق من الدفع', 'ownerPaymentVerifications.rejectDescription': 'أدخل سبب رفض طلب التحقق من الدفع.', 'ownerPaymentVerifications.rejectionReasonPlaceholder': 'اشرح سبب رفض طلب التحقق من الدفع.', 'ownerPaymentVerifications.rejectionReasonRequired': 'سبب الرفض مطلوب.', 'ownerPaymentVerifications.rejectError': 'تعذّر رفض التحقق من الدفع.', 'ownerPaymentVerifications.zoomIn': 'تكبير', 'ownerPaymentVerifications.zoomOut': 'تصغير', 'ownerPaymentVerifications.resetZoom': 'إعادة ضبط التكبير',
+    'subscribe.title': 'أنشئ حساب SafePharma الخاص بك', 'subscribe.subtitle': 'ثلاثة أقسام سريعة وتبدأ العمل. تشمل التجربة المجانية ١٤ يوماً.', 'subscribe.selectPlan': 'اختر خطتك', 'subscribe.planDescription': 'يمكنك التبديل في أي وقت. لن يتم تحصيل أي رسوم حتى انتهاء التجربة.', 'subscribe.monthly': 'شهري', 'subscribe.yearly': 'سنوي', 'subscribe.loadingPlans': 'جارٍ تحميل الخطط…', 'subscribe.pharmacyInformation': 'معلومات الصيدلية', 'subscribe.businessDescription': 'أخبرنا عن نشاطك التجاري.', 'subscribe.pharmacyName': 'اسم الصيدلية', 'subscribe.pharmacyLogo': 'شعار الصيدلية', 'subscribe.uploading': 'جارٍ الرفع…', 'subscribe.clickToUploadLogo': 'اضغط لرفع الشعار (PNG, SVG)', 'subscribe.taxNumber': 'الرقم الضريبي', 'subscribe.commercialRegistration': 'السجل التجاري', 'subscribe.address': 'العنوان', 'subscribe.country': 'الدولة', 'subscribe.city': 'المدينة', 'subscribe.phone': 'الهاتف', 'subscribe.email': 'البريد الإلكتروني', 'subscribe.numberOfBranches': 'عدد الفروع', 'subscribe.preferredLanguage': 'اللغة المفضلة', 'subscribe.timeZone': 'المنطقة الزمنية', 'subscribe.primaryContact': 'جهة الاتصال الرئيسية', 'subscribe.primaryContactDescription': 'سيكون هذا الشخص مسؤول إدارة حسابك.', 'subscribe.fullName': 'الاسم الكامل', 'subscribe.mobile': 'رقم الجوال', 'subscribe.password': 'كلمة المرور', 'subscribe.requiredPassword': '٨ أحرف على الأقل', 'subscribe.selectCountry': 'اختر دولة', 'subscribe.searchCountries': 'ابحث عن الدول…', 'subscribe.selectCity': 'اختر مدينة', 'subscribe.searchCities': 'ابحث عن المدن…', 'subscribe.selectLanguage': 'اختر لغة', 'subscribe.searchLanguages': 'ابحث عن اللغات…', 'subscribe.selectTimeZone': 'اختر منطقة زمنية', 'subscribe.searchTimeZones': 'ابحث عن المناطق الزمنية…', 'subscribe.terms': 'بالاشتراك، أنت توافق على الشروط وسياسة الخصوصية.', 'subscribe.submitting': 'جارٍ الإرسال…', 'subscribe.submit': 'اشترك الآن', 'subscribe.locationsError': 'تعذّر تحميل المواقع.', 'subscribe.plansError': 'تعذّر تحميل خطط الاشتراك.', 'subscribe.logoUploadFailed': 'فشل رفع الشعار.', 'subscribe.logoUploadRetry': 'فشل رفع الشعار. حاول مرة أخرى.', 'subscribe.fixFields': 'يرجى تصحيح الحقول المميزة قبل الإرسال.', 'subscribe.genericError': 'حدث خطأ ما. حاول مرة أخرى.', 'subscribe.required': 'هذا الحقل مطلوب.', 'subscribe.invalidEmail': 'يرجى إدخال بريد إلكتروني صالح.', 'subscribe.minLength': 'يجب ألا يقل عن {value} أحرف.', 'subscribe.maxLength': 'يجب ألا يزيد عن {value} حرفاً.', 'subscribe.min': 'يجب ألا تقل القيمة عن {value}.', 'subscribe.max': 'يجب ألا تزيد القيمة عن {value}.', 'subscribe.invalidPhone': 'أدخل رقماً دولياً صالحاً (مثال: +971501234567).', 'subscribe.invalidName': 'يسمح بالأحرف والمسافات والشرطات والفواصل العليا فقط.', 'subscribe.invalidFormat': 'يجب أن يتكون من ٥–٢٠ حرفاً أو رقماً أو شرطة فقط.', 'subscribe.missingUppercase': 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.', 'subscribe.missingLowercase': 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.', 'subscribe.missingDigit': 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.', 'subscribe.missingSpecialChar': 'يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل.', 'subscribe.invalidFormatShort': 'تنسيق غير صالح.', 'subscribe.invalidValue': 'قيمة غير صالحة.',
+    'subscription.completePayment': 'أكمل عملية الدفع', 'subscription.reference': 'مرجع الاشتراك', 'subscription.plan': 'الخطة', 'subscription.amountDue': 'المبلغ المستحق', 'subscription.paymentInstructions': 'استخدم إحدى الطرق التالية لتحويل المبلغ، ثم أرسل إيصالك.', 'subscription.includeReference': 'أدرج المرجع في وصف التحويل.', 'subscription.madePayment': 'أتممت الدفع — أرسل الإثبات', 'subscription.viewStatus': 'عرض الحالة', 'subscription.loading': 'جارٍ التحميل…', 'subscription.paymentUnderReview': 'دفعتك قيد المراجعة', 'subscription.reviewDescription': 'شكراً لك — سيتحقق فريقنا من التحويل ويخطرك بعد اعتماده. يستغرق ذلك عادة أقل من يوم عمل.', 'subscription.status': 'الحالة', 'subscription.referenceShort': 'المرجع', 'subscription.backToStatus': 'العودة إلى الحالة', 'subscription.subscriptionStatus': 'حالة الاشتراك', 'subscription.statusDescription': 'تتبع التحقق من الدفع للمرجع {reference}.', 'subscription.submissionHistory': 'سجل الإرسالات', 'subscription.noSubmissions': 'لا توجد إرسالات لهذا الاشتراك.', 'subscription.paymentMethod': 'طريقة الدفع', 'subscription.transactionReference': 'مرجع المعاملة', 'subscription.paymentDate': 'تاريخ الدفع', 'subscription.paidAmount': 'المبلغ المدفوع (جنيه)', 'subscription.receipt': 'الإيصال / لقطة الشاشة', 'subscription.uploadReceipt': 'اضغط لرفع ملف (PNG, JPG, PDF · حد أقصى ٥ ميجابايت)', 'subscription.confirmDetails': 'بتقديم الطلب، تؤكد أن البيانات دقيقة.', 'subscription.submittingProof': 'جارٍ الإرسال…', 'subscription.submitVerification': 'إرسال للتحقق', 'subscription.submitProof': 'إرسال إثبات الدفع', 'subscription.approved': 'تم الاعتماد', 'subscription.rejected': 'مرفوض', 'subscription.pendingVerification': 'قيد التحقق', 'subscription.rejectedDescription': 'تم رفض إثبات الدفع. يرجى إرسال إثبات جديد.', 'subscription.approvedDescription': 'تم التحقق من دفعتك. سنقوم بتفعيل حسابك قريباً.', 'subscription.pendingDescription': 'إثبات الدفع قيد المراجعة. سيتم إخطارك بعد التحقق، عادة خلال يوم عمل.', 'subscription.submitted': 'تم الإرسال {created} · تم الدفع في {paid} · {amount}', 'subscription.resubmit': 'إرسال إثبات جديد', 'subscription.continue': 'متابعة', 'subscription.loadInstructionsError': 'تعذّر تحميل تعليمات الدفع.', 'subscription.loadDetailsError': 'تعذّر تحميل تفاصيل الدفع.', 'subscription.loadStatusError': 'تعذّر تحميل حالة الاشتراك.', 'subscription.receiptUploadFailed': 'فشل رفع الإيصال.', 'subscription.receiptUploadRetry': 'فشل رفع الإيصال. حاول مرة أخرى.', 'subscription.submitProofError': 'تعذّر إرسال إثبات الدفع.', 'subscription.fileTypeError': 'يجب أن يكون الملف JPG أو PNG أو PDF.', 'subscription.fileSizeError': 'يجب ألا يتجاوز الملف ٥ ميجابايت.',
+    'common.actions.save': 'حفظ', 'common.actions.cancel': 'إلغاء', 'common.actions.close': 'إغلاق',
+    'common.actions.edit': 'تعديل', 'common.actions.delete': 'حذف', 'common.actions.retry': 'إعادة المحاولة',
+    'common.actions.search': 'بحث', 'common.actions.clear': 'مسح', 'common.actions.logout': 'تسجيل الخروج', 'common.loading': 'جارٍ التحميل…',
+    'common.saving': 'جارٍ الحفظ…', 'common.selectLanguage': 'اختر اللغة', 'common.searchLanguages': 'ابحث عن لغة…',
+    'common.required': 'هذا الحقل مطلوب.', 'common.invalid': 'قيمة غير صالحة.',
+    'language.english': 'الإنجليزية', 'language.arabic': 'العربية', 'language.switchToEnglish': 'التبديل إلى الإنجليزية',
+    'language.switchToArabic': 'التبديل إلى العربية', 'nav.dashboard': 'لوحة التحكم', 'nav.sales': 'المبيعات',
+    'nav.pos': 'نقطة البيع', 'nav.purchases': 'المشتريات', 'nav.inventory': 'المخزون', 'nav.medicines': 'الأدوية',
+    'nav.taxes': 'الضرائب', 'nav.suppliers': 'الموردون', 'nav.customers': 'العملاء', 'nav.reports': 'التقارير',
+    'nav.users': 'المستخدمون', 'nav.settings': 'الإعدادات', 'nav.profile': 'الملف الشخصي', 'nav.audit': 'سجل التدقيق',
+    'nav.changePassword': 'تغيير كلمة المرور', 'nav.finance': 'المالية', 'nav.accountsPayable': 'الحسابات الدائنة',
+    'nav.accountsReceivable': 'الحسابات المدينة', 'nav.invoices': 'الفواتير', 'nav.items': 'الأصناف',
+    'nav.pharmacy': 'الصيدلية', 'nav.details': 'التفاصيل', 'nav.openNavigation': 'فتح التنقل',
+    'nav.closeSidebar': 'إغلاق القائمة الجانبية', 'nav.toggleSidebar': 'تبديل القائمة الجانبية', 'nav.breadcrumb': 'مسار التنقل',
+    'settings.title': 'الإعدادات', 'settings.subtitle': 'إدارة بيانات الصيدلية والتوطين وتفضيلات المنصة.',
+    'settings.profile': 'بيانات الصيدلية', 'settings.profileDescription': 'بيانات الصيدلية الظاهرة للعملاء.',
+    'settings.localization': 'التوطين', 'settings.localizationDescription': 'اللغة والإعدادات الإقليمية الافتراضية.',
+    'settings.pharmacyName': 'اسم الصيدلية', 'settings.logo': 'الشعار', 'settings.uploadLogo': 'رفع PNG أو SVG',
+    'settings.removeLogo': 'إزالة', 'settings.street': 'العنوان', 'settings.country': 'الدولة', 'settings.city': 'المدينة', 'settings.governorate': 'المحافظة',
+    'settings.selectCountry': 'اختر الدولة', 'settings.searchCountries': 'ابحث عن الدول…', 'settings.selectCity': 'اختر المدينة', 'settings.searchCities': 'ابحث عن مدينة…', 'settings.selectGovernorate': 'اختر المحافظة',
+    'settings.searchGovernorates': 'ابحث عن محافظة…', 'settings.taxNumber': 'الرقم الضريبي', 'settings.phone': 'الهاتف',
+    'settings.defaultLanguage': 'اللغة الافتراضية', 'settings.defaultLanguageDescription': 'لغة المستخدمين الذين لا يملكون تفضيلاً شخصياً.',
+    'settings.saveSuccess': 'تم حفظ الإعدادات بنجاح!', 'settings.saveFallback': 'تم حفظ الإعدادات. حدّث الصفحة لتأكيد الشعار الأخير.',
+    'settings.loadError': 'تعذّر تحميل إعدادات الصيدلية.', 'settings.locationError': 'تعذّر تحميل المواقع.',
+    'settings.validationError': 'يرجى تصحيح الأخطاء أدناه.', 'common.somethingWentWrong': 'حدث خطأ ما.',
+    'auth.signInTitle': 'تسجيل الدخول إلى SafePharma', 'auth.signInDescription': 'مرحباً بعودتك. أدخل بياناتك للمتابعة.',
+    'auth.email': 'البريد الإلكتروني', 'auth.password': 'كلمة المرور', 'auth.forgotPassword': 'هل نسيت كلمة المرور؟',
+    'auth.remember': 'تذكرني لمدة 30 يوماً', 'auth.signIn': 'تسجيل الدخول', 'auth.signingIn': 'جارٍ تسجيل الدخول…',
+    'auth.noAccount': 'ليس لديك حساب؟', 'auth.startTrial': 'ابدأ التجربة المجانية', 'auth.invalidEmail': 'يرجى إدخال بريد إلكتروني صحيح.',
+    'auth.passwordMin': 'يجب ألا تقل عن {count} أحرف.', 'auth.passwordUpper': 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.',
+    'auth.passwordLower': 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.', 'auth.passwordDigit': 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.',
+    'auth.passwordSpecial': 'يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل.', 'auth.fixFields': 'يرجى تصحيح الحقول المميزة قبل تسجيل الدخول.',
+    'auth.loginResponseError': 'لم تتضمن استجابة تسجيل الدخول رمز وصول.', 'auth.unableSignIn': 'تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى.',
+    'auth.welcome': 'مرحباً بعودتك — تم تسجيل دخولك.', 'public.features': 'المميزات', 'public.pricing': 'الأسعار',
+    'public.contact': 'تواصل معنا', 'public.login': 'تسجيل الدخول', 'public.subscribe': 'اشترك', 'public.back': 'رجوع',
+    'public.pharmacyErp': 'نظام إدارة الصيدلية', 'public.company': 'الشركة', 'public.legal': 'قانوني', 'public.follow': 'تابعنا',
+    'public.about': 'من نحن', 'public.careers': 'الوظائف', 'public.privacy': 'سياسة الخصوصية', 'public.terms': 'الشروط',
+    'public.dpa': 'اتفاقية معالجة البيانات', 'public.allRightsReserved': 'جميع الحقوق محفوظة.', 'public.tagline': 'نظام إدارة صيدليات للطموحين.'
+    , 'shared.change': 'تغيير', 'shared.catalog': 'دليل الأدوية', 'shared.searchCustomers': 'ابحث باسم العميل أو الهاتف…',
+    'shared.searching': 'جارٍ البحث…', 'shared.noCustomers': 'لم يتم العثور على عملاء. إذا لم يكن العميل مسجلاً، أضفه كعميل جديد أولاً.',
+    'shared.searchMedicine': 'ابحث عن دواء…', 'shared.medicineName': 'اسم الدواء…', 'shared.scientificName': 'الاسم العلمي…',
+    'shared.searchInstead': 'البحث مرة أخرى', 'shared.noCatalogMatches': 'لا توجد نتائج في الدليل.', 'shared.addManually': 'لا تجده؟ أضفه يدوياً',
+    'shared.loading': 'جارٍ التحميل', 'shared.searchOptions': 'بحث في الخيارات', 'shared.loadingOptions': 'جارٍ تحميل الخيارات…', 'shared.noOptions': 'لا توجد خيارات.',
+    'shared.retry': 'إعادة المحاولة',
+    'dashboard.title': 'لوحة التحكم', 'dashboard.subtitle': 'نظرة مباشرة على عمليات الصيدلية.', 'dashboard.export': 'تصدير',
+    'dashboard.newSale': 'بيع جديد', 'dashboard.today': 'اليوم', 'dashboard.invoices': 'الفواتير', 'dashboard.cancelled': 'ملغاة',
+    'dashboard.avgBasket': 'متوسط السلة', 'dashboard.salesLast7Days': 'المبيعات — آخر ٧ أيام', 'dashboard.total': 'الإجمالي {amount}',
+    'dashboard.noSales': 'لا توجد مبيعات بعد.', 'dashboard.categoryMix': 'توزيع الفئات', 'dashboard.shareRevenue': 'نسبة الإيرادات',
+    'dashboard.noCompletedSales': 'لا توجد مبيعات مكتملة بعد.', 'dashboard.topProductsByStock': 'أكثر المنتجات حسب المخزون',
+    'dashboard.noProducts': 'لا توجد منتجات بعد.', 'dashboard.inStock': '{quantity} في المخزون', 'dashboard.recentActivity': 'النشاط الأخير',
+    'dashboard.noRecentActivity': 'لا يوجد نشاط حديث.', 'dashboard.lowStockTitle': 'الأصناف منخفضة المخزون أو النافدة',
+    'dashboard.acrossPharmacy': 'في جميع أقسام الصيدلية', 'dashboard.everythingStocked': 'جميع الأصناف متوفرة بشكل جيد.',
+    'dashboard.sku': 'رمز الصنف', 'dashboard.product': 'المنتج', 'dashboard.category': 'الفئة', 'dashboard.stock': 'المخزون',
+    'dashboard.status': 'الحالة', 'dashboard.outOfStock': 'نافد من المخزون', 'dashboard.lowStock': 'مخزون منخفض',
+    'dashboard.loading': 'جارٍ التحميل…', 'dashboard.errorKpis': 'تعذّر تحميل المؤشرات.', 'dashboard.errorTrend': 'تعذّر تحميل اتجاه المبيعات.',
+    'dashboard.errorCategoryMix': 'تعذّر تحميل توزيع الفئات.', 'dashboard.errorActivity': 'تعذّر تحميل النشاط الأخير.',
+    'dashboard.errorInventory': 'تعذّر تحميل بيانات المخزون.', 'dashboard.exportUnavailable': 'التصدير غير متاح بعد.',
+    'dashboard.justNow': 'الآن', 'dashboard.minutesAgo': 'منذ {count} دقيقة', 'dashboard.hoursAgo': 'منذ {count} ساعة',
+    'dashboard.daysAgo': 'منذ {count} يوم', 'dashboard.activityItem': '{action} {entity}', 'dashboard.action.create': 'تم إنشاء',
+    'dashboard.action.update': 'تم تحديث', 'dashboard.action.delete': 'تم حذف', 'dashboard.action.login': 'تم تسجيل الدخول',
+    'dashboard.action.logout': 'تم تسجيل الخروج', 'dashboard.action.receive': 'تم استلام', 'dashboard.action.pay': 'تم الدفع',
+    'dashboard.entity.sale': 'عملية بيع', 'dashboard.entity.purchase': 'طلب شراء', 'dashboard.entity.medicine': 'دواء',
+    'dashboard.entity.customer': 'عميل', 'dashboard.entity.supplier': 'مورد', 'dashboard.entity.user': 'مستخدم',
+    'dashboard.entity.invoice': 'فاتورة', 'dashboard.entity.stock': 'مخزون'
+    , 'customer.title': 'العملاء', 'customer.subtitle': 'مشتركون بين جميع الصيدليات — المدفوعات والحالة أدناه تخص صيدليتك.',
+    'customer.new': 'عميل جديد', 'customer.refresh': 'تحديث', 'customer.total': 'إجمالي العملاء', 'customer.active': 'نشط',
+    'customer.inactive': 'غير نشط', 'customer.paidHere': 'المدفوع في صيدليتك', 'customer.search': 'ابحث بالاسم أو الهاتف أو البريد…',
+    'customer.noResults': 'لا يوجد عملاء.', 'customer.customer': 'العميل', 'customer.phone': 'الهاتف', 'customer.email': 'البريد الإلكتروني',
+    'customer.paid': 'المدفوع هنا', 'customer.status': 'الحالة', 'customer.actions': 'الإجراءات', 'customer.view': 'عرض التفاصيل',
+    'customer.edit': 'تعديل', 'customer.activate': 'تفعيل', 'customer.deactivate': 'إلغاء التفعيل', 'customer.delete': 'حذف',
+    'customer.refreshing': 'جارٍ تحديث العملاء…', 'customer.loadingError': 'تعذّر تحميل العملاء.', 'customer.statusError': 'تعذّر تحديث الحالة.',
+    'customer.deleteError': 'تعذّر حذف العميل.', 'customer.deleteConfirm': 'حذف "{name}"؟ سيؤدي ذلك إلى إزالة العميل وسجل أدويته بالكامل.',
+    'customer.unknown': 'غير معروف'
+    , 'medicine.title': 'الأدوية', 'medicine.subtitle': 'دليل الأدوية مع الأسعار والوحدات والحد الأدنى للمخزون والباركود.',
+    'medicine.new': 'دواء جديد', 'medicine.refresh': 'تحديث', 'medicine.active': 'الأدوية النشطة', 'medicine.inactive': 'غير نشطة',
+    'medicine.belowMin': 'أقل من الحد الأدنى', 'medicine.categories': 'الفئات', 'medicine.search': 'ابحث بالاسم أو الرمز أو الباركود…',
+    'medicine.showInactive': 'عرض غير النشطة فقط', 'medicine.manageTaxes': 'إدارة الضرائب ←', 'medicine.noResults': 'لم يتم العثور على أدوية.',
+    'medicine.refreshing': 'جارٍ تحديث الأدوية…', 'medicine.sku': 'الرمز', 'medicine.medicine': 'الدواء', 'medicine.category': 'الفئة',
+    'medicine.unit': 'الوحدة', 'medicine.price': 'السعر', 'medicine.stockMin': 'المخزون / الحد الأدنى', 'medicine.taxes': 'الضرائب',
+    'medicine.barcodes': 'الباركود', 'medicine.status': 'الحالة', 'medicine.actions': 'الإجراءات', 'medicine.batches': '{count} تشغيلات',
+    'medicine.inStock': 'متوفر', 'medicine.low': 'منخفض', 'medicine.out': 'نافد', 'medicine.updateStatusError': 'تعذّر تحديث الحالة.', 'medicine.errorAdd': 'تعذّر إضافة الدواء إلى صيدليتك.', 'medicine.errorCreate': 'تعذّر إنشاء الدواء.',
+    'medicine.deleteConfirm': 'حذف "{name}"؟', 'medicine.deleteError': 'تعذّر حذف الدواء.', 'medicine.errorLoad': 'تعذّر تحميل الدواء.', 'medicine.add': 'إضافة دواء', 'medicine.create': 'إنشاء دواء جديد',
+    'medicine.searchMedicine': 'بحث عن دواء', 'medicine.searchCatalog': 'ابحث بالاسم أو الفئة أو الباركود…', 'medicine.alreadyInPharmacy': 'موجود بالفعل في صيدليتك',
+    'medicine.pharmacySettings': 'حدد سعر الدواء والحد الأدنى للمخزون والضرائب الخاصة بصيدليتك.', 'medicine.tradeNameEn': 'الاسم التجاري (EN)',
+    'medicine.tradeNameAr': 'الاسم التجاري (AR)', 'medicine.scientificName': 'الاسم العلمي', 'medicine.unitOfSale': 'وحدة البيع',
+    'medicine.unitsPerPackage': 'الوحدات لكل عبوة', 'medicine.dosageForm': 'الشكل الدوائي', 'medicine.strength': 'التركيز', 'medicine.prescriptionRequired': 'يتطلب وصفة طبية', 'medicine.controlled': 'دواء خاضع للرقابة', 'medicine.manufacturer': 'الشركة المصنعة',
+    'medicine.countryOrigin': 'بلد المنشأ', 'medicine.purchasePrice': 'سعر الشراء', 'medicine.sellingPrice': 'سعر البيع', 'medicine.minStock': 'الحد الأدنى للمخزون',
+    'medicine.skuOptional': 'الرمز (اختياري — يُنشأ تلقائياً عند تركه فارغاً)', 'medicine.loadingTaxes': 'جارٍ تحميل الضرائب…', 'medicine.noActiveTaxes': 'لا توجد ضرائب نشطة.', 'medicine.creating': 'جارٍ الإنشاء…', 'medicine.createGlobal': 'إنشاء دواء عام', 'medicine.createLocal': 'إنشاء دواء محلي',
+    'medicine.save': 'حفظ الدواء', 'medicine.editPharmacy': 'تعديل بيانات الصيدلية', 'medicine.pharmacyOnly': 'تنطبق هذه القيم على صيدليتك فقط. الحقول العامة للقراءة فقط.',
+    'medicine.sellPrice': 'سعر البيع', 'medicine.purchasePriceRequired': 'سعر الشراء مطلوب.', 'medicine.sellPriceRequired': 'سعر البيع مطلوب.', 'medicine.errorSave': 'تعذّر حفظ التغييرات.', 'medicine.minimumStock': 'الحد الأدنى للمخزون',
+    'medicine.minimumStockRequired': 'الحد الأدنى للمخزون مطلوب.', 'medicine.addBarcode': 'إضافة باركود', 'medicine.manufacturerBarcode': 'باركود الشركة المصنعة',
+    'medicine.pharmacyBarcode': 'باركود الصيدلية', 'medicine.barcodeRequired': 'الباركود مطلوب.', 'medicine.errorBarcode': 'تعذّرت إضافة الباركود.', 'medicine.barcodeOptional': 'الباركود (اختياري — يُنشأ تلقائياً عند تركه فارغاً)', 'medicine.barcodePlaceholder': 'مثال: 6221031012345', 'medicine.skuPlaceholder': 'RX-1001',
+    'medicine.setPrimaryBarcode': 'تعيين كرمز أساسي', 'medicine.adding': 'جارٍ الإضافة…', 'medicine.added': 'إضافة باركود {type}', 'medicine.noManufacturerBarcodes': 'لا توجد باركودات للشركة المصنعة.',
+    'medicine.noPharmacyBarcodes': 'لا توجد باركودات خاصة بالصيدلية.', 'medicine.globalInfo': 'معلومات الدواء العامة', 'medicine.sharedAllPharmacies': 'مشتركة بين جميع الصيدليات.',
+    'medicine.tradeName': 'الاسم التجاري', 'medicine.form': 'الشكل', 'medicine.globalStatus': 'الحالة العامة', 'medicine.storage': 'التخزين',
+    'medicine.sharedBarcodes': 'معرّفات الدواء والشركة المصنعة المشتركة بين الصيدليات.', 'medicine.localBarcode': 'باركود مخصص محلياً لهذه الصيدلية.',
+    'medicine.totalStock': 'إجمالي المخزون', 'medicine.availableQty': 'الكمية المتاحة', 'medicine.expiringSoon': 'قريب الانتهاء', 'medicine.localBarcodes': 'الباركودات المحلية',
+    'medicine.mfrBarcodes': 'باركودات الشركة', 'medicine.general': 'عام', 'medicine.pharmacy': 'الصيدلية', 'medicine.inventory': 'المخزون', 'medicine.back': 'رجوع', 'medicine.backArrow': '→',
+    'medicine.edit': 'تعديل', 'medicine.activate': 'تفعيل', 'medicine.deactivate': 'تعطيل', 'medicine.perBatchUnavailable': 'تفاصيل التشغيلات (تواريخ الانتهاء والكميات المستلمة) غير متاحة حالياً.',
+    'inventory.title': 'المخزون', 'inventory.subtitle': 'مخزون لحظي لكل دواء مع عرض التشغيلات وتواريخ الانتهاء.', 'inventory.loading': 'جارٍ تحميل المخزون…',
+    'inventory.onHandValue': 'قيمة المخزون الحالي', 'inventory.activeSkus': 'الأصناف النشطة', 'inventory.belowMin': 'أقل من الحد الأدنى', 'inventory.expiring30': 'ينتهي خلال ٣٠ يوماً',
+    'inventory.live': 'مباشر', 'inventory.search': 'ابحث عن الأدوية…', 'inventory.sku': 'الرمز', 'inventory.medicine': 'الدواء', 'inventory.category': 'الفئة',
+    'inventory.batches': 'التشغيلات', 'inventory.onHand': 'المتاح', 'inventory.min': 'الحد الأدنى', 'inventory.status': 'الحالة', 'inventory.actions': 'الإجراءات',
+    'inventory.adjust': 'تعديل', 'inventory.delete': 'حذف', 'inventory.adjustStock': 'تعديل المخزون', 'inventory.newQuantity': 'الكمية الجديدة', 'inventory.save': 'حفظ',
+    'inventory.cancel': 'إلغاء', 'inventory.deleteExpired': 'حذف التشغيلة المنتهية', 'inventory.deleteConfirm': 'حذف هذه التشغيلة المنتهية؟',
+    'inventory.noResults': 'لم يتم العثور على أدوية تطابق البحث.', 'inventory.batch': 'رقم التشغيلة', 'inventory.quantity': 'الكمية', 'inventory.expiry': 'الانتهاء',
+    'inventory.daysLeft': 'الأيام المتبقية', 'inventory.error': 'تعذّر تحميل المخزون.', 'inventory.updateError': 'تعذّر تحديث المخزون.', 'inventory.deleteError': 'تعذّر حذف التشغيلة.',
+    'inventory.missingBatch': 'معرّف التشغيلة غير موجود.', 'inventory.deleted': 'تم حذف التشغيلة بنجاح.', 'inventory.unknownMedicine': 'دواء غير معروف', 'inventory.inStock': 'متوفر', 'inventory.low': 'منخفض', 'inventory.out': 'نافد',
+    'inventory.viewAlerts': 'عرض التنبيهات ←', 'inventory.close': 'إغلاق', 'inventory.confirmDelete': 'حذف',
+    'supplier.title': 'الموردون', 'supplier.subtitle': 'ملفات الموردين والبيانات الضريبية وأرصدة الحسابات.', 'supplier.new': 'مورد جديد', 'supplier.refresh': 'تحديث',
+    'supplier.total': 'إجمالي الموردين', 'supplier.active': 'الموردون النشطون', 'supplier.payments': 'المدفوعات المسجلة', 'supplier.countries': 'الدول', 'supplier.live': 'مباشر',
+    'supplier.search': 'ابحث عن الموردين…', 'supplier.supplier': 'المورد', 'supplier.contact': 'جهة الاتصال', 'supplier.tax': 'الرقم الضريبي', 'supplier.country': 'الدولة',
+    'supplier.outstanding': 'المستحق', 'supplier.status': 'الحالة', 'supplier.actions': 'الإجراءات', 'supplier.noResults': 'لم يتم العثور على موردين.', 'supplier.date': 'التاريخ', 'supplier.paymentHistory': 'سجل المدفوعات',
+    'supplier.amount': 'المبلغ', 'supplier.method': 'الطريقة', 'supplier.reference': 'المرجع', 'supplier.noPayments': 'لا توجد مدفوعات مسجلة بعد.', 'supplier.edit': 'تعديل',
+    'supplier.activate': 'تفعيل', 'supplier.deactivate': 'تعطيل', 'supplier.recordPayment': 'تسجيل دفعة', 'supplier.delete': 'حذف', 'supplier.create': 'إنشاء مورد',
+    'supplier.editTitle': 'تعديل المورد', 'supplier.createTitle': 'إنشاء مورد', 'supplier.updateDescription': 'تحديث بيانات هذا المورد.', 'supplier.createDescription': 'إضافة ملف مورد جديد.',
+    'supplier.name': 'اسم المورد', 'supplier.contactPerson': 'جهة الاتصال', 'supplier.phone': 'الهاتف', 'supplier.email': 'البريد الإلكتروني', 'supplier.namePlaceholder': 'مثال: شركة ميدسبلاي', 'supplier.contactPlaceholder': 'مثال: أحمد نجار', 'supplier.phonePlaceholder': '+971 4 555 1000', 'supplier.emailPlaceholder': 'sales@supplier.com', 'supplier.addressPlaceholder': 'الشارع، المدينة', 'supplier.taxPlaceholder': 'مثال: 100-234-556', 'supplier.address': 'العنوان',
+    'supplier.taxNumber': 'الرقم الضريبي', 'supplier.balance': 'الرصيد المستحق (جنيه)', 'supplier.selectCountry': 'اختر الدولة', 'supplier.statusActive': 'نشط', 'supplier.statusInactive': 'غير نشط',
+    'supplier.cancel': 'إلغاء', 'supplier.saveChanges': 'حفظ التغييرات', 'supplier.deleteQuestion': 'حذف هذا المورد؟', 'supplier.deleteWarning': 'سيؤدي ذلك إلى حذف "{name}" وسجله نهائياً. لا يمكن التراجع عن هذا الإجراء.',
+    'supplier.paymentTo': 'تسجيل دفعة إلى', 'supplier.currentBalance': 'الرصيد الحالي:', 'supplier.paymentAmount': 'المبلغ (جنيه)', 'supplier.paymentDate': 'التاريخ',
+    'supplier.paymentMethod': 'الطريقة', 'supplier.paymentReference': 'المرجع (اختياري)', 'supplier.paymentPlaceholder': 'رقم المعاملة أو الشيك أو ملاحظات…',
+    'supplier.errorLoad': 'تعذّر تحميل الموردين.', 'supplier.errorStatus': 'تعذّر تحديث حالة المورد.', 'supplier.duplicate': 'يوجد مورد بهذا الاسم بالفعل.', 'supplier.amountTooHigh': 'لا يمكن أن يتجاوز المبلغ الرصيد المستحق ({amount}).', 'supplier.bankTransfer': 'تحويل بنكي', 'supplier.cash': 'نقداً', 'supplier.cheque': 'شيك', 'supplier.card': 'بطاقة', 'supplier.errorDelete': 'تعذّر حذف المورد.', 'supplier.errorSave': 'تعذّر حفظ المورد.', 'supplier.errorPayment': 'تعذّر تسجيل الدفعة.'
+    , 'sales.title': 'المبيعات', 'sales.subtitle': 'فواتير نقاط البيع والمرتجعات.', 'sales.export': 'تصدير',
+    'sales.newSale': 'بيع جديد', 'sales.today': 'اليوم', 'sales.completedInvoices': 'الفواتير المكتملة',
+    'sales.cancelledInvoices': 'الفواتير الملغاة', 'sales.avgBasket': 'متوسط السلة', 'sales.live': 'مباشر',
+    'sales.search': 'ابحث باسم العميل أو رقم الفاتورة…', 'sales.filterStatus': 'تصفية المبيعات حسب الحالة', 'sales.allStatuses': 'كل الحالات',
+    'sales.open': 'مفتوحة', 'sales.completed': 'مكتملة', 'sales.cancelled': 'ملغاة', 'sales.clear': 'مسح',
+    'sales.invoice': 'الفاتورة', 'sales.date': 'التاريخ', 'sales.customer': 'العميل', 'sales.items': 'الأصناف', 'sales.total': 'الإجمالي',
+    'sales.status': 'الحالة', 'sales.medicine': 'الدواء', 'sales.batch': 'رقم التشغيلة', 'sales.quantity': 'الكمية',
+    'sales.unitPrice': 'سعر الوحدة', 'sales.lineTotal': 'إجمالي السطر', 'sales.subtotal': 'الإجمالي الفرعي', 'sales.discount': 'الخصم',
+    'sales.tax': 'الضريبة', 'sales.grandTotal': 'الإجمالي الكلي', 'sales.walkIn': 'عميل عابر', 'sales.noResults': 'لا توجد مبيعات.',
+    'sales.updating': 'جارٍ تحديث المبيعات…', 'sales.loadingError': 'حدث خطأ أثناء تحميل المبيعات.', 'sales.unknownStatus': 'غير معروف',
+    'customer.back': 'العودة إلى العملاء', 'customer.editTitle': 'تعديل العميل', 'customer.newTitle': 'عميل جديد',
+    'customer.sharedDescription': 'العملاء مشتركون بين جميع الصيدليات على المنصة.', 'customer.name': 'الاسم', 'customer.dateOfBirth': 'تاريخ الميلاد', 'customer.notes': 'ملاحظات',
+    'customer.parent': 'العميل الأب', 'customer.parentDescription': 'اختر عميلاً موجوداً لربطه كأب لهذا العميل. سيتم تفعيل الوصول إلى الأب تلقائياً.',
+    'customer.requiredWithoutParent': 'مطلوب عند عدم اختيار عميل أب.', 'customer.optionalExtras': 'تفاصيل اختيارية تُضاف بعد إنشاء العميل.',
+    'customer.medicineHistory': 'سجل الأدوية', 'customer.historyDescription': 'مشترك بين جميع الصيدليات التي زارها العميل.', 'customer.all': 'الكل', 'customer.currentlyTaking': 'يتناوله حالياً',
+    'customer.addMedicine': 'إضافة دواء', 'customer.add': 'إضافة', 'customer.medicine': 'الدواء', 'customer.quantity': 'الكمية', 'customer.currentlyTakingThis': 'يتناول هذا الدواء حالياً', 'customer.catalog': 'الدليل', 'customer.freeText': 'نص حر',
+    'customer.stopped': 'متوقف', 'customer.source': 'المصدر', 'customer.date': 'التاريخ', 'customer.remove': 'إزالة', 'customer.noHistory': 'لا يوجد سجل أدوية بعد.',
+    'customer.noAllergies': 'لا توجد حساسية مطابقة.', 'customer.noConditions': 'لا توجد حالات مطابقة.', 'customer.allergies': 'الحساسيات', 'customer.conditions': 'الأمراض المزمنة',
+    'customer.organFunction': 'وظائف الأعضاء', 'customer.organDescription': 'إدخال واحد لكل عضو — تسجيل مستوى جديد لعضو موجود يحدّثه.', 'customer.organ': 'العضو', 'customer.level': 'مستوى القصور',
+    'customer.selectOrgan': 'اختر عضواً…', 'customer.selectLevel': 'اختر مستوى…', 'customer.noOrganFunction': 'لا توجد وظائف أعضاء مسجلة.', 'customer.relatives': 'الأقارب',
+    'customer.relativesDescription': 'القريب هو عميل آخر على المنصة. غير مسجل بعد؟ أضفه كعميل جديد أولاً.', 'customer.addRelative': 'إضافة قريب', 'customer.adding': 'جارٍ الإضافة…',
+    'customer.makeChild': 'اجعل هذا القريب ابناً', 'customer.noRelatives': 'لا يوجد أقارب مرتبطون بعد.', 'customer.paidDescription': 'من المبيعات المكتملة — لا يتم إدخاله يدوياً.',
+    'customer.save': 'حفظ', 'customer.saving': 'جارٍ الحفظ…', 'customer.create': 'إنشاء العميل', 'customer.cancel': 'إلغاء', 'customer.enterValidEmail': 'أدخل بريداً إلكترونياً صحيحاً.',
+    'customer.nameRequired': 'الاسم مطلوب.', 'customer.nameTooLong': 'الاسم طويل جداً.', 'customer.invalidName': 'أدخل اسماً صحيحاً (حروف فقط).', 'customer.invalidPhone': 'استخدم الصيغة الدولية، مثال: +201001234567.',
+    'customer.medicineRequired': 'اختر دواءً من الدليل أو أدخله يدوياً مع الاسم والاسم العلمي.', 'customer.finishMedicine': 'أكمل اسم الدواء والاسم العلمي أو امسح الحقل.', 'customer.errorLoad': 'تعذّر تحميل العميل.',
+    'customer.errorHistory': 'تعذّر تحميل سجل الأدوية.', 'customer.errorAddHistory': 'تعذّرت إضافة سجل الدواء.', 'customer.errorUpdate': 'تعذّر التحديث.', 'customer.errorDeleteHistory': 'تعذّر حذف سجل الدواء.',
+    'customer.errorSave': 'تعذّر حفظ العميل.', 'customer.errorCreate': 'تعذّر إنشاء العميل.', 'customer.deleteHistoryConfirm': 'إزالة «{name}» من سجل هذا العميل؟',
+    'customer.addedHistory': 'تمت إضافة {name} إلى سجل الأدوية.', 'customer.updatedHistory': 'الدواء {name} موجود بالفعل في سجل العميل — تم تحديثه.', 'customer.updatingHistory': 'جارٍ تحديث سجل الأدوية…', 'customer.backToCustomers': 'العودة إلى العملاء',
+    'users.title': 'المستخدمون', 'users.subtitle': 'إدارة وصول الموظفين والأدوار والفروع.', 'users.create': 'إنشاء مستخدم', 'users.createTitle': 'إنشاء مستخدم جديد', 'users.createSubtitle': 'دعوة عضو للفريق وتعيين الدور والفرع.',
+    'users.editTitle': 'تعديل المستخدم', 'users.editSubtitle': 'تحديث دور {name} وفرعه وبيانات الاتصال.', 'users.name': 'الاسم', 'users.email': 'البريد الإلكتروني', 'users.role': 'الدور', 'users.phone': 'الهاتف', 'users.status': 'الحالة',
+    'users.lastLogin': 'آخر تسجيل دخول', 'users.created': 'تاريخ الإنشاء', 'users.actions': 'الإجراءات', 'users.view': 'عرض التفاصيل', 'users.edit': 'تعديل المستخدم', 'users.delete': 'حذف المستخدم',
+    'users.activate': 'تفعيل', 'users.deactivate': 'إلغاء التفعيل', 'users.noResults': 'لا يوجد مستخدمون يطابقون عوامل التصفية.', 'users.search': 'ابحث بالاسم أو البريد الإلكتروني…', 'users.allRoles': 'كل الأدوار',
+    'users.allStatuses': 'كل الحالات', 'users.active': 'نشط', 'users.inactive': 'غير نشط', 'users.loading': 'جارٍ تحميل الأدوار…', 'users.updating': 'جارٍ تحديث المستخدمين…', 'users.cancel': 'إلغاء', 'users.creating': 'جارٍ الإنشاء…',
+    'users.saving': 'جارٍ الحفظ…', 'users.saveChanges': 'حفظ التغييرات', 'users.firstName': 'الاسم الأول', 'users.lastName': 'اسم العائلة', 'users.password': 'كلمة المرور', 'users.confirmPassword': 'تأكيد كلمة المرور',
+    'users.branch': 'الفرع', 'users.personalInfo': 'المعلومات الشخصية', 'users.contactInfo': 'معلومات الاتصال', 'users.account': 'الحساب', 'users.recentActivity': 'النشاط الأخير', 'users.memberSince': 'عضو منذ', 'users.back': 'رجوع',
+    'users.notFound': 'لم يتم العثور على المستخدم.', 'users.noActivity': 'لا يوجد نشاط حديث.', 'users.close': 'إغلاق', 'users.rowActions': 'إجراءات الصف', 'users.required': 'هذا الحقل مطلوب.', 'users.validEmail': 'أدخل بريداً إلكترونياً صحيحاً.',
+    'users.minCharacters': 'الحد الأدنى {count} أحرف.', 'users.invalid': 'قيمة غير صالحة.',
+    'users.role.Admin': 'مدير', 'users.role.Pharmacist': 'صيدلي', 'users.role.Cashier': 'أمين صندوق', 'users.role.Inventory Manager': 'مدير المخزون', 'users.role.Accountant': 'محاسب',
+    'users.branch.Main Branch': 'الفرع الرئيسي', 'users.branch.Downtown': 'وسط المدينة', 'users.branch.North Plaza': 'ميدان الشمال', 'users.branch.Westside': 'الجهة الغربية', 'users.branch.Airport Mall': 'مول المطار',
+    'users.passwordsMismatch': 'كلمتا المرور غير متطابقتين.', 'users.failedRoles': 'تعذّر تحميل الأدوار.',
+    'tax.title': 'الضرائب', 'tax.subtitle': 'إدارة الضرائب التي يمكن تطبيقها على المنتجات.', 'tax.export': 'تصدير', 'tax.new': 'ضريبة جديدة', 'tax.total': 'إجمالي الضرائب', 'tax.active': 'نشطة', 'tax.inactive': 'غير نشطة', 'tax.averageRate': 'متوسط النسبة', 'tax.live': 'مباشر', 'tax.search': 'ابحث عن الضرائب…', 'tax.name': 'الاسم', 'tax.rate': 'النسبة', 'tax.status': 'الحالة', 'tax.actions': 'الإجراءات', 'tax.noResults': 'لا توجد ضرائب.', 'tax.loading': 'جارٍ التحميل…', 'tax.edit': 'تعديل', 'tax.activate': 'تفعيل', 'tax.deactivate': 'إلغاء التفعيل', 'tax.delete': 'حذف', 'tax.editTitle': 'تعديل الضريبة', 'tax.createTitle': 'إنشاء ضريبة', 'tax.updateDescription': 'تحديث بيانات هذه الضريبة.', 'tax.createDescription': 'تعريف ضريبة يمكن تطبيقها على المنتجات.', 'tax.nameLabel': 'اسم الضريبة', 'tax.rateLabel': 'نسبة الضريبة (%)', 'tax.namePlaceholder': 'مثال: ضريبة القيمة المضافة', 'tax.valid': 'أدخل اسماً صحيحاً ونسبة بين 0 و100.', 'tax.duplicate': 'توجد ضريبة بهذا الاسم بالفعل.', 'tax.saveError': 'حدث خطأ أثناء الحفظ. حاول مرة أخرى.', 'tax.statusError': 'حدث خطأ أثناء تغيير حالة الضريبة.', 'tax.deleteError': 'حدث خطأ أثناء حذف الضريبة.', 'tax.deleteTitle': 'حذف هذه الضريبة؟', 'tax.deleteWarning': 'لا يمكن التراجع عن هذا الإجراء.',
+    'audit.title': 'سجل التدقيق', 'audit.search': 'ابحث في النشاط…', 'audit.allUsers': 'كل المستخدمين', 'audit.allActions': 'كل الإجراءات', 'audit.allEntities': 'كل الكيانات', 'audit.dateTime': 'التاريخ والوقت', 'audit.user': 'المستخدم', 'audit.action': 'الإجراء', 'audit.entity': 'الكيان', 'audit.device': 'الجهاز', 'audit.loading': 'جارٍ تحميل سجلات التدقيق…', 'audit.noResults': 'لا توجد سجلات تدقيق.', 'audit.details': 'تفاصيل التدقيق', 'audit.timestamp': 'الطابع الزمني', 'audit.newValue': 'القيمة الجديدة', 'audit.oldValue': 'القيمة القديمة', 'audit.close': 'إغلاق', 'audit.error': 'تعذّر تحميل سجل التدقيق.', 'audit.actionCreate': 'إنشاء', 'audit.actionUpdate': 'تحديث', 'audit.actionDelete': 'حذف', 'audit.actionLogin': 'تسجيل الدخول', 'audit.actionLogout': 'تسجيل الخروج', 'audit.entityTax': 'ضريبة', 'audit.entityBatch': 'تشغيلة', 'audit.entityCategory': 'فئة', 'audit.entityProduct': 'منتج', 'audit.entityOrder': 'طلب', 'audit.entityMedicine': 'دواء', 'audit.entityUser': 'مستخدم', 'audit.entityCustomer': 'عميل', 'audit.entitySupplier': 'مورد',
+    'report.title': 'التقارير', 'report.sales': 'أداء المبيعات', 'report.salesDescription': 'مراجعة الفواتير والإجماليات ونشاط نقاط البيع الأخير.', 'report.inventory': 'ملخص المخزون', 'report.inventoryDescription': 'فحص مستويات المخزون والتشغيلات وتواريخ الانتهاء.', 'report.audit': 'نشاط التدقيق', 'report.auditDescription': 'تتبع التغييرات التشغيلية وأحداث الامتثال.', 'report.open': 'فتح التقرير',
+    'purchase.title': 'طلبات الشراء', 'purchase.procurement': 'المشتريات', 'purchase.subtitle': 'إنشاء طلبات الموردين وتتبع التسليمات واستلام المخزون.', 'purchase.new': 'طلب شراء جديد', 'purchase.retry': 'إعادة المحاولة', 'purchase.activity': 'نشاط طلبات الشراء', 'purchase.activityDescription': 'مراجعة الطلبات المستلمة وفواتير الموردين.', 'purchase.receiptHistory': 'سجل الاستلام', 'purchase.poNumber': 'رقم الطلب', 'purchase.supplier': 'المورد', 'purchase.orderDate': 'تاريخ الطلب', 'purchase.expectedDate': 'التاريخ المتوقع', 'purchase.lines': 'السطور', 'purchase.total': 'الإجمالي', 'purchase.status': 'الحالة', 'purchase.actions': 'الإجراءات', 'purchase.receive': 'استلام', 'purchase.received': 'تم الاستلام', 'purchase.unknown': 'غير معروف', 'purchase.noOrders': 'لا توجد طلبات شراء.', 'purchase.supplierInfo': 'معلومات المورد والطلب', 'purchase.supplierInfoDescription': 'اختر المورد وتواريخ التسليم.', 'purchase.step1': 'الخطوة 1', 'purchase.searchSupplier': 'ابحث بالاسم أو الرمز أو الهاتف', 'purchase.noSuppliers': 'لا يوجد موردون.', 'purchase.selected': 'المحدد', 'purchase.items': 'الأصناف', 'purchase.itemsDescription': 'ابحث واختر ثم أضف الأدوية باستمرار دون فتح نافذة أخرى.', 'purchase.step2': 'الخطوة 2', 'purchase.searchMedicine': 'ابحث عن دواء أو امسح باركود', 'purchase.searchMedicinePlaceholder': 'ابحث بالاسم أو الباركود أو الرمز أو المادة الفعالة…', 'purchase.noMatchingMedicine': 'لا يوجد دواء مطابق. اضغط Enter للبحث بالباركود.', 'purchase.add': 'إضافة', 'purchase.stock': 'المخزون', 'purchase.medicine': 'الدواء', 'purchase.quantity': 'الكمية', 'purchase.unitCost': 'تكلفة الوحدة (جنيه)', 'purchase.lineDiscount': 'خصم السطر (جنيه)', 'purchase.tax': 'الضريبة (جنيه)', 'purchase.lineTotal': 'إجمالي السطر (جنيه)', 'purchase.clearLine': 'مسح السطر', 'purchase.searchFirst': 'ابحث أعلاه لإضافة أول دواء.', 'purchase.additional': 'معلومات إضافية', 'purchase.additionalDescription': 'تطبيق خصم على مستوى الطلب إذا تم الاتفاق عليه.', 'purchase.discount': 'خصم المورد / المستند', 'purchase.subtotal': 'الإجمالي الفرعي', 'purchase.lineDiscounts': 'خصومات السطور', 'purchase.supplierDiscount': 'خصم المورد', 'purchase.financialSummary': 'الملخص المالي', 'purchase.cancel': 'إلغاء', 'purchase.create': 'إنشاء طلب الشراء', 'purchase.creating': 'جارٍ الإنشاء…', 'purchase.receiving': 'جارٍ الاستلام…', 'purchase.confirmReceipt': 'تأكيد الاستلام', 'purchase.invoiceNumber': 'رقم الفاتورة', 'purchase.invoiceDate': 'تاريخ الفاتورة', 'purchase.invoiceTotal': 'إجمالي الفاتورة (جنيه)', 'purchase.receiveQuantity': 'كمية الاستلام', 'purchase.batch': 'التشغيلة', 'purchase.expiry': 'الانتهاء', 'purchase.receiptHistoryDescription': 'طلبات الشراء المستلمة وفواتير الموردين.', 'purchase.noReceipts': 'لا توجد إيصالات.', 'purchase.updatingReceipts': 'جارٍ تحديث سجل الاستلام…', 'purchase.receiptDetails': 'الإيصال', 'purchase.reviewPrices': 'مراجعة أسعار التشغيلات المستلمة.', 'purchase.purchasePrice': 'سعر الشراء (جنيه)', 'purchase.sellingPrice': 'سعر البيع (جنيه)', 'purchase.savePrices': 'حفظ الأسعار', 'purchase.saving': 'جارٍ الحفظ…', 'purchase.errorLoad': 'تعذّر تحميل طلبات الشراء.', 'purchase.errorSuppliers': 'تعذّر تحميل الموردين.', 'purchase.errorSearch': 'تعذّر البحث عن الأدوية.', 'purchase.errorBarcode': 'تعذّر حل الباركود.', 'purchase.errorReceiptLines': 'تعذّر تحميل سطور طلب الشراء. أغلق النافذة وحاول مرة أخرى.', 'purchase.errorReceipts': 'تعذّر تحميل سجل الاستلام.', 'purchase.success': 'تم إنشاء الطلب بنجاح!', 'purchase.createError': 'فشل إنشاء طلب الشراء.', 'purchase.notFound': 'لم يتم العثور على طلب الشراء', 'purchase.notFoundDescription': 'قد يكون الطلب محذوفاً أو لا تملك صلاحية الوصول إليه.', 'purchase.back': 'العودة إلى طلبات الشراء', 'purchase.details': 'تفاصيل طلب الشراء', 'purchase.unable': 'تعذّر تحميل طلب الشراء', 'purchase.noItems': 'لا توجد أصناف في هذا الطلب.', 'purchase.purchaseLines': 'سطور شراء', 'purchase.orderExpected': 'الطلب / المتوقع', 'purchase.discountSummary': 'الخصم',
+    'purchase.openOrders': 'طلبات مفتوحة', 'purchase.totalValue': 'إجمالي القيمة', 'purchase.suppliersCount': 'الموردون', 'purchase.totalLines': 'إجمالي السطور', 'purchase.updatingOrders': 'جارٍ تحديث طلبات الشراء…', 'purchase.newDescription': 'أضف طلباً من المورد عبر خطوات بسيطة.', 'purchase.loadingSuppliers': 'جارٍ تحميل الموردين', 'purchase.searching': 'جارٍ البحث عن الأدوية…', 'purchase.catalogMedicine': 'دواء من الكتالوج', 'purchase.chooseFromSearch': 'اختر من البحث أعلاه', 'purchase.loadingLines': 'جارٍ تحميل سطور الطلب القابلة للاستلام…', 'purchase.receiveDescription': 'سجّل بيانات الفاتورة والتشغيلة لكل صنف مستلم.', 'purchase.batchPlaceholder': 'مثال-###', 'purchase.qtyBatch': 'الكمية {quantity} · التشغيلة {batch}', 'purchase.receiptItemCount': '{count} أصناف', 'purchase.receiptCreated': 'تم إنشاء الإيصال بنجاح', 'purchase.receiveError': 'فشل استلام البضائع', 'purchase.pricesUpdated': 'تم تحديث الأسعار بنجاح', 'purchase.pricesError': 'فشل تحديث الأسعار', 'purchase.barcodeNotFound': 'لم يُعثر على دواء قابل للشراء بهذا الباركود.', 'purchase.selectSupplier': 'اختر مورداً قبل إنشاء الطلب.', 'purchase.selectOrderDate': 'اختر تاريخ الطلب.', 'purchase.expectedBeforeOrder': 'لا يمكن أن يسبق التاريخ المتوقع تاريخ الطلب.', 'purchase.addLine': 'أضف سطر دواء واحداً على الأقل.', 'purchase.selectMedicine': 'اختر دواءً.', 'purchase.quantityPositive': 'يجب أن تكون الكمية أكبر من صفر.', 'purchase.unitCostPositive': 'يجب أن تكون تكلفة الوحدة أكبر من صفر.', 'purchase.discountRange': 'يجب أن يكون الخصم بين صفر وقيمة السطر.', 'purchase.taxNegative': 'لا يمكن أن تكون الضريبة سالبة.', 'purchase.supplierDiscountLimit': 'لا يمكن أن يتجاوز خصم المورد قيمة الطلب.', 'purchase.invoiceNumberRequired': 'رقم الفاتورة مطلوب.', 'purchase.invoiceDateRequired': 'تاريخ الفاتورة مطلوب.', 'purchase.invoiceTotalPositive': 'يجب أن يكون إجمالي الفاتورة أكبر من صفر.', 'purchase.receiptLineRequired': 'مطلوب سطر استلام واحد على الأقل.', 'purchase.receiptQuantityPositive': 'أدخل كمية أكبر من صفر.', 'purchase.batchRequired': 'رقم التشغيلة مطلوب.', 'purchase.expiryRequired': 'تاريخ الانتهاء مطلوب.', 'purchase.expiryPast': 'لا يمكن أن يكون تاريخ الانتهاء في الماضي.', 'notification.title': 'الإشعارات', 'notification.markAll': 'تحديد الكل كمقروء', 'notification.loading': 'جارٍ تحميل الإشعارات…', 'notification.empty': 'لا توجد إشعارات بعد', 'notification.aria': 'الإشعارات', 'notification.lowStock': 'مخزون منخفض', 'notification.expiry90': 'ينتهي خلال 90 يوماً', 'notification.expiry60': 'ينتهي خلال 60 يوماً', 'notification.expiry30': 'ينتهي خلال 30 يوماً', 'notification.expired': 'انتهت صلاحية التشغيلة', 'notification.generic': 'إشعار'
+  }
+};
+
+// Public entry labels are kept explicit so the landing journey never presents
+// an ambiguous, all-portals "Login" action.
+APP_TEXT.en['public.subscribePharmacy'] = 'Subscribe Your Pharmacy';
+APP_TEXT.en['public.pharmacySignIn'] = 'Pharmacy Sign In';
+APP_TEXT.en['public.patientPortal'] = 'Patient Portal';
+APP_TEXT.en['landing.patientPrompt'] = 'Looking for your patient account?';
+APP_TEXT.ar['public.subscribePharmacy'] = 'اشترك بصيدليتك';
+APP_TEXT.ar['public.pharmacySignIn'] = 'تسجيل دخول الصيدلية';
+APP_TEXT.ar['public.patientPortal'] = 'بوابة المريض';
+APP_TEXT.ar['landing.patientPrompt'] = 'هل تبحث عن حساب المريض؟';
+APP_TEXT.en['ownerLogin.title'] = 'Owner Portal Sign In';
+APP_TEXT.en['ownerLogin.description'] = 'Sign in with your Owner account to continue.';
+APP_TEXT.en['ownerLogin.emailPlaceholder'] = 'owner@safepharma.com';
+APP_TEXT.en['ownerLogin.passwordPlaceholder'] = 'Enter your password';
+APP_TEXT.en['ownerLogin.ownerOnly'] = 'This login is only available to Owner accounts.';
+APP_TEXT.en['ownerLogin.welcome'] = 'Welcome back, Owner.';
+APP_TEXT.en['ownerLogin.networkError'] = 'Cannot reach the server. Check your connection.';
+APP_TEXT.en['ownerLogin.invalidCredentials'] = 'Invalid email or password.';
+APP_TEXT.en['ownerLogin.notAuthorized'] = 'You are not authorized to access this resource.';
+APP_TEXT.en['ownerLogin.serverError'] = 'Something went wrong on our end. Please try again.';
+APP_TEXT.en['ownerLogin.invalidRequest'] = 'Invalid request. Please check your input.';
+APP_TEXT.en['ownerLogin.unexpectedError'] = 'Unexpected response from the server. Please try again.';
+APP_TEXT.ar['ownerLogin.title'] = 'تسجيل الدخول إلى بوابة المالك';
+APP_TEXT.ar['ownerLogin.description'] = 'سجّل الدخول باستخدام حساب المالك للمتابعة.';
+APP_TEXT.ar['ownerLogin.emailPlaceholder'] = 'owner@safepharma.com';
+APP_TEXT.ar['ownerLogin.passwordPlaceholder'] = 'أدخل كلمة المرور';
+APP_TEXT.ar['ownerLogin.ownerOnly'] = 'هذا الدخول متاح لحسابات المالكين فقط.';
+APP_TEXT.ar['ownerLogin.welcome'] = 'مرحباً بعودتك أيها المالك.';
+APP_TEXT.ar['ownerLogin.networkError'] = 'تعذّر الوصول إلى الخادم. تحقق من اتصالك.';
+APP_TEXT.ar['ownerLogin.invalidCredentials'] = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+APP_TEXT.ar['ownerLogin.notAuthorized'] = 'ليس لديك صلاحية للوصول إلى هذا المورد.';
+APP_TEXT.ar['ownerLogin.serverError'] = 'حدث خطأ من جانبنا. حاول مرة أخرى.';
+APP_TEXT.ar['ownerLogin.invalidRequest'] = 'الطلب غير صالح. تحقق من المدخلات.';
+APP_TEXT.ar['ownerLogin.unexpectedError'] = 'استجابة غير متوقعة من الخادم. حاول مرة أخرى.';
 
 /**
  * App-wide i18n. This generalizes the pattern that already shipped for the
@@ -19,62 +434,131 @@ const STORAGE_KEY = 'app_lang';
  * t() — this keeps translation files small and colocated with the feature
  * that uses them, instead of one giant ever-growing file.
  *
- * Persistence: staff accounts have their language synced with the backend
- * (GET/PUT /api/UserLanguage) so it follows them across devices; localStorage
- * is just the fast local cache used before that round trip resolves (and the
- * only thing anonymous/portal contexts use).
+ * Persistence: app_lang is the one browser-level source of truth for the active
+ * UI language. Staff accounts may still synchronize that active choice with the
+ * backend, but authentication and tenant settings never replace the choice
+ * already being used in this browser.
  */
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private readonly http = inject(HttpClient);
+  private readonly document = inject(DOCUMENT);
+  private readonly authSession = inject(AuthSessionService);
+  private readonly startedWithPersistedLanguage = this.readStoredLanguage() !== null;
+  private browserPreferenceWasChosen = this.startedWithPersistedLanguage;
   private readonly langState = signal<AppLanguage>(this.readInitialLanguage());
+  private readonly tenantDefaultState = signal<AppLanguage>('en');
+  private readonly userOverrideState = signal<AppLanguage | null>(null);
+  private sessionKey: string | null = null;
 
   readonly lang = computed(() => this.langState());
   readonly dir = computed<'ltr' | 'rtl'>(() => (this.langState() === 'ar' ? 'rtl' : 'ltr'));
   readonly isRtl = computed(() => this.langState() === 'ar');
+  readonly tenantDefault = computed(() => this.tenantDefaultState());
+  readonly userOverride = computed(() => this.userOverrideState());
+  readonly hasUserOverride = computed(() => this.userOverrideState() !== null);
 
   constructor() {
-    this.applyDocumentDir(this.langState());
+    // Persist the synchronously resolved startup value so every later route and
+    // layout consumes the same preference, including the first anonymous visit.
+    this.applyLanguage(this.langState());
+  }
+
+  /**
+   * Starts authenticated preference synchronization without changing the active
+   * browser language. A language selected before login always wins for this
+   * session; the backend is updated to match it instead of racing the UI.
+   */
+  initializeForCurrentSession(): void {
+    const userKey = this.preferenceKey();
+    if (!userKey || userKey === this.sessionKey) return;
+    this.sessionKey = userKey;
+    this.userOverrideState.set(this.langState());
+
+    // A fresh browser with no app preference may still honor an existing staff
+    // preference once. Once app_lang exists, it is authoritative and is synced
+    // to the signed-in account without waiting for the network.
+    const hasBrowserPreference = this.browserPreferenceWasChosen;
+    const tenantRequest = this.http.get<unknown>(`${environment.apiUrl}/PharmacySettings`).pipe(catchError(() => of(null)));
+    const userRequest = hasBrowserPreference
+      ? of(null)
+      : this.http.get<unknown>(`${environment.apiUrl}/UserLanguage`).pipe(catchError(() => of(null)));
+
+    forkJoin({ tenant: tenantRequest, user: userRequest }).subscribe({
+      next: ({ tenant, user }) => {
+        const tenantLanguage = this.extractLanguage(tenant, ['preferredLanguage', 'defaultLanguage', 'language']);
+        if (tenantLanguage) {
+          this.tenantDefaultState.set(tenantLanguage);
+        }
+        const userLanguage = this.extractLanguage(user, ['preferredLanguage', 'language']);
+        if (userLanguage && !hasBrowserPreference) {
+          this.userOverrideState.set(userLanguage);
+          this.applyLanguage(userLanguage);
+          this.syncBackendLanguage(userLanguage);
+        } else {
+          this.syncBackendLanguage(this.langState());
+        }
+      },
+      error: () => this.syncBackendLanguage(this.langState()),
+    });
   }
 
   /** Call once after login (or on app init for an already-authenticated
-   *  session) to pull the language actually saved server-side for this staff
-   *  account, in case it differs from what's cached in this browser. */
+   *  session) to synchronize the active browser language with this staff
+   *  account. */
   loadFromServer(): void {
-    this.http
-      .get<{ success: boolean; data?: { preferredLanguage?: string } }>(
-        `${environment.apiUrl}/UserLanguage`,
-      )
-      .subscribe({
-        next: (res) => {
-          const server = res?.data?.preferredLanguage;
-          const lang: AppLanguage | null =
-            server === 'Arabic' || server === 'ar' ? 'ar' : server === 'English' || server === 'en' ? 'en' : null;
-          if (lang) this.setLanguage(lang, false);
-        },
-        error: () => {}, // not logged in yet, or offline — keep whatever's cached locally
-      });
+    this.initializeForCurrentSession();
   }
 
   /** @param persist Also PUTs the choice to the backend for a signed-in staff
-   *  user. Pass false when just applying a value we already read *from* the
-   *  backend (loadFromServer), to avoid an immediate pointless round trip. */
+   *  user. */
   setLanguage(lang: AppLanguage, persist = true): void {
+    if (persist) this.setUserLanguage(lang);
+    else this.applyLanguage(lang);
+  }
+
+  /** Changes only the current user's personal override. */
+  setUserLanguage(lang: AppLanguage): void {
+    const normalized = this.normalize(lang) ?? 'en';
+    this.browserPreferenceWasChosen = true;
+    this.userOverrideState.set(normalized);
+    this.applyLanguage(normalized);
+    this.syncBackendLanguage(normalized);
+  }
+
+  /** Changes the tenant default; users with personal overrides remain unchanged. */
+  setTenantDefault(lang: AppLanguage): void {
+    const normalized = this.normalize(lang) ?? 'en';
+    this.tenantDefaultState.set(normalized);
+    if (!this.userOverrideState()) this.applyLanguage(normalized);
+  }
+
+  clearSession(): void {
+    this.sessionKey = null;
+    this.userOverrideState.set(null);
+    // Language is an application preference, not authentication state. Keep
+    // app_lang and the current direction intact across logout.
+  }
+
+  restoreResolvedLanguage(): void { this.applyLanguage(this.langState()); }
+
+  toggle(): void {
+    this.setUserLanguage(this.langState() === 'en' ? 'ar' : 'en');
+  }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.t(APP_TEXT, key, params);
+  }
+
+  normalize(value: unknown): AppLanguage | null {
+    const valueString = String(value ?? '').trim().toLowerCase();
+    return valueString === 'ar' || valueString === 'arabic' ? 'ar' : valueString === 'en' || valueString === 'english' ? 'en' : null;
+  }
+
+  private applyLanguage(lang: AppLanguage): void {
     localStorage.setItem(STORAGE_KEY, lang);
     this.langState.set(lang);
     this.applyDocumentDir(lang);
-
-    if (persist) {
-      this.http
-        .put(`${environment.apiUrl}/UserLanguage`, {
-          preferredLanguage: lang === 'ar' ? 'Arabic' : 'English',
-        })
-        .subscribe({ error: () => {} }); // best-effort — the UI already switched locally either way
-    }
-  }
-
-  toggle(): void {
-    this.setLanguage(this.langState() === 'en' ? 'ar' : 'en');
   }
 
   /** Key lookup with optional {placeholder} interpolation, e.g.
@@ -97,13 +581,68 @@ export class I18nService {
     return this.langState() === 'ar' ? item.nameAr || item.nameEn : item.nameEn || item.nameAr;
   }
 
+  roleLabel(role: string | null | undefined): string {
+    const value = String(role ?? '').trim();
+    const translated = this.text(`users.role.${value}`);
+    return translated === `users.role.${value}` ? value : translated;
+  }
+
+  branchLabel(branch: string | null | undefined): string {
+    const value = String(branch ?? '').trim();
+    const translated = this.text(`users.branch.${value}`);
+    return translated === `users.branch.${value}` ? value : translated;
+  }
+
   private readInitialLanguage(): AppLanguage {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'ar' ? 'ar' : 'en';
+    const stored = this.readStoredLanguage();
+    return stored ?? 'en';
+  }
+
+  private readStoredLanguage(): AppLanguage | null {
+    const current = this.normalize(localStorage.getItem(STORAGE_KEY));
+    if (current) return current;
+
+    // Migrate the old portal-only preference once. No code writes this key
+    // anymore, so the application has one persisted language source afterward.
+    const legacyPortalLanguage = this.normalize(localStorage.getItem(LEGACY_PORTAL_STORAGE_KEY));
+    if (legacyPortalLanguage) {
+      localStorage.setItem(STORAGE_KEY, legacyPortalLanguage);
+      localStorage.removeItem(LEGACY_PORTAL_STORAGE_KEY);
+    }
+    return legacyPortalLanguage;
+  }
+
+  private preferenceKey(): string | null {
+    const user = this.authSession.user();
+    if (!user) return null;
+    const identity = user.email || user.fullName;
+    const tenant = user.pharmacyName || 'tenant';
+    return `${tenant}:${identity}`;
+  }
+
+  private extractLanguage(response: unknown, keys: string[]): AppLanguage | null {
+    const candidates: unknown[] = [response];
+    if (response && typeof response === 'object') {
+      const record = response as Record<string, unknown>;
+      candidates.push(record['data'], record['message'], record['language'], record['preferredLanguage']);
+      if (record['data'] && typeof record['data'] === 'object') {
+        const data = record['data'] as Record<string, unknown>;
+        candidates.push(...keys.map(key => data[key]));
+      }
+      candidates.push(...keys.map(key => record[key]));
+    }
+    return candidates.map(candidate => this.normalize(candidate)).find(Boolean) ?? null;
   }
 
   private applyDocumentDir(lang: AppLanguage): void {
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    document.documentElement.setAttribute('lang', lang);
+    this.document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    this.document.documentElement.setAttribute('lang', lang);
+  }
+
+  private syncBackendLanguage(lang: AppLanguage): void {
+    if (!this.authSession.isAuthenticated()) return;
+    this.http.put(`${environment.apiUrl}/UserLanguage`, {
+      language: lang,
+    }).subscribe({ error: () => {} });
   }
 }

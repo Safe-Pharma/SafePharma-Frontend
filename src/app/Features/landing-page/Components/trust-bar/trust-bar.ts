@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-trust-bar',
@@ -7,5 +8,5 @@ import { Component } from '@angular/core';
   styleUrl: './trust-bar.css',
 })
 export class TrustBar {
-
+  protected readonly i18n = inject(I18nService);
 }

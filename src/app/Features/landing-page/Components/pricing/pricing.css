@@ -1,0 +1,28 @@
+.landing-pricing-grid > div {
+  animation: landing-pricing-in 700ms cubic-bezier(.22, 1, .36, 1) both;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.landing-pricing-grid > div:nth-child(1) { animation-delay: 100ms; }
+.landing-pricing-grid > div:nth-child(2) { animation-delay: 180ms; }
+.landing-pricing-grid > div:nth-child(3) { animation-delay: 260ms; }
+
+.landing-pricing-grid > div:hover {
+  transform: translateY(-7px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.landing-pricing-grid a {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.landing-pricing-grid a:hover { transform: translateY(-2px); }
+
+@keyframes landing-pricing-in {
+  from { opacity: 0; transform: translateY(20px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-pricing-grid > div { animation: none; }
+}

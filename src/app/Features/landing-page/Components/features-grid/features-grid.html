@@ -4,13 +4,13 @@
 
     <!-- Section heading -->
     <div class="mx-auto max-w-2xl text-center">
-      <div class="text-xs font-semibold uppercase tracking-wider text-primary">Capabilities</div>
-      <h2 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Everything you need to run a modern pharmacy</h2>
-      <p class="mt-4 text-muted-foreground">Ten purpose-built modules that work as one. No more spreadsheets, no more swivel-chair workflows.</p>
+      <div class="text-xs font-semibold uppercase tracking-wider text-primary">{{ i18n.text('landing.capabilities') }}</div>
+      <h2 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{{ i18n.text('landing.capabilitiesTitle') }}</h2>
+      <p class="mt-4 text-muted-foreground">{{ i18n.text('landing.capabilitiesDescription') }}</p>
     </div>
 
     <!-- Cards grid: 2 cols on small screens, 3 on large, 5 on extra large -->
-    <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div class="landing-feature-grid mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 
       <!-- Card: Inventory Management -->
       <div class="group rounded-xl border border-border bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-elevated">
@@ -30,8 +30,8 @@
             <path d="M12 13.5V8"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Inventory Management</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Real-time stock across branches, batches, expiry tracking and auto-reorder.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.inventory') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.inventoryDescription') }}</p>
       </div>
 
       <!-- Card: Sales & POS -->
@@ -43,8 +43,8 @@
             <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Sales &amp; POS</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Fast checkout, insurance claims, loyalty and integrated payments.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.salesPos') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.salesPosDescription') }}</p>
       </div>
 
       <!-- Card: Purchasing -->
@@ -58,8 +58,8 @@
             <circle cx="7" cy="18" r="2"></circle>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Purchasing</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">RFQs, purchase orders, GRNs and supplier price lists in one flow.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.purchasing') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.purchasingDescription') }}</p>
       </div>
 
       <!-- Card: Suppliers -->
@@ -73,8 +73,8 @@
             <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Suppliers</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Vendor catalog, performance and contract terms at your fingertips.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.suppliers') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.suppliersDescription') }}</p>
       </div>
 
       <!-- Card: Customers -->
@@ -87,8 +87,8 @@
             <circle cx="9" cy="7" r="4"></circle>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Customers</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Patient profiles, prescription history and segmentation.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.customers') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.customersDescription') }}</p>
       </div>
 
       <!-- Card: Reports -->
@@ -101,8 +101,8 @@
             <path d="M8 17v-3"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Reports</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Pre-built dashboards plus a no-code report builder.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.reports') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.reportsDescription') }}</p>
       </div>
 
       <!-- Card: User Management -->
@@ -122,8 +122,8 @@
             <circle cx="9" cy="7" r="4"></circle>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">User Management</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Granular role-based access for every team member and branch.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.userManagement') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.userManagementDescription') }}</p>
       </div>
 
       <!-- Card: Audit Logs -->
@@ -136,8 +136,8 @@
             <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Audit Logs</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Tamper-proof history of every action — who, what, when, where.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.auditLogs') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.auditLogsDescription') }}</p>
       </div>
 
       <!-- Card: Multi-Branch -->
@@ -151,8 +151,8 @@
             <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Multi-Branch</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Consolidated reporting with branch-level autonomy.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.multiBranch') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.multiBranchDescription') }}</p>
       </div>
 
       <!-- Card: Secure Cloud -->
@@ -162,8 +162,8 @@
             <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
           </svg>
         </div>
-        <div class="mt-4 text-sm font-semibold">Secure Cloud</div>
-        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">SOC 2 aligned, encrypted at rest and in transit.</p>
+        <div class="mt-4 text-sm font-semibold">{{ i18n.text('landing.secureCloud') }}</div>
+        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ i18n.text('landing.secureCloudDescription') }}</p>
       </div>
 
     </div>

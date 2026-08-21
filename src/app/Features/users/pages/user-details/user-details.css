@@ -9,9 +9,7 @@
 =========================== */
 
 .detail-page {
-  padding: 32px;
-  background: #f7f8fa;
-  min-height: 100vh;
+  min-width: 0;
 }
 
 /* ===========================

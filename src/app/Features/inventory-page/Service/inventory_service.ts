@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../../environments/environment.production';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -10,7 +11,7 @@ interface newStockBatchDto {
   providedIn: 'root',
 })
 export class InventoryService {
-  private BaseUrl = `https://localhost:7259/api/Batch/`;
+  private BaseUrl = `${environment.apiUrl}/Batch/`;
 
   constructor(private http: HttpClient) {}
 

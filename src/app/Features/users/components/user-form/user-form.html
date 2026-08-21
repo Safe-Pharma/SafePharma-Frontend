@@ -18,7 +18,7 @@
   <!-- ── First name / Last name ──────────────────────────────── -->
   <div class="row">
     <div class="field">
-      <label for="firstName">First name</label>
+      <label for="firstName">{{ i18n.text('users.firstName') }}</label>
       <input
         id="firstName"
         type="text"
@@ -30,7 +30,7 @@
       }
     </div>
     <div class="field">
-      <label for="lastName">Last name</label>
+      <label for="lastName">{{ i18n.text('users.lastName') }}</label>
       <input
         id="lastName"
         type="text"
@@ -46,7 +46,7 @@
   <!-- ── Email / Phone ───────────────────────────────────────── -->
   <div class="row">
     <div class="field">
-      <label for="email">Email</label>
+      <label for="email">{{ i18n.text('users.email') }}</label>
       <input
         id="email"
         type="email"
@@ -58,7 +58,7 @@
       }
     </div>
     <div class="field">
-      <label for="phone">Phone</label>
+      <label for="phone">{{ i18n.text('users.phone') }}</label>
       <input
         id="phone"
         type="tel"
@@ -75,7 +75,7 @@
   @if (mode() === 'create') {
     <div class="row">
       <div class="field">
-        <label for="password">Password</label>
+        <label for="password">{{ i18n.text('users.password') }}</label>
         <input
           id="password"
           type="password"
@@ -87,7 +87,7 @@
         }
       </div>
       <div class="field">
-        <label for="confirmPassword">Confirm password</label>
+        <label for="confirmPassword">{{ i18n.text('users.confirmPassword') }}</label>
         <input
           id="confirmPassword"
           type="password"
@@ -95,7 +95,7 @@
           [class.invalid]="(form.errors?.['passwordsMismatch'] || form.controls.confirmPassword.invalid) && form.controls.confirmPassword.touched"
         />
         @if (form.errors?.['passwordsMismatch'] && form.controls.confirmPassword.touched) {
-          <span class="field-error">Passwords do not match.</span>
+          <span class="field-error">{{ i18n.text('users.passwordsMismatch') }}</span>
         } @else if (fieldError('confirmPassword'); as err) {
           <span class="field-error">{{ err }}</span>
         }
@@ -106,7 +106,7 @@
   <!-- ── Role / Branch ───────────────────────────────────────── -->
   <div class="row">
     <div class="field">
-      <label for="role">Role</label>
+      <label for="role">{{ i18n.text('users.role') }}</label>
       <select
         id="role"
         formControlName="role"
@@ -114,10 +114,10 @@
         [attr.disabled]="rolesLoading() ? true : null"
       >
         @if (rolesLoading()) {
-          <option value="">Loading roles...</option>
+          <option value="">{{ i18n.text('users.loading') }}</option>
         } @else {
           @for (r of roles(); track r.id) {
-            <option [value]="r.name">{{ r.name }}</option>
+            <option [value]="r.name">{{ i18n.roleLabel(r.name) }}</option>
           }
         }
       </select>
@@ -126,10 +126,10 @@
       }
     </div>
     <div class="field">
-      <label for="branch">Branch</label>
+      <label for="branch">{{ i18n.text('users.branch') }}</label>
       <select id="branch" formControlName="branch">
         @for (b of branches; track b) {
-          <option [value]="b">{{ b }}</option>
+          <option [value]="b">{{ i18n.branchLabel(b) }}</option>
         }
       </select>
     </div>
@@ -138,10 +138,10 @@
   <!-- ── Status ──────────────────────────────────────────────── -->
   <div class="row single">
     <div class="field">
-      <label for="status">Status</label>
+      <label for="status">{{ i18n.text('users.status') }}</label>
       <select id="status" formControlName="status">
         @for (s of statuses; track s) {
-          <option [value]="s">{{ s }}</option>
+          <option [value]="s">{{ s === 'Active' ? i18n.text('users.active') : i18n.text('users.inactive') }}</option>
         }
       </select>
     </div>

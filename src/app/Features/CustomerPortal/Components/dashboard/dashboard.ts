@@ -14,7 +14,7 @@ import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
 import { Customer, CustomerAllergy, CustomerChronicCondition } from '../../../Customer/Models/customer.model';
 import { PortalReceiptListItem } from '../../Models/portal-sales.model';
-import { receiptStatusTone, receiptStatusLabel } from '../../Shared/receipt-status';
+import { receiptStatusTone } from '../../Shared/receipt-status';
 import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../Shared/portal-animations';
 
 
@@ -56,7 +56,6 @@ export class PortalDashboard implements OnInit {
       .slice(0, 5);
 
   receiptStatusTone = receiptStatusTone;
-  receiptStatusLabel = receiptStatusLabel;
 
   ngOnInit(): void {
     this.load();
@@ -92,7 +91,7 @@ export class PortalDashboard implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.error.set(true);
-        this.toast.show(getErrorMessage(err, 'Could not load your dashboard.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadDashboardError')), 'error');
       },
     });
   }

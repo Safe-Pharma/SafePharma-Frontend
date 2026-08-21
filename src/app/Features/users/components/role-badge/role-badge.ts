@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-role-badge',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<span class="badge">{{ role() }}</span>`,
+  template: `<span class="badge">{{ i18n.roleLabel(role()) }}</span>`,
   styles: [`
     .badge {
       display: inline-flex;
@@ -19,5 +20,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   `],
 })
 export class RoleBadgeComponent {
+  protected readonly i18n = inject(I18nService);
   role = input.required<string>();
 }

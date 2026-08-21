@@ -13,7 +13,7 @@ const ROLES = ['Admin', 'Pharmacist', 'Cashier', 'Inventory Manager', 'Accountan
 const BRANCHES = ALL_BRANCHES;
 
 function emailOf(name: string): string {
-  return name.toLowerCase().replace(' ', '.') + '@medirx.io';
+  return name.toLowerCase().replace(' ', '.') + '@safepharma.com';
 }
 
 function isoDate(base: Date, offsetDays: number): string {
