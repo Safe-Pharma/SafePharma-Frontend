@@ -417,7 +417,7 @@
                       (click)="toggleItemCustomerPicker(item.id)"
                       class="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
                     >
-                      {{ item.customerName || t('cart.relative') }}
+                      {{ rowCustomerLabel(item) }}
                     </button>
 
                     @if (openItemCustomerPickerId() === item.id) {

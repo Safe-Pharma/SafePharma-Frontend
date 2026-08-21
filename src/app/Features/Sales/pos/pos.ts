@@ -307,6 +307,7 @@ export class Pos implements OnInit, AfterViewInit {
 
   // ---- relatives of the sale's customer — power the per-row "Relative" dropdown ----
   protected readonly relatives = signal<RelativeListItem[]>([]);
+  private relativesRequestId = 0;
 
   // ---- per-line customer picker ----
   protected readonly openItemCustomerPickerId = signal<string | null>(null);
@@ -637,14 +638,21 @@ export class Pos implements OnInit, AfterViewInit {
   /** Loads the relatives of the given customer for the per-row "Relative"
    *  dropdown. Clears the list when there's no sale-level customer yet. */
   private loadRelativesForCustomer(customerId: string | null): void {
+    const requestId = ++this.relativesRequestId;
     if (!customerId) {
       this.relatives.set([]);
       this.excludedCustomerIds.set([]);
       return;
     }
 
+    // Do not keep showing the previous customer's relatives while the new
+    // customer's list is loading.
+    this.relatives.set([]);
+    this.excludedCustomerIds.set([customerId]);
+
     this.relativesApi.getAllRelatives(customerId).subscribe({
       next: (list) => {
+        if (requestId !== this.relativesRequestId) return;
         this.relatives.set(list ?? []);
         this.excludedCustomerIds.set([
           customerId,
@@ -652,7 +660,12 @@ export class Pos implements OnInit, AfterViewInit {
         ]);
         this.refreshCustomerSearchResults(this.customers());
       },
-      error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.loadRelativesFailed')), 'error'),
+      error: (err) => {
+        if (requestId !== this.relativesRequestId) return;
+        this.relatives.set([]);
+        this.excludedCustomerIds.set([customerId]);
+        this.toast.show(getErrorMessage(err, this.t('toast.loadRelativesFailed')), 'error');
+      },
     });
   }
 
@@ -823,7 +836,24 @@ export class Pos implements OnInit, AfterViewInit {
    *  checkout, so this just updates the active tab's cart state. */
   selectCustomer(customer: Customer | null): void {
     this.showCustomerDropdown.set(false);
-    this.updateActiveTab((t) => ({ ...t, selectedCustomer: customer }));
+    this.openItemCustomerPickerId.set(null);
+    const previousCustomerId = this.selectedCustomer()?.id ?? null;
+    const nextCustomerId = customer?.id ?? null;
+    const customerChanged = previousCustomerId !== nextCustomerId;
+    this.updateActiveTab((t) => ({
+      ...t,
+      selectedCustomer: customer,
+      // A relative belongs to the previous sale-level customer. When the
+      // header customer changes, reset every line to the new customer so its
+      // relative dropdown is no longer tied to the old customer's family.
+      items: customerChanged
+        ? t.items.map((item) => ({
+            ...item,
+            customerId: customer?.id ?? null,
+            customerName: customer?.name ?? '',
+          }))
+        : t.items,
+    }));
     this.loadRelativesForCustomer(customer?.id ?? null);
   }
 
@@ -1085,6 +1115,10 @@ export class Pos implements OnInit, AfterViewInit {
 
   toggleItemCustomerPicker(itemId: string): void {
     this.openItemCustomerPickerId.update((v) => (v === itemId ? null : itemId));
+  }
+
+  rowCustomerLabel(item: SaleItem): string {
+    return item.customerName || this.selectedCustomer()?.name || this.t('cart.relative');
   }
 
   /** Per-row "Relative" dropdown — assigns one of the sale customer's relatives
