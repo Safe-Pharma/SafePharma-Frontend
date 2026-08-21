@@ -583,8 +583,10 @@ export class I18nService {
 
   roleLabel(role: string | null | undefined): string {
     const value = String(role ?? '').trim();
-    const translated = this.text(`users.role.${value}`);
-    return translated === `users.role.${value}` ? value : translated;
+    const knownRole = ['Admin', 'Pharmacist', 'Cashier', 'Inventory Manager', 'Accountant']
+      .find((candidate) => candidate.toLowerCase() === value.toLowerCase()) ?? value;
+    const translated = this.text(`users.role.${knownRole}`);
+    return translated === `users.role.${knownRole}` ? value : translated;
   }
 
   branchLabel(branch: string | null | undefined): string {

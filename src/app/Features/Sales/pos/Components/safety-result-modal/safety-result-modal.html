@@ -41,12 +41,12 @@
                 </p>
               </div>
               @if (card.result.checkSucceeded && card.result.riskScore !== null) {
-                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" [class.bg-emerald-100]="card.decisionTone === 'ok'" [class.text-emerald-700]="card.decisionTone === 'ok'" [class.bg-amber-100]="card.decisionTone === 'warn'" [class.text-amber-700]="card.decisionTone === 'warn'" [class.bg-red-100]="card.decisionTone === 'danger'" [class.text-red-700]="card.decisionTone === 'danger'">Risk {{ card.result.riskScore }}/100</span>
+                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" [class.bg-emerald-100]="card.decisionTone === 'ok'" [class.text-emerald-700]="card.decisionTone === 'ok'" [class.bg-amber-100]="card.decisionTone === 'warn'" [class.text-amber-700]="card.decisionTone === 'warn'" [class.bg-red-100]="card.decisionTone === 'danger'" [class.text-red-700]="card.decisionTone === 'danger'">{{ t('safety.risk', { score: card.result.riskScore ?? 0 }) }}</span>
               }
             </div>
 
             @if (!card.result.checkSucceeded) {
-              <p class="mt-3 text-sm text-amber-700">{{ card.result.failureReason || 'The safety check could not be completed.' }}</p>
+              <p class="mt-3 text-sm text-amber-700">{{ card.result.failureReason || t('safety.couldNotComplete') }}</p>
             }
 
             <div class="mt-3 grid gap-2">
@@ -55,7 +55,7 @@
                   <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                       <p class="truncate text-sm font-semibold text-slate-900">{{ medicine.medicine.medicineName }}</p>
-                      <p class="mt-0.5 text-xs text-slate-500">Quantity {{ medicine.medicine.quantity }}</p>
+                      <p class="mt-0.5 text-xs text-slate-500">{{ t('safety.quantity', { count: medicine.medicine.quantity }) }}</p>
                     </div>
                     <span class="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold" [class.bg-emerald-100]="medicine.tone === 'ok'" [class.text-emerald-700]="medicine.tone === 'ok'" [class.bg-amber-100]="medicine.tone === 'warn'" [class.text-amber-700]="medicine.tone === 'warn'" [class.bg-red-100]="medicine.tone === 'danger'" [class.text-red-700]="medicine.tone === 'danger'">
                       @if (medicine.tone === 'ok') { ✓ } @else if (medicine.tone === 'warn') { ⚠ } @else { ! }

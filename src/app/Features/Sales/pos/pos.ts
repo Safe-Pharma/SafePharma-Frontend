@@ -135,6 +135,7 @@ export class Pos implements OnInit, AfterViewInit {
   protected readonly dir = this.i18n.dir;
   protected readonly t = (key: string, params?: Record<string, string | number>) =>
     this.i18n.t(POS_DICT, key, params);
+  protected readonly roleLabel = (role: string | null | undefined) => this.i18n.roleLabel(role);
   protected toggleLanguage(): void {
     this.i18n.toggle();
   }
@@ -204,7 +205,7 @@ export class Pos implements OnInit, AfterViewInit {
     const snapshot = this.currentSafetySnapshot();
     if (!snapshot || snapshot.stale) return null;
     if (snapshot.results.length === 0) {
-      return { tone: 'warn', label: 'No result returned' } as const;
+      return { tone: 'warn', label: this.t('safety.noResult') } as const;
     }
     const tones = [
       ...snapshot.results.map((result) => this.toneFor(result)),
@@ -213,7 +214,7 @@ export class Pos implements OnInit, AfterViewInit {
     const tone = tones.includes('danger') ? 'danger' : tones.includes('warn') ? 'warn' : 'ok';
     return {
       tone,
-      label: tone === 'ok' ? 'Safe' : tone === 'warn' ? 'Warnings found' : 'High-risk issue',
+      label: tone === 'ok' ? this.t('safety.safe') : tone === 'warn' ? this.t('safety.warningsFound') : this.t('safety.highRiskIssue'),
     } as const;
   });
 
@@ -227,8 +228,8 @@ export class Pos implements OnInit, AfterViewInit {
       return {
         ...item,
         tone,
-        label: tone === 'ok' ? 'Safe' : tone === 'warn' ? 'Warning' : 'High Risk',
-        conclusion: issues[0]?.reason || 'No patient-specific issues detected.',
+        label: tone === 'ok' ? this.t('safety.safe') : tone === 'warn' ? this.t('safety.warning') : this.t('safety.highRisk'),
+        conclusion: issues[0]?.reason || this.t('safety.noIssues'),
       };
     });
   });
@@ -692,7 +693,7 @@ export class Pos implements OnInit, AfterViewInit {
       error: () => {
         this.taxes.set([]);
         this.taxesLoading.set(false);
-        this.taxesError.set('Could not load active taxes.');
+        this.taxesError.set(this.t('editor.loadTaxesFailed'));
       },
     });
   }
@@ -1274,7 +1275,7 @@ export class Pos implements OnInit, AfterViewInit {
 
   taxLabel(taxId: string): string {
     const tax = this.taxes().find((item) => item.id === taxId);
-    return tax ? `${tax.name} (${tax.rate}%)` : 'No tax';
+    return tax ? `${tax.name} (${tax.rate}%)` : this.t('editor.noTax');
   }
 
   toggleSaleTaxMenu(): void {
@@ -1389,7 +1390,7 @@ export class Pos implements OnInit, AfterViewInit {
             items: [{ pharmacyMedicineId: item.pharmacyMedicineId, saleItemId: item.id }],
           },
         ],
-        language: 'en',
+        language: this.i18n.lang(),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -1411,14 +1412,14 @@ export class Pos implements OnInit, AfterViewInit {
             this.openSafetyResults(res.data.results, names);
           } else {
             this.safetyLoading.set(false);
-            this.safetyError.set(res.message || 'Could not complete the safety check.');
+            this.safetyError.set(res.message || this.t('safety.couldNotComplete'));
           }
         },
         error: (err) => {
           if (!this.isCurrentSafetyRequest(requestId, requestKey, tabId)) return;
           this.checkingItemId.set(null);
           this.safetyLoading.set(false);
-          this.safetyError.set(getErrorMessage(err, 'Could not complete the safety check.'));
+          this.safetyError.set(getErrorMessage(err, this.t('safety.couldNotComplete')));
         },
       });
   }
@@ -1475,7 +1476,7 @@ export class Pos implements OnInit, AfterViewInit {
           customerId: g.customerId,
           items: g.items.map((i) => ({ pharmacyMedicineId: i.pharmacyMedicineId, saleItemId: i.id })),
         })),
-        language: 'en',
+        language: this.i18n.lang(),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -1503,14 +1504,14 @@ export class Pos implements OnInit, AfterViewInit {
             this.openSafetyResults(res.data.results, names);
           } else {
             this.safetyLoading.set(false);
-            this.safetyError.set(res.message || 'Could not complete the safety check.');
+            this.safetyError.set(res.message || this.t('safety.couldNotComplete'));
           }
         },
         error: (err) => {
           if (!this.isCurrentSafetyRequest(requestId, requestKey, tabId)) return;
           this.checkingAll.set(false);
           this.safetyLoading.set(false);
-          this.safetyError.set(getErrorMessage(err, 'Could not complete the safety check.'));
+          this.safetyError.set(getErrorMessage(err, this.t('safety.couldNotComplete')));
         },
       });
   }
