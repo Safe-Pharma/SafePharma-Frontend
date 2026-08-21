@@ -8,10 +8,13 @@ import {
   signal,
   Output,
   EventEmitter,
+  inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RelativesService } from '../../Services/relatives';
 import { Spinner } from '../../../../../Shared/Components/spinner/spinner';
+import { I18nService } from '../../../../../Core/Services/i18n.service';
+import { POS_DICT } from '../../pos.i18n';
 interface Relative {
   relativeId: string;
   relativeName: string;
@@ -24,6 +27,7 @@ interface Relative {
   styleUrl: './relative-drop-down.css',
 })
 export class RelativeDropDown implements OnInit, OnChanges {
+  private readonly i18n = inject(I18nService);
   // Input: customer id يتم تمريره من الـ parent component
   @Input() customerId: string = '';
 
@@ -81,7 +85,7 @@ export class RelativeDropDown implements OnInit, OnChanges {
       },
       error: (error) => {
         console.error('❌ Error loading relatives:', error);
-        this.error.set('Failed to load relatives');
+        this.error.set(this.t('relative.loadFailed'));
         this.relatives.set([]);
         this.selectedRelativeId.set('');
         this.relativesLoaded.emit({ customerId: this.customerId, relatives: [] });
@@ -108,6 +112,8 @@ export class RelativeDropDown implements OnInit, OnChanges {
   }
 
   selectedRelativeName(): string {
-    return this.relatives().find((relative) => relative.relativeId === this.selectedRelativeId())?.relativeName ?? 'Relative';
+    return this.relatives().find((relative) => relative.relativeId === this.selectedRelativeId())?.relativeName ?? this.t('relative.label');
   }
+
+  t(key: string): string { return this.i18n.t(POS_DICT, key); }
 }

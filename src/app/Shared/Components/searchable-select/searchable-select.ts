@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, computed, input, output, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 export interface SearchableSelectOption {
   value: string;
@@ -16,6 +17,7 @@ export interface SearchableSelectOption {
   styleUrl: './searchable-select.css',
 })
 export class SearchableSelectComponent {
+  private readonly i18n = inject(I18nService);
   options = input<SearchableSelectOption[]>([]);
   value = input<string | null>('');
   placeholder = input('Select an option');
@@ -40,6 +42,7 @@ export class SearchableSelectComponent {
     const selected = this.options().find((option) => option.value === this.value());
     return selected?.label || this.value() || this.placeholder();
   });
+  text(key: string): string { return this.i18n.text(key); }
 
   toggle(): void {
     if (this.disabled() || this.loading()) return;

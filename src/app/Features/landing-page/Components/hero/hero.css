@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  overflow: hidden;
+}
+
+.landing-hero {
+  position: relative;
+}
+
+.landing-hero::before,
+.landing-hero::after {
+  position: absolute;
+  z-index: -1;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  content: '';
+  filter: blur(70px);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.landing-hero::before {
+  top: 4rem;
+  inset-inline-start: -10rem;
+  background: var(--primary);
+  animation: hero-orb-drift 9s ease-in-out infinite;
+}
+
+.landing-hero::after {
+  top: 11rem;
+  inset-inline-end: -10rem;
+  background: var(--success);
+  animation: hero-orb-drift 11s ease-in-out -3s infinite reverse;
+}
+
+.landing-hero-badge,
+.landing-hero-title,
+.landing-hero-description,
+.landing-hero-actions,
+.landing-patient-entry,
+.landing-preview-wrap {
+  animation: landing-rise-in 700ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.landing-hero-badge { animation-delay: 80ms; }
+.landing-hero-title { animation-delay: 160ms; }
+.landing-hero-description { animation-delay: 240ms; }
+.landing-hero-actions { animation-delay: 320ms; }
+.landing-patient-entry { animation-delay: 380ms; }
+.landing-preview-wrap { animation-delay: 430ms; }
+
+.landing-hero-actions a {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.landing-hero-actions a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -14px color-mix(in oklch, var(--primary) 70%, transparent);
+}
+
+.landing-hero-actions a:active { transform: translateY(-1px) scale(.98); }
+
+.landing-preview {
+  transform: perspective(1400px) rotateX(2deg);
+  transition: transform 500ms cubic-bezier(.22, 1, .36, 1), box-shadow 500ms ease;
+}
+
+.landing-preview:hover {
+  transform: perspective(1400px) rotateX(0deg) translateY(-6px);
+  box-shadow: 0 24px 60px -30px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+.landing-preview-stat {
+  animation: landing-stat-pop 600ms cubic-bezier(.22, 1, .36, 1) both;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.landing-preview-stat:nth-child(1) { animation-delay: 620ms; }
+.landing-preview-stat:nth-child(2) { animation-delay: 690ms; }
+.landing-preview-stat:nth-child(3) { animation-delay: 760ms; }
+.landing-preview-stat:nth-child(4) { animation-delay: 830ms; }
+
+.landing-preview-stat:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.landing-chart-bar {
+  transform-origin: bottom;
+  animation: landing-bar-grow 900ms cubic-bezier(.22, 1, .36, 1) var(--bar-delay) both;
+  transition: filter 180ms ease, transform 180ms ease;
+}
+
+.landing-chart-bar:hover {
+  filter: brightness(1.08) saturate(1.1);
+  transform: scaleX(1.06);
+}
+
+@keyframes landing-rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes landing-stat-pop {
+  from { opacity: 0; transform: translateY(10px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes landing-bar-grow {
+  from { opacity: .2; transform: scaleY(0); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes hero-orb-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, 22px, 0) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero::before,
+  .landing-hero::after { animation: none; }
+  .landing-hero-badge,
+  .landing-hero-title,
+  .landing-hero-description,
+  .landing-hero-actions,
+  .landing-patient-entry,
+  .landing-preview-wrap,
+  .landing-preview-stat,
+  .landing-chart-bar { animation: none; }
+  .landing-preview { transform: none; }
+}

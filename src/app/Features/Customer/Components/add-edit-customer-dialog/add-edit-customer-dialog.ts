@@ -26,6 +26,7 @@ import {
 } from '../../../../Shared/Components/customer-picker/customer-picker';
 import { fullNameValidator, phoneValidator } from '../../../subscribe/Validators/custom-validators';
 import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 interface OrganFunctionEntry {
   organId: string;
@@ -51,6 +52,7 @@ interface OrganFunctionEntry {
 export class AddEditCustomerDialogComponent {
   private readonly api = inject(CustomersApiService);
   private readonly fb = inject(NonNullableFormBuilder);
+  protected readonly i18n = inject(I18nService);
 
   // Pass an existing customer to edit; omit (or leave undefined) to create a new one.
   readonly customer = input<Customer | null>(null);
@@ -136,7 +138,7 @@ export class AddEditCustomerDialogComponent {
   // --- Allergies (via shared tag-picker) ---
 
   protected readonly allergyItems = computed(() =>
-    this.allergyCatalog().map((c) => ({ id: c.id, label: c.nameEn })),
+    this.allergyCatalog().map((c) => ({ id: c.id, label: this.i18n.localizedName(c) })),
   );
   protected readonly selectedAllergyIds = signal<string[]>([]);
 
@@ -147,7 +149,7 @@ export class AddEditCustomerDialogComponent {
   // --- Chronic conditions (via shared tag-picker) ---
 
   protected readonly chronicConditionItems = computed(() =>
-    this.chronicConditionCatalog().map((c) => ({ id: c.id, label: c.nameEn })),
+    this.chronicConditionCatalog().map((c) => ({ id: c.id, label: this.i18n.localizedName(c) })),
   );
   protected readonly selectedChronicConditionIds = signal<string[]>([]);
 
@@ -204,7 +206,7 @@ export class AddEditCustomerDialogComponent {
     if (this.medicinePicker()?.hasIncompleteManualEntry()) {
       this.medicinePicker()?.markTouched();
       this.errorMsg.set(
-        'Finish entering the medicine name and scientific name, or clear that field.',
+        this.i18n.text('customer.finishMedicine'),
       );
       return;
     }
@@ -239,7 +241,7 @@ export class AddEditCustomerDialogComponent {
         },
         error: (err) => {
           this.submitting.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not save customer.'));
+          this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorSave')));
         },
       });
       return;
@@ -249,7 +251,7 @@ export class AddEditCustomerDialogComponent {
       next: (created) => this.assignExtras(created.id),
       error: (err) => {
         this.submitting.set(false);
-        this.errorMsg.set(getErrorMessage(err, 'Could not create customer.'));
+        this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorCreate')));
       },
     });
   }

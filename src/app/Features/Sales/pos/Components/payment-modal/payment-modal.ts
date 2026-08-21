@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PaymentMethodChoice, PaySaleDto } from '../../Model/pos.models';
 import { ModalOverlayDirective } from '../../../../../Shared/Components/modal-overlay/modal-overlay';
 import { EgpCurrencyPipe } from '../../../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../../../Core/Services/i18n.service';
+import { POS_DICT } from '../../pos.i18n';
 
 @Component({
   selector: 'app-payment-modal',
@@ -12,6 +14,7 @@ import { EgpCurrencyPipe } from '../../../../../Shared/Pipes/egp-currency.pipe';
   templateUrl: './payment-modal.html',
 })
 export class PaymentModalComponent implements OnInit {
+  private readonly i18n = inject(I18nService);
   grandTotal = input.required<number>();
   initialMethod = input<PaymentMethodChoice>('Cash');
   submitting = input(false);
@@ -72,6 +75,8 @@ export class PaymentModalComponent implements OnInit {
         return false;
     }
   });
+
+  protected readonly t = (key: string, params?: Record<string, string | number>) => this.i18n.t(POS_DICT, key, params);
 
   protected onClose() {
     this.closed.emit();

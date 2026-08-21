@@ -6,12 +6,14 @@ import { Sale, SaleStats, SaleStatus } from '../pos/Model/pos.models';
 import { SalesService } from './Services/sales';
 import { LoadingOverlay } from '../../../Shared/Components/loading-overlay/loading-overlay';
 import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
 
 
 @Component({
   selector: 'app-sales-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, LoadingOverlay, EgpCurrencyPipe],
+  imports: [CommonModule, FormsModule, LoadingOverlay, EgpCurrencyPipe, PageHeaderComponent],
   templateUrl: './sales.html',
   styleUrl: './sales.css',
 })
@@ -29,7 +31,9 @@ export class Sales implements OnInit {
 
   private searchDebounce?: ReturnType<typeof setTimeout>;
 
-  constructor(private salesService: SalesService, private router: Router) {}
+  constructor(private salesService: SalesService, private router: Router, private i18n: I18nService) {}
+
+  text(key: string): string { return this.i18n.text(key); }
 
   ngOnInit(): void {
     this.loadSales();
@@ -46,7 +50,7 @@ export class Sales implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMsg.set('An error occurred while loading sales.');
+        this.errorMsg.set(this.text('sales.loadingError'));
         this.loading.set(false);
       },
     });
@@ -104,10 +108,10 @@ export class Sales implements OnInit {
   }
   statusName(status: SaleStatus | string | number): string {
     const normalized = this.normalizeStatus(status);
-    if (normalized === 'open') return 'Open';
-    if (normalized === 'completed') return 'Completed';
-    if (normalized === 'cancelled') return 'Cancelled';
-    return typeof status === 'string' && status.trim() ? status : 'Unknown';
+    if (normalized === 'open') return this.text('sales.open');
+    if (normalized === 'completed') return this.text('sales.completed');
+    if (normalized === 'cancelled') return this.text('sales.cancelled');
+    return typeof status === 'string' && status.trim() ? status : this.text('sales.unknownStatus');
   }
 
   private normalizeStatus(status: SaleStatus | string | number): string {

@@ -247,7 +247,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/dashboard/dashboard').then(
             (m) => m.PortalDashboard,
           ),
-        data: { title: 'Dashboard' },
+        data: { title: 'nav.dashboard' },
       },
       {
         path: 'profile',
@@ -255,7 +255,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/profile/profile').then(
             (m) => m.PortalProfile,
           ),
-        data: { title: 'My Profile' },
+        data: { title: 'nav.profile' },
       },
       {
         path: 'purchases',
@@ -263,7 +263,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/purchase-history/purchase-history').then(
             (m) => m.PurchaseHistoryPage,
           ),
-        data: { title: 'Purchase History' },
+        data: { title: 'nav.purchases' },
       },
       {
         path: 'purchases/:id',
@@ -271,7 +271,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/receipt-details/receipt-details').then(
             (m) => m.ReceiptDetailsPage,
           ),
-        data: { title: 'Receipt Details' },
+        data: { title: 'nav.receiptDetails' },
       },
       {
         path: 'relatives',
@@ -279,7 +279,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/relatives/relatives').then(
             (m) => m.RelativesPage,
           ),
-        data: { title: 'Relatives' },
+        data: { title: 'nav.relatives' },
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
@@ -297,7 +297,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/dashboard/dashboard').then(
             (m) => m.PortalDashboard,
           ),
-        data: { title: 'Dashboard' },
+        data: { title: 'nav.dashboard' },
       },
       {
         path: 'profile',
@@ -305,7 +305,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/profile/profile').then(
             (m) => m.PortalProfile,
           ),
-        data: { title: 'My Profile' },
+        data: { title: 'nav.profile' },
       },
       {
         path: 'purchases',
@@ -313,7 +313,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/purchase-history/purchase-history').then(
             (m) => m.PurchaseHistoryPage,
           ),
-        data: { title: 'Purchase History' },
+        data: { title: 'nav.purchases' },
       },
       {
         path: 'purchases/:id',
@@ -321,7 +321,7 @@ export const routes: Routes = [
           import('./Features/CustomerPortal/Components/receipt-details/receipt-details').then(
             (m) => m.ReceiptDetailsPage,
           ),
-        data: { title: 'Receipt Details' },
+        data: { title: 'nav.receiptDetails' },
       },
     ],
   },
@@ -334,9 +334,24 @@ export const routes: Routes = [
     path: 'owner-dashboard',
     canActivate: [ownerAuthGuard],
     loadComponent: () =>
-      import('./Features/owner-dashboard/owner-dashboard').then(
-        (m) => m.PharmaciesDashboardComponent,
-      ),
-    data: { title: 'Owner Dashboard' },
+      import('./Features/owner-dashboard/owner-layout').then((m) => m.OwnerLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./Features/owner-dashboard/owner-dashboard').then(
+            (m) => m.OwnerDashboard,
+          ),
+        data: { title: 'ownerDashboard.title' },
+      },
+      {
+        path: 'payment-verifications',
+        loadComponent: () =>
+          import('./Features/owner-dashboard/payment-verifications/payment-verifications').then(
+            (m) => m.PaymentVerificationsPage,
+          ),
+        data: { title: 'ownerPaymentVerifications.title' },
+      },
+    ],
   },
 ];

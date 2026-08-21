@@ -6,6 +6,7 @@ import { Tax } from '../../../Tax/Models/tax';
 import { MedicineDetails, MedicineEditFields } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-edit-pharmacy-medicine-dialog',
@@ -18,6 +19,7 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
   private readonly api = inject(MedicinesApiService);
   private readonly taxesApi = inject(TaxesService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly i18n = inject(I18nService);
 
   // id used for the PUT — this is the global Medicine.Id, same one the details route/page uses
   medicineId = input.required<string>();
@@ -63,7 +65,7 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
       error: () => {
         this.taxes.set([]);
         this.taxesLoading.set(false);
-        this.taxesError.set('Could not load active taxes.');
+        this.taxesError.set(this.text('medicine.loadingTaxes'));
       },
     });
   }
@@ -82,7 +84,7 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
     if (this.form.invalid || this.selectedTaxIds().size === 0) {
       this.form.markAllAsTouched();
       if (this.selectedTaxIds().size === 0) {
-        this.errorMsg.set('At least one tax is required.');
+        this.errorMsg.set(this.text('common.required'));
       }
       return;
     }
@@ -108,9 +110,13 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
         },
         error: (err) => {
           this.submitting.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not save these changes.'));
+          this.errorMsg.set(getErrorMessage(err, this.text('medicine.errorSave')));
         },
       });
+  }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
   }
 }
 

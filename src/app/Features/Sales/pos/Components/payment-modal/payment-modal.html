@@ -5,9 +5,9 @@
   >
     <button
       type="button"
-      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      class="absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
       (click)="onClose()"
-      aria-label="Close"
+      [attr.aria-label]="t('payment.close')"
     >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
@@ -17,8 +17,8 @@
     </button>
 
     <div>
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Complete payment</h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">Grand total: {{ grandTotal() | egpCurrency }}</p>
+      <h2 class="text-lg font-semibold leading-none tracking-tight">{{ t('payment.complete') }}</h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">{{ t('payment.grandTotal') }}: {{ grandTotal() | egpCurrency }}</p>
     </div>
 
     <!-- Method tabs -->
@@ -31,7 +31,7 @@
         [class.text-primary]="method() === 'Cash'"
         class="rounded-md border border-border py-2 text-sm font-medium transition-colors hover:bg-accent cursor-pointer"
       >
-        Cash
+        {{ t('payment.cash') }}
       </button>
       <button
         type="button"
@@ -41,7 +41,7 @@
         [class.text-primary]="method() === 'Card'"
         class="rounded-md border border-border py-2 text-sm font-medium transition-colors hover:bg-accent cursor-pointer"
       >
-        Card
+        {{ t('payment.card') }}
       </button>
       <button
         type="button"
@@ -51,7 +51,7 @@
         [class.text-primary]="method() === 'Mixed'"
         class="rounded-md border border-border py-2 text-sm font-medium transition-colors hover:bg-accent cursor-pointer"
       >
-        Mixed
+        {{ t('payment.mixed') }}
       </button>
     </div>
 
@@ -59,7 +59,7 @@
     @if (method() === 'Cash') {
     <div class="space-y-3">
       <div>
-        <label class="text-sm font-medium">Amount paid (EGP)</label>
+        <label class="text-sm font-medium">{{ t('payment.amountPaid') }}</label>
         <input
           type="number"
           min="0"
@@ -70,11 +70,11 @@
         />
       </div>
       <div class="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm">
-        <span class="text-muted-foreground">Change</span>
+        <span class="text-muted-foreground">{{ t('payment.change') }}</span>
         <span class="font-semibold tabular-nums">{{ cashChange() | egpCurrency }}</span>
       </div>
       @if (cashAmountPaid() < grandTotal()) {
-      <p class="text-xs text-destructive">Amount paid is less than the grand total.</p>
+      <p class="text-xs text-destructive">{{ t('payment.lessThanTotal') }}</p>
       }
     </div>
     }
@@ -83,7 +83,7 @@
     @if (method() === 'Card') {
     <div class="space-y-3">
       <div>
-        <label class="text-sm font-medium">Card amount (EGP)</label>
+        <label class="text-sm font-medium">{{ t('payment.cardAmount') }}</label>
         <input
           type="number"
           min="0"
@@ -94,7 +94,7 @@
         />
       </div>
       @if (cardAmount() < grandTotal()) {
-      <p class="text-xs text-destructive">Card amount is less than the grand total.</p>
+      <p class="text-xs text-destructive">{{ t('payment.cardLessThanTotal') }}</p>
       }
     </div>
     }
@@ -104,7 +104,7 @@
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="text-sm font-medium">Cash amount (EGP)</label>
+          <label class="text-sm font-medium">{{ t('payment.cashAmount') }}</label>
           <input
             type="number"
             min="0"
@@ -115,7 +115,7 @@
           />
         </div>
         <div>
-          <label class="text-sm font-medium">Card amount (EGP)</label>
+          <label class="text-sm font-medium">{{ t('payment.cardAmount') }}</label>
           <input
             type="number"
             min="0"
@@ -128,7 +128,7 @@
       </div>
 
       <div>
-        <label class="text-sm font-medium">Amount paid in cash (EGP)</label>
+        <label class="text-sm font-medium">{{ t('payment.paidInCash') }}</label>
         <input
           type="number"
           min="0"
@@ -140,17 +140,16 @@
       </div>
 
       <div class="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm">
-        <span class="text-muted-foreground">Change</span>
+        <span class="text-muted-foreground">{{ t('payment.change') }}</span>
         <span class="font-semibold tabular-nums">{{ mixedChange() | egpCurrency }}</span>
       </div>
 
       @if (!mixedSplitMatches()) {
       <p class="text-xs text-destructive">
-        Cash amount + Card amount ({{ mixedSplitTotal() | egpCurrency }}) must equal the grand total
-        ({{ grandTotal() | egpCurrency }}).
+        {{ t('payment.splitMustMatch', { actual: (mixedSplitTotal() | egpCurrency), total: (grandTotal() | egpCurrency) }) }}
       </p>
       } @else if (mixedAmountPaidInCash() < mixedCashPortion()) {
-      <p class="text-xs text-destructive">Amount paid in cash can't be less than the cash amount.</p>
+      <p class="text-xs text-destructive">{{ t('payment.cashLessThanPortion') }}</p>
       }
     </div>
     }
@@ -161,7 +160,7 @@
         (click)="onClose()"
         class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent cursor-pointer"
       >
-        Cancel
+        {{ t('payment.cancel') }}
       </button>
       <button
         type="button"
@@ -169,7 +168,7 @@
         (click)="onConfirm()"
         class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
       >
-        {{ submitting() ? 'Processing…' : 'Confirm sale' }}
+        {{ submitting() ? t('payment.processing') : t('payment.confirmSale') }}
       </button>
     </div>
   </div>

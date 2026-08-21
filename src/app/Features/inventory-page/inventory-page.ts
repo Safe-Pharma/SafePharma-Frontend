@@ -6,6 +6,8 @@ import { InventoryService } from './Service/inventory_service';
 import { Spinner } from '../../Shared/Components/spinner/spinner';
 import { ModalOverlayDirective } from '../../Shared/Components/modal-overlay/modal-overlay';
 import { EgpCurrencyPipe } from '../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../Shared/Components/page-header/page-header';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -32,7 +34,7 @@ interface Medicine {
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe,Spinner],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe, Spinner, PageHeaderComponent],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.css',
 })
@@ -50,7 +52,7 @@ export class InventoryPage implements OnInit {
   isSaving = signal(false);
   isDeleting = signal(false);
 
-  constructor(private inventoryService: InventoryService) {}
+  constructor(private inventoryService: InventoryService, private i18n: I18nService) {}
 
   ngOnInit() {
     this.loading.set(true);
@@ -64,7 +66,7 @@ export class InventoryPage implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set('Could not load inventory.');
+        this.errorMessage.set(this.text('inventory.error'));
       },
     });
   }
@@ -125,7 +127,7 @@ export class InventoryPage implements OnInit {
 
       return {
         sku: medicine?.sku ?? medicine?.medeicineCode ?? `MED-${index + 1}`,
-        name: medicine?.name ?? medicine?.medeicineName ?? 'Unknown Medicine',
+        name: medicine?.name ?? medicine?.medeicineName ?? this.text('inventory.unknownMedicine'),
         category: medicine?.category ?? medicine?.medeicineCategory ?? 'Uncategorized',
         batches,
         onHand,
@@ -204,9 +206,13 @@ export class InventoryPage implements OnInit {
     return colors[status] || 'bg-gray-500';
   }
 
+  statusLabel(status: Medicine['status']): string {
+    return status === 'In Stock' ? this.text('inventory.inStock') : status === 'Low' ? this.text('inventory.low') : this.text('inventory.out');
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    return date.toLocaleDateString(this.i18n.lang() === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
   }
 
   getDaysLeftColor(daysLeft: number): string {
@@ -286,7 +292,7 @@ export class InventoryPage implements OnInit {
         },
         error: (err) => {
           console.error('Failed to update batch stock', err);
-          alert('Failed to update stock.');
+          alert(this.text('inventory.updateError'));
         },
       });
   }
@@ -308,7 +314,7 @@ export class InventoryPage implements OnInit {
     const batchToDelete = this.selectedBatch;
     const batchId = String(batchToDelete.id ?? batchToDelete.batchNumber ?? '').trim();
     if (!batchId) {
-      alert('Batch identifier is missing.');
+      alert(this.text('inventory.missingBatch'));
       return;
     }
 
@@ -335,7 +341,7 @@ export class InventoryPage implements OnInit {
         },
         error: (err) => {
           console.error('Failed to delete batch', err);
-          alert('Failed to delete batch.');
+          alert(this.text('inventory.deleteError'));
         },
       });
   }
@@ -358,5 +364,9 @@ export class InventoryPage implements OnInit {
 
   scrollToAlerts(): void {
     document.querySelector('[data-inventory-table]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
   }
 }

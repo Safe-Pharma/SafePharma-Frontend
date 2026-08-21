@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { SubscriptionService } from './Services/subscription.service';
 import { LocationService } from './Services/location.service';
 import { CreateSubscriptionRequest } from './Models/create-subscription.model';
@@ -12,6 +12,7 @@ import { SubscriptionPlanService } from './Services/subscription-plan.service';
 import { SubscriptionPlanRead } from './Models/subscription-plan.model';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../Shared/Components/searchable-select/searchable-select';
 import { formatCurrency } from '../../Shared/utils/currency.util';
+import { I18nService } from '../../Core/Services/i18n.service';
 interface PlanOption {
   tier: 'Starter' | 'Professional' | 'Enterprise';
   price: string;
@@ -22,11 +23,12 @@ interface PlanOption {
 @Component({
   selector: 'app-subscribe',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SearchableSelectComponent],
+  imports: [ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './subscribe.html',
   styleUrl: './subscribe.css',
 })
 export class Subscribe implements OnInit {
+  protected readonly i18n = inject(I18nService);
   private fb = inject(FormBuilder);
   private subscriptionService = inject(SubscriptionService);
   private locationService = inject(LocationService);
@@ -55,16 +57,16 @@ export class Subscribe implements OnInit {
 
   get languageOptions(): SearchableSelectOption[] {
     return [
-      { value: 'English', label: 'English' },
-      { value: 'Arabic', label: 'العربية' },
+      { value: 'English', label: this.i18n.text('language.english') },
+      { value: 'Arabic', label: this.i18n.text('language.arabic') },
     ];
   }
 
   get timeZoneOptions(): SearchableSelectOption[] {
     return [
-      { value: '(GMT+4) Gulf Standard Time', label: '(GMT+4) Gulf Standard Time' },
-      { value: '(GMT+3) Arabia Standard Time', label: '(GMT+3) Arabia Standard Time' },
-      { value: '(GMT+2) Eastern European Time', label: '(GMT+2) Eastern European Time' },
+      { value: '(GMT+4) Gulf Standard Time', label: this.i18n.text('subscribe.gulfTime') },
+      { value: '(GMT+3) Arabia Standard Time', label: this.i18n.text('subscribe.arabiaTime') },
+      { value: '(GMT+2) Eastern European Time', label: this.i18n.text('subscribe.europeTime') },
     ];
   }
 
@@ -108,13 +110,13 @@ ngOnInit(): void {
       if (result.success && result.data) {
         this.countries.set(result.data);
       } else {
-        this.locationError.set('Could not load locations.');
+        this.locationError.set(this.i18n.text('subscribe.locationsError'));
       }
       this.isLoadingLocations.set(false);
     },
     error: () => {
       this.isLoadingLocations.set(false);
-      this.locationError.set('Could not load locations.');
+      this.locationError.set(this.i18n.text('subscribe.locationsError'));
     },
   });
 
@@ -125,7 +127,7 @@ ngOnInit(): void {
     },
     error: () => {
       this.isLoadingPlans.set(false);
-      this.toast.show('Could not load subscription plans.', 'error');
+      this.toast.show(this.i18n.text('subscribe.plansError'), 'error');
     },
   });
 }
@@ -138,13 +140,13 @@ retryLocations(): void {
       if (result.success && result.data) {
         this.countries.set(result.data);
       } else {
-        this.locationError.set('Could not load locations.');
+        this.locationError.set(this.i18n.text('subscribe.locationsError'));
       }
       this.isLoadingLocations.set(false);
     },
     error: () => {
       this.isLoadingLocations.set(false);
-      this.locationError.set('Could not load locations.');
+      this.locationError.set(this.i18n.text('subscribe.locationsError'));
     },
   });
 }
@@ -175,8 +177,24 @@ onCountryChange(selectedCountryId = this.form.controls.pharmacy.controls.country
   return formatCurrency(amount);
 }
 
-planPeriod(): string {
-  return this.form.controls.billingCycle.value === 'yearly' ? '/yr' : '/mo';
+  planPeriod(): string {
+  return this.form.controls.billingCycle.value === 'yearly'
+    ? this.i18n.text('subscribe.perYear')
+    : this.i18n.text('subscribe.perMonth');
+}
+
+planName(plan: SubscriptionPlanRead): string {
+  const key = plan.tier === 'Starter' ? 'landing.starter' : plan.tier === 'Professional' ? 'landing.professional' : 'landing.enterprise';
+  return this.i18n.text(key);
+}
+
+planFeature(feature: string): string {
+  const featureKeys: Record<string, string> = {
+    '1 branch': 'landing.oneBranch', 'Up to 5 users': 'landing.upTo5Users', 'Inventory + POS': 'landing.inventoryPos', 'Email support': 'landing.emailSupport',
+    'Up to 5 branches': 'landing.upTo5Branches', 'Unlimited users': 'landing.unlimitedUsers', 'Purchasing + Suppliers': 'landing.purchasingSuppliers', 'Advanced reports': 'landing.advancedReports', 'Priority support': 'landing.prioritySupport',
+    'Unlimited branches': 'landing.unlimitedBranches', 'SSO + SAML': 'landing.ssoSaml', 'Custom integrations': 'landing.customIntegrations', 'Dedicated CSM': 'landing.dedicatedCsm', '99.95% SLA': 'landing.sla',
+  };
+  return featureKeys[feature] ? this.i18n.text(featureKeys[feature]) : feature;
 }
 
 yearlyDiscountLabel(): string | null {
@@ -195,27 +213,27 @@ getErrorMessage(control: AbstractControl | null): string | null {
 
   const errors = control.errors;
   if (errors['server']) return errors['server'];
-  if (errors['required']) return 'This field is required.';
-  if (errors['email']) return 'Please enter a valid email address.';
-  if (errors['minlength']) return `Must be at least ${errors['minlength'].requiredLength} characters.`;
-  if (errors['maxlength']) return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
-  if (errors['min']) return `Must be at least ${errors['min'].min}.`;
-  if (errors['max']) return `Must not exceed ${errors['max'].max}.`;
-  if (errors['invalidPhone']) return 'Enter a valid international number (e.g. +971501234567).';
-  if (errors['invalidName']) return 'Only letters, spaces, hyphens, or apostrophes are allowed.';
-  if (errors['invalidFormat']) return 'Must be 5–20 characters: letters, numbers, or hyphens only.';
-  if (errors['missingUppercase']) return 'Password must contain at least one uppercase letter.';
-  if (errors['missingLowercase']) return 'Password must contain at least one lowercase letter.';
-  if (errors['missingDigit']) return 'Password must contain at least one digit.';
-  if (errors['missingSpecialChar']) return 'Password must contain at least one special character.';
-  if (errors['pattern']) return 'Invalid format.';
-  return 'Invalid value.';
+  if (errors['required']) return this.i18n.text('subscribe.required');
+  if (errors['email']) return this.i18n.text('subscribe.invalidEmail');
+  if (errors['minlength']) return this.i18n.text('subscribe.minLength', { value: errors['minlength'].requiredLength });
+  if (errors['maxlength']) return this.i18n.text('subscribe.maxLength', { value: errors['maxlength'].requiredLength });
+  if (errors['min']) return this.i18n.text('subscribe.min', { value: errors['min'].min });
+  if (errors['max']) return this.i18n.text('subscribe.max', { value: errors['max'].max });
+  if (errors['invalidPhone']) return this.i18n.text('subscribe.invalidPhone');
+  if (errors['invalidName']) return this.i18n.text('subscribe.invalidName');
+  if (errors['invalidFormat']) return this.i18n.text('subscribe.invalidFormat');
+  if (errors['missingUppercase']) return this.i18n.text('subscribe.missingUppercase');
+  if (errors['missingLowercase']) return this.i18n.text('subscribe.missingLowercase');
+  if (errors['missingDigit']) return this.i18n.text('subscribe.missingDigit');
+  if (errors['missingSpecialChar']) return this.i18n.text('subscribe.missingSpecialChar');
+  if (errors['pattern']) return this.i18n.text('subscribe.invalidFormatShort');
+  return this.i18n.text('subscribe.invalidValue');
 }
 
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.submitError.set('Please fix the highlighted fields before submitting.');
+      this.submitError.set(this.i18n.text('subscribe.fixFields'));
       return;
     }
 
@@ -239,7 +257,7 @@ getErrorMessage(control: AbstractControl | null): string | null {
         if (result) {
           this.applyResultErrors(result);
         } else {
-          this.submitError.set('Something went wrong. Please try again.');
+          this.submitError.set(this.i18n.text('subscribe.genericError'));
         }
       },
     });
@@ -282,13 +300,13 @@ getErrorMessage(control: AbstractControl | null): string | null {
         this.form.controls.pharmacy.controls.logoUrl.setValue(result.data);
         this.logoFileName.set(file.name);
       } else {
-        this.toast.show(result.message ?? 'Logo upload failed.', 'error');
+        this.toast.show(result.message ?? this.i18n.text('subscribe.logoUploadFailed'), 'error');
       }
       input.value = '';
     },
     error: () => {
       this.isUploadingLogo.set(false);
-      this.toast.show('Logo upload failed. Please try again.', 'error');
+      this.toast.show(this.i18n.text('subscribe.logoUploadRetry'), 'error');
       input.value = '';
     },
   });

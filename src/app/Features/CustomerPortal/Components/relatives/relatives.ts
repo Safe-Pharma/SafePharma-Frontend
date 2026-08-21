@@ -53,7 +53,7 @@ export class RelativesPage implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load your relatives.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadRelativesError')), 'error');
       },
     });
 

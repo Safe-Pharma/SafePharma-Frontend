@@ -4,7 +4,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthSessionService } from '../../../../../Core/Services/auth-session.service';
 import { PharmacySettings as PharmacySettingsService } from '../../../../settings/pharmacy-settings/Services/pharmacy-settings';
-import { UserLanguage } from '../../../../settings/pharmacy-settings/Services/user-language';
+import { I18nService } from '../../../../../Core/Services/i18n.service';
 // ASSUMPTION: Features/ sits at the same depth as Core/ from this file.
 // Adjust the relative path if your actual folder layout differs.
 // Import from the feature's barrel (index.ts), not its internal files.
@@ -24,7 +24,7 @@ export interface Breadcrumb {
 export class PrivateHeader {
   private readonly authSession = inject(AuthSessionService);
   private readonly pharmacySettings = inject(PharmacySettingsService);
-  private readonly userLanguage = inject(UserLanguage);
+  private readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
 
   readonly pharmacyName = computed(() => {
@@ -37,7 +37,7 @@ export class PrivateHeader {
       : null;
   });
 
-  readonly lang = computed(() => this.userLanguage.language().toUpperCase());
+  readonly lang = computed(() => this.i18n.lang().toUpperCase());
   readonly userMenuOpen = signal(false);
   readonly user = this.authSession.user;
   private readonly failedLogoUrl = signal<string | null>(null);
@@ -51,16 +51,20 @@ export class PrivateHeader {
 
   @Output() readonly menuToggle = new EventEmitter<void>();
 
-  pageTitle = signal('Dashboard');
-  readonly breadcrumbs = signal<string[]>(['Dashboard']);
+  pageTitle = signal('nav.dashboard');
+  readonly breadcrumbs = signal<string[]>(['nav.dashboard']);
 
   searchTerm = '';
 
   readonly menuItems = [
-    { label: 'Preferences', route: '/app/settings' },
-    { label: 'Profile', route: '/app/profile' },
-    { label: 'Change Password', route: '/app/change-password' },
+    { key: 'nav.settings', route: '/app/settings' },
+    { key: 'nav.profile', route: '/app/profile' },
+    { key: 'nav.changePassword', route: '/app/change-password' },
   ];
+
+  text(key: string): string { return this.i18n.text(key); }
+
+  toggleLanguage(): void { this.i18n.toggle(); }
 
   constructor() {
     this.pharmacySettings.ensureLoaded();
@@ -80,7 +84,7 @@ export class PrivateHeader {
     const labels = appSegments
       .map((segment, index) => this.resolveSegmentLabel(segment, index))
       .filter(Boolean);
-    const resolved = labels.length ? labels : ['Dashboard'];
+    const resolved = labels.length ? labels : ['nav.dashboard'];
 
     this.breadcrumbs.set(resolved);
     this.pageTitle.set(resolved[resolved.length - 1]);
@@ -88,30 +92,15 @@ export class PrivateHeader {
 
   private resolveSegmentLabel(segment: string, index: number): string {
     const labels: Record<string, string> = {
-      dashboard: 'Dashboard',
-      purchases: 'Purchases',
-      inventory: 'Inventory',
-      products: 'Medicines',
-      taxes: 'Taxes',
-      suppliers: 'Suppliers',
-      customers: 'Customers',
-      reports: 'Reports',
-      users: 'Users',
-      profile: 'Profile',
-      settings: 'Settings',
-      'change-password': 'Change Password',
-      audit: 'Audit History',
-      pos: 'POS',
-      sales: 'Sales',
-      finance: 'Finance',
-      ap: 'Accounts Payable',
-      ar: 'Accounts Receivable',
-      invoices: 'Invoices',
-      items: 'Items',
+      dashboard: 'nav.dashboard', purchases: 'nav.purchases', inventory: 'nav.inventory', products: 'nav.medicines',
+      taxes: 'nav.taxes', suppliers: 'nav.suppliers', customers: 'nav.customers', reports: 'nav.reports',
+      users: 'nav.users', profile: 'nav.profile', settings: 'nav.settings', 'change-password': 'nav.changePassword',
+      audit: 'nav.audit', pos: 'nav.pos', sales: 'nav.sales', finance: 'nav.finance', ap: 'nav.accountsPayable',
+      ar: 'nav.accountsReceivable', invoices: 'nav.invoices', items: 'nav.items',
     };
 
     if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment) || /^\d+$/.test(segment)) {
-      return index > 0 ? 'Details' : 'Dashboard';
+      return index > 0 ? 'nav.details' : 'nav.dashboard';
     }
 
     if (labels[segment]) return labels[segment];

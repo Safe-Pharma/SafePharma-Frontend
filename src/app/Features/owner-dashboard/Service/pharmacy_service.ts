@@ -1,24 +1,36 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { GeneralResult } from '../../../Core/Models/general-result.model';
 import { PharmacyReadDto } from '../Models/pharmacy-read.dto';
+
+type PharmacyCollectionResponse = PharmacyReadDto[] | GeneralResult<PharmacyReadDto[]>;
 
 @Injectable({
   providedIn: 'root',
 })
 export class PharmacyService {
-  private readonly baseUrl = 'https://localhost:7259/api/Pharmacy';
+  private readonly baseUrl = `${environment.apiUrl}/Pharmacy`;
 
   constructor(private http: HttpClient) {}
 
   getAllPharmacies(): Observable<PharmacyReadDto[]> {
-    return this.http.get<PharmacyReadDto[] | { data?: PharmacyReadDto[] }>(this.baseUrl).pipe(
+    return this.http.get<PharmacyCollectionResponse>(this.baseUrl).pipe(
       map((response): PharmacyReadDto[] => {
         if (Array.isArray(response)) {
           return response;
         }
 
-        return response.data ?? [];
+        if (response.success === false) {
+          throw new Error(response.message || 'Could not load pharmacies.');
+        }
+
+        if (!Array.isArray(response.data)) {
+          throw new Error('The pharmacy response did not contain a data array.');
+        }
+
+        return response.data;
       }),
     );
   }

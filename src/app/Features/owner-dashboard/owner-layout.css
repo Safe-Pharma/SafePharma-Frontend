@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  height: 100dvh;
+}
+
+.owner-shell {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.owner-shell-content {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.owner-shell-main {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: var(--page-padding-block) var(--page-padding-inline);
+}

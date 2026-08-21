@@ -4,7 +4,7 @@
   <button
     type="button"
     class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
-    aria-label="Open navigation"
+    [attr.aria-label]="text('nav.openNavigation')"
     (click)="menuToggle.emit()"
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -14,7 +14,7 @@
   <div class="hidden min-w-0 items-center gap-2 md:flex">
     <div class="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md bg-primary-soft text-primary">
       @if (pharmacyLogo(); as logo) {
-        <img [src]="logo" alt="Pharmacy logo" class="h-full w-full object-contain" (error)="onLogoError(logo)" />
+        <img [src]="logo" [alt]="text('nav.pharmacy')" class="h-full w-full object-contain" (error)="onLogoError(logo)" />
       } @else {
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -48,17 +48,18 @@
   </div>
 
   <nav
-    aria-label="Breadcrumb"
+    [attr.aria-label]="text('nav.breadcrumb')"
     class="hidden items-center gap-1.5 text-sm text-muted-foreground lg:flex"
   >
     <span class="mx-2 h-4 w-px bg-border"></span>
 
-    <span>Pharmacy</span>
+    <span>{{ text('nav.pharmacy') }}</span>
 
     @for (crumb of breadcrumbs(); track $index) {
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="h-3.5 w-3.5"
+        [class.rotate-180]="lang() === 'AR'"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -68,7 +69,7 @@
         <path d="m9 18 6-6-6-6"></path>
       </svg>
       <span [class.font-medium]="$last" [class.text-foreground]="$last">
-        {{ crumb }}
+        {{ text(crumb) }}
       </span>
     }
   </nav>
@@ -76,10 +77,18 @@
   <div class="ms-auto flex items-center gap-1.5 md:gap-2">
     <button
       type="button"
-      class="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground h-9 gap-1.5"
-      aria-label="Toggle language"
+      class="inline-flex min-h-9 min-w-[3.5rem] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-primary/20 bg-primary-soft/70 px-3 text-xs font-semibold text-primary shadow-sm transition-all hover:border-primary/30 hover:bg-primary-soft active:scale-[.98] active:bg-primary-soft/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      [attr.aria-label]="lang() === 'AR' ? text('language.switchToEnglish') : text('language.switchToArabic')"
+      [title]="lang() === 'AR' ? text('language.switchToEnglish') : text('language.switchToArabic')"
+      (click)="toggleLanguage()"
     >
-      {{ lang() }}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M3 12h18"></path>
+        <path d="M12 3a14 14 0 0 1 0 18"></path>
+        <path d="M12 3a14 14 0 0 0 0 18"></path>
+      </svg>
+      {{ lang() === 'AR' ? 'EN' : 'AR' }}
     </button>
 
     <app-notification-bell />
@@ -100,26 +109,26 @@
 
         <span class="hidden text-start leading-tight md:block">
           <span class="block text-xs font-semibold">
-            {{ user()?.fullName ?? 'User' }}
+            {{ user()?.fullName ?? text('nav.users') }}
           </span>
 
           <span class="block text-[11px] text-muted-foreground">
-            {{ user()?.role ?? 'User' }}
+            {{ user()?.role ?? text('nav.users') }}
           </span>
         </span>
       </button>
 
       @if (userMenuOpen()) {
         <div
-          class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+          class="absolute end-0 z-50 mt-2 w-56 max-w-[calc(100vw-1rem)] origin-top-end overflow-hidden rounded-xl border border-border bg-card shadow-lg"
         >
           <div class="border-b border-border px-4 py-3">
             <p class="text-sm font-semibold text-foreground">
-              {{ user()?.fullName ?? 'User' }}
+              {{ user()?.fullName ?? text('nav.users') }}
             </p>
 
             <p class="text-xs text-muted-foreground">
-              {{ user()?.role ?? 'User' }}
+              {{ user()?.role ?? text('nav.users') }}
             </p>
           </div>
 
@@ -130,7 +139,7 @@
                 (click)="closeUserMenu()"
                 class="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
               >
-                {{ item.label }}
+            {{ text(item.key) }}
               </a>
             }
           </div>

@@ -7,6 +7,7 @@ import { SubmitPaymentProofRequest } from '../Models/payment-verification.model'
 import { receiptFileValidator } from '../Validators/custom-validators';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { formatCurrency } from '../../../Shared/utils/currency.util';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-submit-payment-proof',
@@ -17,6 +18,7 @@ import { formatCurrency } from '../../../Shared/utils/currency.util';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubmitPaymentProof implements OnInit {
+  protected readonly i18n = inject(I18nService);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -55,12 +57,12 @@ export class SubmitPaymentProof implements OnInit {
             paymentMethod: result.data.paymentMethods[0]?.methodName ?? '',
           });
         } else {
-          this.toast.show(result.message ?? 'Could not load payment details.', 'error');
+          this.toast.show(result.message ?? this.i18n.text('subscription.loadDetailsError'), 'error');
         }
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.show('Could not load payment details.', 'error');
+        this.toast.show(this.i18n.text('subscription.loadDetailsError'), 'error');
       },
     });
   }
@@ -75,12 +77,12 @@ export class SubmitPaymentProof implements OnInit {
   getErrorMessage(control: AbstractControl | null): string {
     if (!control || !control.touched || !control.errors) return '';
     const errors = control.errors;
-    if (errors['required']) return 'This field is required.';
-    if (errors['maxlength']) return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
-    if (errors['min']) return `Must be at least ${errors['min'].min}.`;
-    if (errors['invalidFileType']) return 'File must be a JPG, PNG, or PDF.';
-    if (errors['fileTooLarge']) return 'File must be under 5MB.';
-    return 'Invalid value.';
+    if (errors['required']) return this.i18n.text('subscribe.required');
+    if (errors['maxlength']) return this.i18n.text('subscribe.maxLength', { value: errors['maxlength'].requiredLength });
+    if (errors['min']) return this.i18n.text('subscribe.min', { value: errors['min'].min });
+    if (errors['invalidFileType']) return this.i18n.text('subscription.fileTypeError');
+    if (errors['fileTooLarge']) return this.i18n.text('subscription.fileSizeError');
+    return this.i18n.text('subscribe.invalidValue');
   }
 
   onSubmit(): void {
@@ -97,7 +99,7 @@ export class SubmitPaymentProof implements OnInit {
       next: (uploadResult) => {
         if (!uploadResult.success || !uploadResult.data) {
           this.isSubmitting.set(false);
-          this.toast.show(uploadResult.message ?? 'Receipt upload failed.', 'error');
+          this.toast.show(uploadResult.message ?? this.i18n.text('subscription.receiptUploadFailed'), 'error');
           return;
         }
 
@@ -115,18 +117,18 @@ export class SubmitPaymentProof implements OnInit {
             if (submitResult.success) {
               this.router.navigate(['/subscribe', this.subscriptionId, 'payment', 'review']);
             } else {
-              this.toast.show(submitResult.message ?? 'Could not submit payment proof.', 'error');
+              this.toast.show(submitResult.message ?? this.i18n.text('subscription.submitProofError'), 'error');
             }
           },
           error: () => {
             this.isSubmitting.set(false);
-            this.toast.show('Could not submit payment proof.', 'error');
+            this.toast.show(this.i18n.text('subscription.submitProofError'), 'error');
           },
         });
       },
       error: () => {
         this.isSubmitting.set(false);
-        this.toast.show('Receipt upload failed.', 'error');
+        this.toast.show(this.i18n.text('subscription.receiptUploadRetry'), 'error');
       },
     });
   }

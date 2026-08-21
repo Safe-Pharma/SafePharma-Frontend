@@ -10,7 +10,7 @@ import { PortalReceiptDetail, PortalReceiptListItem } from '../../Models/portal-
 import { PortalSkeleton } from '../../Shared/skeleton';
 import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
-import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
+import { receiptStatusTone } from '../../Shared/receipt-status';
 import {
   fadeSlideIn,
   staggerList,
@@ -49,7 +49,6 @@ export class ReceiptDetailsPage implements OnInit {
   readonly loading = signal(true);
   readonly notFound = signal(false);
   readonly receipt = signal<PortalReceiptListItem | null>(null);
-  receiptStatusLabel = receiptStatusLabel;
   receiptStatusTone = receiptStatusTone;
 
   ngOnInit(): void {
@@ -74,7 +73,7 @@ export class ReceiptDetailsPage implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.notFound.set(true);
-        this.toast.show(getErrorMessage(err, 'Could not load this receipt.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadReceiptError')), 'error');
       },
     });
   }

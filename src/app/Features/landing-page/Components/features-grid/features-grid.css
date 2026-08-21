@@ -1,0 +1,29 @@
+.landing-feature-grid > div {
+  animation: landing-feature-in 650ms cubic-bezier(.22, 1, .36, 1) both;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.landing-feature-grid > div:nth-child(1) { animation-delay: 80ms; }
+.landing-feature-grid > div:nth-child(2) { animation-delay: 130ms; }
+.landing-feature-grid > div:nth-child(3) { animation-delay: 180ms; }
+.landing-feature-grid > div:nth-child(4) { animation-delay: 230ms; }
+.landing-feature-grid > div:nth-child(5) { animation-delay: 280ms; }
+.landing-feature-grid > div:nth-child(6) { animation-delay: 330ms; }
+.landing-feature-grid > div:nth-child(7) { animation-delay: 380ms; }
+.landing-feature-grid > div:nth-child(8) { animation-delay: 430ms; }
+.landing-feature-grid > div:nth-child(9) { animation-delay: 480ms; }
+.landing-feature-grid > div:nth-child(10) { animation-delay: 530ms; }
+
+.landing-feature-grid > div:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in oklch, var(--primary) 35%, var(--border));
+}
+
+@keyframes landing-feature-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-feature-grid > div { animation: none; }
+}

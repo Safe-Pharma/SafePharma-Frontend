@@ -617,7 +617,7 @@ export class Pos implements OnInit, AfterViewInit {
       error: (err) => {
         this.customersLoading.set(false);
         this.customerSearchLoading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load customers.'), 'error');
+        this.toast.show(getErrorMessage(err, this.t('toast.loadCustomersFailed')), 'error');
       },
     });
   }
@@ -949,11 +949,11 @@ export class Pos implements OnInit, AfterViewInit {
         next: ({ res, availability }) => {
           const data = res.data;
           if (!res.success || !data || !this.isValidBarcodeResult(data)) {
-            this.toast.show(res.message || 'Barcode not found.', 'error');
+            this.toast.show(res.message || this.t('toast.noMatchingProduct'), 'error');
             return;
           }
           if (!availability?.success || !availability.data) {
-            this.toast.show(availability?.message || 'Could not check availability.', 'error');
+          this.toast.show(availability?.message || this.t('toast.availabilityFailed'), 'error');
             return;
           }
           const customerId = this.selectedCustomer()?.id ?? null;
@@ -962,13 +962,13 @@ export class Pos implements OnInit, AfterViewInit {
               item.pharmacyMedicineId === data.pharmacyMedicineId && item.customerId === customerId,
           )?.quantity ?? 0;
           if (availability.data.availableQuantity <= existingQuantity) {
-            this.toast.show(`Only ${availability.data.availableQuantity} units available.`, 'error');
+          this.toast.show(this.t('toast.onlyAvailable', { available: availability.data.availableQuantity }), 'error');
             return;
           }
           this.addScannedItem(data);
         },
         error: (err) => {
-          this.toast.show(getErrorMessage(err, 'Could not resolve barcode.'), 'error');
+          this.toast.show(getErrorMessage(err, this.t('toast.availabilityFailed')), 'error');
         },
       });
   }
@@ -1237,7 +1237,7 @@ export class Pos implements OnInit, AfterViewInit {
     if (!confirm('Remove all items from this cart?')) return;
 
     this.updateActiveTab((t) => ({ ...t, items: [] }));
-    this.toast.show('Cart cleared.', 'success');
+    this.toast.show(this.t('toast.cartCleared'), 'success');
     this.restoreScannerFocus(true);
   }
 

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-status-badge',
@@ -6,7 +7,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="badge" [class.is-active]="isActive()" [class.pill]="variant() === 'pill'">
-      <span class="dot"></span>{{ isActive() ? 'Active' : 'Inactive' }}
+      <span class="dot"></span>{{ isActive() ? i18n.text('users.active') : i18n.text('users.inactive') }}
     </span>
   `,
   styles: [`
@@ -35,6 +36,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   `],
 })
 export class StatusBadgeComponent {
+  protected readonly i18n = inject(I18nService);
   isActive = input.required<boolean>();
   variant  = input<'text' | 'pill'>('text');
 }

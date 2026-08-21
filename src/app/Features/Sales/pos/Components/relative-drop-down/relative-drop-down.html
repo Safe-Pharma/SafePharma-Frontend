@@ -1,6 +1,6 @@
 <!-- Relatives Dropdown -->
 <div class="flex gap-1.5 items-center">
-  <label class=""> Relative </label>
+  <label class="">{{ t('relative.label') }}</label>
 
   <!-- Loading State -->
   <div *ngIf="isLoading()" class="py-2 text-sm text-gray-500"><app-spinner size="sm" /></div>
@@ -16,7 +16,7 @@
       {{ selectedRelativeId() ? selectedRelativeName() : 'For Me' }}
     </button>
     <div *ngIf="menuOpen()" class="absolute right-0 z-30 mt-1 max-h-48 min-w-36 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-      <button type="button" (click)="choose('')" class="block w-full px-3 py-2 text-left text-xs hover:bg-slate-50">For Me</button>
+      <button type="button" (click)="choose('')" class="block w-full px-3 py-2 text-start text-xs hover:bg-slate-50">{{ t('relative.forMe') }}</button>
       <button *ngFor="let relative of relatives()" type="button" (click)="choose(relative.relativeId)" class="block w-full px-3 py-2 text-left text-xs hover:bg-slate-50">
         {{ relative.relativeName }}
       </button>

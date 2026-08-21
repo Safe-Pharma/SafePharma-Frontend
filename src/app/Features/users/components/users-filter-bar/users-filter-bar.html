@@ -6,22 +6,22 @@
     </svg>
     <input
       type="text"
-      placeholder="Search by name or email..."
+      [placeholder]="i18n.text('users.search')"
       [ngModel]="search()"
       (ngModelChange)="onSearchInput($event)"
     />
   </div>
 
   <select class="select" [ngModel]="role()" (ngModelChange)="onRoleChange($event)">
-    <option value="">All roles</option>
+    <option value="">{{ i18n.text('users.allRoles') }}</option>
     @for (r of roles(); track r.id) {
-      <option [value]="r.name">{{ r.name }}</option>
+      <option [value]="r.name">{{ i18n.roleLabel(r.name) }}</option>
     }
   </select>
 
   <select class="select" [ngModel]="status()" (ngModelChange)="onStatusChange($event)">
     @for (s of statuses; track s) {
-      <option [value]="s">{{ s === 'All' ? 'All statuses' : s }}</option>
+      <option [value]="s">{{ s === 'All' ? i18n.text('users.allStatuses') : s === 'Active' ? i18n.text('users.active') : i18n.text('users.inactive') }}</option>
     }
   </select>
 </div>

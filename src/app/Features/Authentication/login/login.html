@@ -1,19 +1,19 @@
-<div class=" grid lg:grid-cols-2 min-h-[calc(100vh-65px)]">
+<div class="login-page grid lg:grid-cols-2 min-h-[calc(100vh-65px)]">
 
   <!-- Left: form -->
-  <div class="flex items-center justify-center px-6 py-12 space-y-12">
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="card w-full max-w-md animate-fade-in-up space-y-4">
-      <h1 class="text-2xl font-bold text-foreground">Sign in to SafePharma </h1>
-      <p class="text-sm text-muted-foreground mt-1 mb-6">Welcome back. Enter your details to continue.</p>
+  <div class="login-form-column flex items-center justify-center px-6 py-12 space-y-12">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form card w-full max-w-md animate-fade-in-up space-y-4">
+      <h1 class="text-2xl font-bold text-foreground">{{ text('auth.signInTitle') }}</h1>
+      <p class="text-sm text-muted-foreground mt-1 mb-6">{{ text('auth.signInDescription') }}</p>
 
       @if (formError(); as error) {
-        <div class="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-4">
+        <div class="login-error rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-4">
           {{ error }}
         </div>
       }
 
       <!-- Email -->
-      <label class="block text-sm font-medium text-foreground mb-1">Email</label>
+      <label class="block text-sm font-medium text-foreground mb-1">{{ text('auth.email') }}</label>
       <input
         type="email"
         placeholder="you@medirx.io"
@@ -27,8 +27,8 @@
 
       <!-- Password -->
       <div class="flex items-center justify-between mt-4 mb-1">
-        <label class="text-sm font-medium text-foreground">Password</label>
-        <a routerLink="/forgot-password" class="text-sm text-primary hover:underline">Forgot password?</a>
+        <label class="text-sm font-medium text-foreground">{{ text('auth.password') }}</label>
+        <a routerLink="/forgot-password" class="text-sm text-primary hover:underline">{{ text('auth.forgotPassword') }}</a>
       </div>
       <input
         type="password"
@@ -43,16 +43,16 @@
             <p class="error">{{ error }}</p>
           }
           @if (password.errors?.['missingUppercase']) {
-            <p class="error">Password must contain at least one uppercase letter.</p>
+            <p class="error">{{ text('auth.passwordUpper') }}</p>
           }
           @if (password.errors?.['missingLowercase']) {
-            <p class="error">Password must contain at least one lowercase letter.</p>
+            <p class="error">{{ text('auth.passwordLower') }}</p>
           }
           @if (password.errors?.['missingDigit']) {
-            <p class="error">Password must contain at least one number.</p>
+            <p class="error">{{ text('auth.passwordDigit') }}</p>
           }
           @if (password.errors?.['missingSpecialChar']) {
-            <p class="error">Password must contain at least one special character.</p>
+            <p class="error">{{ text('auth.passwordSpecial') }}</p>
           }
         </div>
       }
@@ -60,26 +60,26 @@
       <!-- Remember me -->
       <label class="flex items-center gap-2 mt-4 text-sm text-foreground cursor-pointer select-none">
         <input type="checkbox" formControlName="remember" class="w-4 h-4 rounded border-input accent-primary" />
-        Remember me for 30 days
+        {{ text('auth.remember') }}
       </label>
 
       <button type="submit" [disabled]="loading()" class="btn flex justify-center  mt-6 disabled:opacity-50 disabled:cursor-not-allowed">
         @if (loading()) {
           <app-spinner />
         } @else {
-          Sign in
+          {{ text('auth.signIn') }}
         }
       </button>
 
       <p class="text-center text-sm text-muted-foreground mt-4">
-        No account yet? <a routerLink="/register" class="text-primary hover:underline font-medium">Start free trial</a>
+        {{ text('auth.noAccount') }} <a routerLink="/register" class="text-primary hover:underline font-medium">{{ text('auth.startTrial') }}</a>
       </p>
     </form>
   </div>
 
   <!-- Right -->
   <div
-    class="hidden lg:flex relative flex-col justify-between p-12 overflow-hidden text-primary-foreground"
+    class="login-showcase hidden lg:flex relative flex-col justify-between p-12 overflow-hidden text-primary-foreground"
     style="background: linear-gradient(135deg, var(--primary), var(--success))"
   >
     <div
@@ -87,9 +87,9 @@
       style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 24px 24px;"
     ></div>
 
-    <p class="relative text-sm font-medium animate-fade-in">Pharmacy operations, unified.</p>
+    <p class="login-showcase-tagline relative text-sm font-medium animate-fade-in">{{ text('public.tagline') }}</p>
 
-    <div class="relative animate-fade-in-up" style="animation-delay: .15s">
+    <div class="login-showcase-copy relative animate-fade-in-up" style="animation-delay: .15s">
       <blockquote class="text-2xl font-semibold leading-snug">
         "SafePharma replaced four systems and cut our month-end close from 5 days to 4 hours."
       </blockquote>
@@ -97,15 +97,15 @@
       <div class="flex gap-3 mt-6">
         <span class="flex items-center gap-1.5 text-xs font-medium bg-white/15 rounded-full px-3 py-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-          Inventory
+          {{ text('nav.inventory') }}
         </span>
         <span class="flex items-center gap-1.5 text-xs font-medium bg-white/15 rounded-full px-3 py-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-          Reports
+          {{ text('nav.reports') }}
         </span>
         <span class="flex items-center gap-1.5 text-xs font-medium bg-white/15 rounded-full px-3 py-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
-          Audit
+          {{ text('nav.audit') }}
         </span>
       </div>
     </div>

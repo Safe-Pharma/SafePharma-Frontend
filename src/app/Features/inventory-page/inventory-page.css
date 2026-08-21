@@ -26,6 +26,23 @@ table tbody tr:nth-child(even) td[colspan] > div {
   transform: rotate(90deg);
 }
 
+.directional-icon {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+[dir='rtl'] .directional-icon {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .inventory-expand-icon {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .inventory-expand-icon.rotate-90 {
+  transform: scaleX(-1) rotate(90deg);
+}
+
 /* Card hover effects */
 .hover\:shadow-md:hover {
   box-shadow:

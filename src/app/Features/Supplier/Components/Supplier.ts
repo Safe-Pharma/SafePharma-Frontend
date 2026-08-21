@@ -31,6 +31,8 @@ import { LocationService } from '../../subscribe/Services/location.service';
 import { ModalOverlayDirective } from '../../../Shared/Components/modal-overlay/modal-overlay';
 import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 import { formatCurrency } from '../../../Shared/utils/currency.util';
+import { I18nService } from '../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
 
 
 interface SupplierFormModel {
@@ -60,7 +62,7 @@ const EMPTY_FORM: SupplierFormModel = {
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe, PageHeaderComponent],
   templateUrl: './supplier.html',
 })
 export class Suppliers implements OnInit, OnDestroy {
@@ -89,7 +91,7 @@ export class Suppliers implements OnInit, OnDestroy {
         tap(() => this.loading.set(false)),
         catchError(() => {
           this.loading.set(false);
-          this.errorMsg.set('An error occurred while loading suppliers.');
+          this.errorMsg.set(this.text('supplier.errorLoad'));
           return of<Supplier[]>([]);
         })
       )
@@ -125,7 +127,8 @@ export class Suppliers implements OnInit, OnDestroy {
   constructor(
     private suppliersService: SuppliersService,
     private LocationService: LocationService,
-    private paymentsService: SupplierPaymentsService
+    private paymentsService: SupplierPaymentsService,
+    private i18n: I18nService
   ) {
     document.addEventListener('scroll', this.closeMenuOnScroll, true);
   }
@@ -138,7 +141,7 @@ export class Suppliers implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.errorMsg.set('An error occurred while loading countries.');
+        this.errorMsg.set(this.text('settings.locationError'));
       },
     });
   }
@@ -237,7 +240,7 @@ export class Suppliers implements OnInit, OnDestroy {
     const address = this.formModel.address.trim();
 
     if (!name || !contactPerson || !phone || !email || !address || !this.formModel.countryId) {
-      this.formError.set('Please fill in all required fields, including country.');
+      this.formError.set(this.text('common.required'));
       return;
     }
 
@@ -272,8 +275,8 @@ export class Suppliers implements OnInit, OnDestroy {
         this.formError.set(
           err?.error?.message ??
             (err?.status === 409
-              ? 'A supplier with this name already exists.'
-              : 'An error occurred while saving. Please try again.')
+              ? this.text('supplier.duplicate')
+              : this.text('supplier.errorSave'))
         );
       },
     });
@@ -284,7 +287,7 @@ export class Suppliers implements OnInit, OnDestroy {
     this.closeMenu();
     this.suppliersService.toggleStatus(supplier.id).subscribe({
       next: () => this.refresh(),
-      error: () => this.errorMsg.set('An error occurred while changing the supplier status.'),
+      error: () => this.errorMsg.set(this.text('supplier.errorStatus')),
     });
   }
 
@@ -311,7 +314,7 @@ export class Suppliers implements OnInit, OnDestroy {
       },
       error: () => {
         this.deleting.set(false);
-        this.errorMsg.set('An error occurred while deleting the supplier.');
+        this.errorMsg.set(this.text('supplier.errorDelete'));
       },
     });
   }
@@ -360,13 +363,13 @@ export class Suppliers implements OnInit, OnDestroy {
     const amount = Number(this.paymentFormModel.amount);
 
     if (!amount || amount <= 0) {
-      this.recordPaymentError.set('Enter a valid amount.');
+      this.recordPaymentError.set(this.text('common.invalid'));
       return;
     }
 
     if (amount > supplier.outstanding) {
       this.recordPaymentError.set(
-        `Amount can't exceed the outstanding balance (${formatCurrency(supplier.outstanding)}).`
+        this.text('supplier.amountTooHigh', { amount: formatCurrency(supplier.outstanding) })
       );
       return;
     }
@@ -391,9 +394,22 @@ export class Suppliers implements OnInit, OnDestroy {
       error: (err) => {
         this.recordingPayment.set(false);
         this.recordPaymentError.set(
-          err?.error?.message ?? 'An error occurred while recording the payment.'
+          err?.error?.message ?? this.text('supplier.errorPayment')
         );
       },
     });
+  }
+
+  statusLabel(status: SupplierStatus): string {
+    return status === 'Active' ? this.text('supplier.statusActive') : this.text('supplier.statusInactive');
+  }
+
+  paymentMethodLabel(method: PaymentMethod): string {
+    const key = method === 'Bank Transfer' ? 'supplier.bankTransfer' : method === 'Cash' ? 'supplier.cash' : method === 'Cheque' ? 'supplier.cheque' : 'supplier.card';
+    return this.text(key);
+  }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
   }
 }

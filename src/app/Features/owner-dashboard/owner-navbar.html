@@ -1,0 +1,87 @@
+<header class="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card/60 px-4 backdrop-blur md:px-6">
+  <button
+    type="button"
+    class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
+    [attr.aria-label]="text('nav.openNavigation')"
+    (click)="menuToggle.emit()"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
+  <div class="hidden min-w-0 items-center gap-2 md:flex">
+    <div class="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md bg-primary-soft text-primary" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 12h4M10 8h4M14 21v-3a2 2 0 0 0-4 0v3M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+      </svg>
+    </div>
+    <div class="min-w-0 leading-tight">
+      <div class="truncate text-sm font-semibold">{{ text('ownerDashboard.portal') }}</div>
+      <div class="truncate text-[11px] text-muted-foreground">{{ text('ownerDashboard.title') }}</div>
+    </div>
+  </div>
+
+  <div class="ms-auto flex items-center gap-1.5 md:gap-2">
+    <button
+      type="button"
+      class="inline-flex min-h-9 min-w-[3.5rem] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-primary/20 bg-primary-soft/70 px-3 text-xs font-semibold text-primary shadow-sm transition-all hover:border-primary/30 hover:bg-primary-soft active:scale-[.98] active:bg-primary-soft/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      [attr.aria-label]="languageLabel() === 'AR' ? text('language.switchToEnglish') : text('language.switchToArabic')"
+      [title]="languageLabel() === 'AR' ? text('language.switchToEnglish') : text('language.switchToArabic')"
+      (click)="toggleLanguage()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+      </svg>
+      {{ languageLabel() === 'AR' ? 'EN' : 'AR' }}
+    </button>
+
+    <app-notification-bell />
+
+    <div class="relative">
+      <button
+        type="button"
+        class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen()"
+        (click)="toggleUserMenu()"
+      >
+        <span class="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary to-success text-xs font-semibold text-primary-foreground">
+          {{ user()?.initials ?? 'U' }}
+        </span>
+        <span class="hidden text-start leading-tight md:block">
+          <span class="block text-xs font-semibold">{{ user()?.fullName ?? text('ownerDashboard.portal') }}</span>
+          <span class="block text-[11px] text-muted-foreground">{{ user()?.role ?? text('ownerDashboard.portal') }}</span>
+        </span>
+      </button>
+
+      @if (userMenuOpen()) {
+        <div class="absolute end-0 z-50 mt-2 w-56 max-w-[calc(100vw-1rem)] origin-top-end overflow-hidden rounded-xl border border-border bg-card shadow-lg" role="menu">
+          <div class="border-b border-border px-4 py-3">
+            <p class="text-sm font-semibold text-foreground">{{ user()?.fullName ?? text('ownerDashboard.portal') }}</p>
+            <p class="text-xs text-muted-foreground">{{ user()?.email ?? '' }}</p>
+          </div>
+          <div class="p-2">
+            <button type="button" role="menuitem" class="w-full rounded-lg px-3 py-2 text-start text-sm text-destructive transition-colors hover:bg-destructive-soft" (click)="emitLogout()">
+              {{ text('common.actions.logout') }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="hidden items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-destructive-soft hover:text-destructive sm:inline-flex"
+      [attr.aria-label]="text('common.actions.logout')"
+      [title]="text('common.actions.logout')"
+      (click)="emitLogout()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 0 0-2-2h-6" />
+      </svg>
+      <span>{{ text('common.actions.logout') }}</span>
+    </button>
+  </div>
+</header>

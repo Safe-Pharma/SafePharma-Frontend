@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Spinner } from '../spinner/spinner';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 /** A local, non-destructive loading state for an already-rendered section. */
 @Component({
@@ -9,7 +10,7 @@ import { Spinner } from '../spinner/spinner';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (visible()) {
-      <div class="loading-overlay" role="status" aria-live="polite" aria-label="Updating">
+      <div class="loading-overlay" role="status" aria-live="polite" [attr.aria-label]="text('common.loading')">
         <div class="loading-overlay__surface">
           <app-spinner size="md" />
           @if (label()) {
@@ -37,6 +38,8 @@ import { Spinner } from '../spinner/spinner';
   `,
 })
 export class LoadingOverlay {
+  private readonly i18n = inject(I18nService);
   readonly visible = input(false);
   readonly label = input('');
+  text(key: string): string { return this.i18n.text(key); }
 }

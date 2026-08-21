@@ -34,6 +34,8 @@ import {
 } from '../../../../Shared/Components/customer-picker/customer-picker';
 import { LoadingOverlay } from '../../../../Shared/Components/loading-overlay/loading-overlay';
 import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../../Shared/Components/page-header/page-header';
 
 @Component({
   selector: 'app-customer-details',
@@ -48,6 +50,7 @@ import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
     CustomerPickerComponent,
     LoadingOverlay,
     EgpCurrencyPipe,
+    PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-details.html',
@@ -58,6 +61,7 @@ export class CustomerDetailsComponent {
   private readonly toast = inject(Toast);
   private readonly auth = inject(AuthSessionService);
   private readonly fb = inject(NonNullableFormBuilder);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly isOwner = computed(() => this.auth.user()?.role === 'Owner');
 
@@ -89,7 +93,7 @@ export class CustomerDetailsComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMsg.set(getErrorMessage(err, 'Could not load customer.'));
+        this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorLoad')));
       },
     });
 
@@ -114,7 +118,7 @@ export class CustomerDetailsComponent {
       error: (err) => {
         this.historyLoading.set(false);
         this.historyRefreshing.set(false);
-        this.errorMsg.set(getErrorMessage(err, 'Could not load medicine history.'));
+        this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorHistory')));
       },
     });
   }
@@ -187,7 +191,7 @@ export class CustomerDetailsComponent {
 
     if (!selection || !selection.label.trim()) {
       this.historyErrorMsg.set(
-        'Select a medicine from the catalog, or enter it manually with both a name and scientific name.',
+        this.i18n.text('customer.medicineRequired'),
       );
       return;
     }
@@ -215,14 +219,14 @@ export class CustomerDetailsComponent {
           this.loadHistory();
           this.toast.show(
             response.wasUpdated
-              ? `${response.history.medicineName} was already in this customer's history — updated it.`
-              : `${response.history.medicineName} added to medicine history.`,
+              ? this.i18n.text('customer.updatedHistory', { name: response.history.medicineName })
+              : this.i18n.text('customer.addedHistory', { name: response.history.medicineName }),
             'success',
           );
         },
         error: (err) => {
           this.addingHistory.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not add medicine history.'));
+          this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorAddHistory')));
         },
       });
   }
@@ -230,15 +234,15 @@ export class CustomerDetailsComponent {
   onToggleActive(entry: CustomerMedicineHistory): void {
     this.api.toggleMedicineActive(this.id, entry.id).subscribe({
       next: () => this.loadHistory(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not update.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
     });
   }
 
   onDeleteHistory(entry: CustomerMedicineHistory): void {
-    if (!confirm(`Remove "${entry.medicineName}" from this customer's history?`)) return;
+    if (!confirm(this.i18n.text('customer.deleteHistoryConfirm', { name: entry.medicineName }))) return;
     this.api.deleteMedicineHistory(this.id, entry.id).subscribe({
       next: () => this.loadHistory(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not delete history entry.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorDeleteHistory'))),
     });
   }
 
@@ -264,14 +268,14 @@ export class CustomerDetailsComponent {
 
   protected readonly allergies = signal<CustomerAllergy[]>([]);
   protected readonly allergyItems = computed(() =>
-    this.allergyCatalog().map((c) => ({ id: c.id, label: c.nameEn })),
+    this.allergyCatalog().map((c) => ({ id: c.id, label: this.i18n.localizedName(c) })),
   );
   protected readonly selectedAllergyIds = computed(() => this.allergies().map((a) => a.allergyId));
 
   private loadAllergies(): void {
     this.api.getAllergies(this.id).subscribe({
       next: (list) => this.allergies.set(list),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not load allergies.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorLoad'))),
     });
   }
 
@@ -283,12 +287,12 @@ export class CustomerDetailsComponent {
     if (added) {
       this.api.assignAllergy(this.id, { allergyId: added }).subscribe({
         next: () => this.loadAllergies(),
-        error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not assign allergy.')),
+        error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
       });
     } else if (removed) {
       this.api.removeAllergy(this.id, removed).subscribe({
         next: () => this.loadAllergies(),
-        error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not remove allergy.')),
+        error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
       });
     }
   }
@@ -297,7 +301,7 @@ export class CustomerDetailsComponent {
 
   protected readonly chronicConditions = signal<CustomerChronicCondition[]>([]);
   protected readonly chronicConditionItems = computed(() =>
-    this.chronicConditionCatalog().map((c) => ({ id: c.id, label: c.nameEn })),
+    this.chronicConditionCatalog().map((c) => ({ id: c.id, label: this.i18n.localizedName(c) })),
   );
   protected readonly selectedChronicConditionIds = computed(() =>
     this.chronicConditions().map((c) => c.chronicConditionId),
@@ -306,7 +310,7 @@ export class CustomerDetailsComponent {
   private loadChronicConditions(): void {
     this.api.getChronicConditions(this.id).subscribe({
       next: (list) => this.chronicConditions.set(list),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not load chronic conditions.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorLoad'))),
     });
   }
 
@@ -319,13 +323,13 @@ export class CustomerDetailsComponent {
       this.api.assignChronicCondition(this.id, { chronicConditionId: added }).subscribe({
         next: () => this.loadChronicConditions(),
         error: (err) =>
-          this.errorMsg.set(getErrorMessage(err, 'Could not assign chronic condition.')),
+          this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
       });
     } else if (removed) {
       this.api.removeChronicCondition(this.id, removed).subscribe({
         next: () => this.loadChronicConditions(),
         error: (err) =>
-          this.errorMsg.set(getErrorMessage(err, 'Could not remove chronic condition.')),
+          this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
       });
     }
   }
@@ -342,7 +346,7 @@ export class CustomerDetailsComponent {
   private loadOrganFunctions(): void {
     this.api.getOrganFunctions(this.id).subscribe({
       next: (list) => this.organFunctions.set(list),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not load organ functions.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorLoad'))),
     });
   }
 
@@ -364,7 +368,7 @@ export class CustomerDetailsComponent {
         },
         error: (err) => {
           this.assigningOrganFunction.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not record organ function.'));
+          this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate')));
         },
       });
   }
@@ -372,7 +376,7 @@ export class CustomerDetailsComponent {
   onRemoveOrganFunction(entry: CustomerOrganFunction): void {
     this.api.removeOrganFunction(this.id, entry.id).subscribe({
       next: () => this.loadOrganFunctions(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not remove organ function.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
     });
   }
 
@@ -393,7 +397,7 @@ export class CustomerDetailsComponent {
   private loadRelatives(): void {
     this.api.getRelatives(this.id).subscribe({
       next: (list) => this.relatives.set(list),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not load relatives.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorLoad'))),
     });
   }
 
@@ -407,7 +411,7 @@ export class CustomerDetailsComponent {
   onAddRelative(): void {
     const selection = this.pendingRelative();
     if (!selection) {
-      this.relativesErrorMsg.set('Search for and select a customer first.');
+      this.relativesErrorMsg.set(this.i18n.text('customer.noResults'));
       return;
     }
 
@@ -423,7 +427,7 @@ export class CustomerDetailsComponent {
         next: (res) => {
           this.addingRelative.set(false);
           if (!res.success) {
-            this.relativesErrorMsg.set(res.message || 'Could not add relative.');
+            this.relativesErrorMsg.set(res.message || this.i18n.text('customer.errorUpdate'));
             return;
           }
           this.pendingRelative.set(null);
@@ -433,17 +437,17 @@ export class CustomerDetailsComponent {
         },
         error: (err) => {
           this.addingRelative.set(false);
-          this.relativesErrorMsg.set(getErrorMessage(err, 'Could not add relative.'));
+          this.relativesErrorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate')));
         },
       });
   }
 
   onRemoveRelative(id: string): void {
-    if (!confirm(`Remove this relative?`)) return;
+    if (!confirm(this.i18n.text('customer.remove'))) return;
     console.log(id);
     this.api.removeRelative(id).subscribe({
       next: () => this.loadRelatives(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not remove relative.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorUpdate'))),
     });
   }
 }

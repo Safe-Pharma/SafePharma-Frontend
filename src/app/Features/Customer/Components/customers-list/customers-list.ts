@@ -9,17 +9,22 @@ import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { AddEditCustomerDialogComponent } from '../add-edit-customer-dialog/add-edit-customer-dialog';
 import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../../Shared/Components/page-header/page-header';
 
 @Component({
   selector: 'app-customers-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, AddEditCustomerDialogComponent, EgpCurrencyPipe],
+  imports: [CommonModule, RouterLink, AddEditCustomerDialogComponent, EgpCurrencyPipe, PageHeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customers-list.html',
 })
 export class CustomersListComponent {
   private readonly api = inject(CustomersApiService);
   private readonly auth = inject(AuthSessionService);
+  private readonly i18n = inject(I18nService);
+
+  text(key: string, params?: Record<string, string | number>): string { return this.i18n.text(key, params); }
 
   protected readonly isOwner = computed(() => this.auth.user()?.role === 'Owner');
 
@@ -41,7 +46,7 @@ export class CustomersListComponent {
         tap(() => this.loading.set(false)),
         catchError((err) => {
           this.loading.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not load customers.'));
+          this.errorMsg.set(getErrorMessage(err, this.text('customer.loadingError')));
           return of<Customer[]>([]);
         }),
       ),
@@ -64,8 +69,8 @@ export class CustomersListComponent {
 
   statusBadge(status: Customer['status']): { label: string; classes: string } {
     return status === 'Active'
-      ? { label: 'Active', classes: 'bg-success-soft text-success' }
-      : { label: 'Inactive', classes: 'bg-muted text-muted-foreground' };
+      ? { label: this.text('customer.active'), classes: 'bg-success-soft text-success' }
+      : { label: this.text('customer.inactive'), classes: 'bg-muted text-muted-foreground' };
   }
 
   // --- Add / edit dialog (same component, different mode) ---
@@ -111,16 +116,16 @@ export class CustomersListComponent {
     this.openMenuId.set(null);
     this.api.toggleStatus(customer.id).subscribe({
       next: () => this.onRefresh(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not update status.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.text('customer.statusError'))),
     });
   }
 
   onDelete(customer: Customer): void {
     this.openMenuId.set(null);
-    if (!confirm(`Delete "${customer.name}"? This removes them and their full medicine history everywhere.`)) return;
+    if (!confirm(this.text('customer.deleteConfirm', { name: customer.name }))) return;
     this.api.delete(customer.id).subscribe({
       next: () => this.onRefresh(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not delete customer.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.text('customer.deleteError'))),
     });
   }
 }

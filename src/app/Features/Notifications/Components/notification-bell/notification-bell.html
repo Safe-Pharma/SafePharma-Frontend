@@ -2,7 +2,7 @@
   <button
     type="button"
     class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative h-9 w-9"
-    aria-label="Notifications"
+    [attr.aria-label]="i18n.text('notification.aria')"
     [attr.aria-expanded]="isOpen()"
     (click)="toggle()"
   >
@@ -27,7 +27,7 @@
 
     @if (unreadCount() > 0) {
       <span
-        class="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-white"
+        class="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-white"
       >
         {{ unreadCount() > 99 ? '99+' : unreadCount() }}
       </span>
@@ -36,17 +36,17 @@
 
   @if (isOpen()) {
     <div
-      class="absolute right-0 z-50 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-xl border border-border bg-card shadow-lg sm:w-96"
+      class="absolute end-0 z-50 mt-2 w-80 max-w-[90vw] origin-top-end overflow-hidden rounded-xl border border-border bg-card shadow-lg sm:w-96"
     >
       <div class="flex items-center justify-between border-b border-border px-4 py-3">
-        <p class="text-sm font-semibold text-foreground">Notifications</p>
+        <p class="text-sm font-semibold text-foreground">{{ i18n.text('notification.title') }}</p>
         @if (unreadCount() > 0) {
           <button
             type="button"
             class="text-xs font-medium text-primary hover:underline"
             (click)="onMarkAllAsRead($event)"
           >
-            Mark all as read
+            {{ i18n.text('notification.markAll') }}
           </button>
         }
       </div>
@@ -54,11 +54,11 @@
       <div class="max-h-96 overflow-y-auto">
         @if (loading()) {
           <div class="px-4 py-6 text-center text-sm text-muted-foreground">
-            Loading notifications...
+            {{ i18n.text('notification.loading') }}
           </div>
         } @else if (notifications().length === 0) {
           <div class="px-4 py-6 text-center text-sm text-muted-foreground">
-            No notifications yet
+            {{ i18n.text('notification.empty') }}
           </div>
         } @else {
           @for (notification of notifications(); track notification.id) {
@@ -76,14 +76,14 @@
               <span class="min-w-0 flex-1">
                 <span class="flex items-center justify-between gap-2">
                   <span class="truncate text-sm font-semibold text-foreground">
-                    {{ notification.title }}
+                    {{ localizedTitle(notification) }}
                   </span>
                   @if (!notification.isRead) {
                     <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
                   }
                 </span>
                 <span class="mt-0.5 block text-xs text-muted-foreground">
-                  {{ notification.message }}
+                  {{ localizedMessage(notification) }}
                 </span>
                 <span class="mt-1 block text-[11px] text-muted-foreground">
                   {{ typeLabel(notification.type) }} · {{ notification.createdAt | timeAgo }}

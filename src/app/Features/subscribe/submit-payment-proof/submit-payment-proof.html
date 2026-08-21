@@ -1,16 +1,16 @@
 @if (isLoading()) {
-  <div class="mx-auto max-w-3xl px-6 py-10 text-sm text-muted-foreground">Loading…</div>
+  <div class="mx-auto max-w-3xl px-6 py-10 text-sm text-muted-foreground">{{ i18n.text('subscription.loading') }}</div>
 } @else {
   <form class="mx-auto max-w-3xl space-y-6 px-6 py-10" [formGroup]="form" (ngSubmit)="onSubmit()">
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight">Submit payment proof</h1>
+      <h1 class="text-2xl font-semibold tracking-tight">{{ i18n.text('subscription.submitProof') }}</h1>
       <p class="mt-1.5 text-sm text-muted-foreground">{{ summaryLabel() }}</p>
     </div>
 
     <div class="rounded-2xl border border-border bg-card p-6 shadow-card md:p-8">
       <div class="grid gap-5 md:grid-cols-2">
         <div class="space-y-2">
-          <label for="paymentMethod" class="text-sm font-medium leading-none">Payment method</label>
+          <label for="paymentMethod" class="text-sm font-medium leading-none">{{ i18n.text('subscription.paymentMethod') }}</label>
           <select
             id="paymentMethod"
             formControlName="paymentMethod"
@@ -26,7 +26,7 @@
         </div>
 
         <div class="space-y-2">
-          <label for="txn" class="text-sm font-medium leading-none">Transaction reference</label>
+          <label for="txn" class="text-sm font-medium leading-none">{{ i18n.text('subscription.transactionReference') }}</label>
           <input
             id="txn"
             type="text"
@@ -41,7 +41,7 @@
         </div>
 
         <div class="space-y-2">
-          <label for="paidon" class="text-sm font-medium leading-none">Payment date</label>
+          <label for="paidon" class="text-sm font-medium leading-none">{{ i18n.text('subscription.paymentDate') }}</label>
           <input
             id="paidon"
             type="date"
@@ -55,7 +55,7 @@
         </div>
 
         <div class="space-y-2">
-          <label for="amount" class="text-sm font-medium leading-none">Paid amount (EGP)</label>
+          <label for="amount" class="text-sm font-medium leading-none">{{ i18n.text('subscription.paidAmount') }}</label>
           <input
             id="amount"
             type="number"
@@ -70,7 +70,7 @@
         </div>
 
         <div class="space-y-2 md:col-span-2">
-          <label class="text-sm font-medium leading-none">Receipt / screenshot</label>
+          <label class="text-sm font-medium leading-none">{{ i18n.text('subscription.receipt') }}</label>
           <label
             class="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong bg-muted/30 text-sm text-muted-foreground hover:bg-muted/50"
           >
@@ -78,7 +78,7 @@
               <path d="M12 3v12" /><path d="m17 8-5-5-5 5" />
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             </svg>
-            <span>{{ selectedFileName() ?? 'Click to upload (PNG, JPG, PDF · max 5MB)' }}</span>
+            <span>{{ selectedFileName() ?? i18n.text('subscription.uploadReceipt') }}</span>
             <input type="file" accept="image/*,.pdf" class="hidden" (change)="onFileSelected($event)" />
           </label>
           @if (getErrorMessage(form.controls.receipt); as error) {
@@ -89,13 +89,13 @@
     </div>
 
     <div class="sticky bottom-0 -mx-6 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
-      <p class="text-xs text-muted-foreground">By submitting, you confirm the details are accurate.</p>
+      <p class="text-xs text-muted-foreground">{{ i18n.text('subscription.confirmDetails') }}</p>
       <button
         type="submit"
         [disabled]="isSubmitting()"
         class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
       >
-        {{ isSubmitting() ? 'Submitting…' : 'Submit for verification' }}
+        {{ isSubmitting() ? i18n.text('subscription.submittingProof') : i18n.text('subscription.submitVerification') }}
       </button>
     </div>
   </form>

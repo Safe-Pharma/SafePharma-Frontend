@@ -4,8 +4,8 @@
     (ngSubmit)="onSubmit()"
     class="card w-full max-w-md animate-fade-in-up space-y-4"
   >
-    <h1 class="text-2xl font-bold text-foreground">Owner Dashboard Sign In</h1>
-    <p class="text-sm text-muted-foreground">Sign in with an Owner account to continue.</p>
+    <h1 class="text-2xl font-bold text-foreground">{{ text('ownerLogin.title') }}</h1>
+    <p class="text-sm text-muted-foreground">{{ text('ownerLogin.description') }}</p>
 
     @if (formError(); as error) {
       <div
@@ -16,11 +16,13 @@
     }
 
     <div>
-      <label class="mb-1 block text-sm font-medium text-foreground">Email</label>
+      <label class="mb-1 block text-sm font-medium text-foreground" for="owner-email">{{ text('auth.email') }}</label>
       <input
+        id="owner-email"
         type="email"
         formControlName="email"
-        placeholder="owner@safepharma.com"
+        [placeholder]="text('ownerLogin.emailPlaceholder')"
+        autocomplete="username"
         class="input"
         [class.border-destructive]="email.invalid && email.touched"
       />
@@ -30,11 +32,13 @@
     </div>
 
     <div>
-      <label class="mb-1 block text-sm font-medium text-foreground">Password</label>
+      <label class="mb-1 block text-sm font-medium text-foreground" for="owner-password">{{ text('auth.password') }}</label>
       <input
+        id="owner-password"
         type="password"
         formControlName="password"
-        placeholder="Enter your password"
+        [placeholder]="text('ownerLogin.passwordPlaceholder')"
+        autocomplete="current-password"
         class="input"
         [class.border-destructive]="password.invalid && password.touched"
       />
@@ -49,9 +53,9 @@
       class="btn mt-6 flex w-full justify-center disabled:cursor-not-allowed disabled:opacity-50"
     >
       @if (loading()) {
-        <app-spinner />
+        <app-spinner /><span>{{ text('auth.signingIn') }}</span>
       } @else {
-        Sign in
+        {{ text('auth.signIn') }}
       }
     </button>
   </form>

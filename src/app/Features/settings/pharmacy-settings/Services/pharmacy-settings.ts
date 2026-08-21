@@ -4,6 +4,10 @@ import { Observable, finalize, of, tap } from 'rxjs';
 
 export interface PharmacySettingsData {
   name: string;
+  /** Tenant-wide default. It is intentionally separate from a user's personal override. */
+  preferredLanguage?: string | null;
+  defaultLanguage?: string | null;
+  language?: string | null;
   logoUrl?: string | null;
   address?: string | null;
   city?: string | null;
@@ -76,6 +80,9 @@ export class PharmacySettings {
           ...current,
           ...(responseData && typeof responseData === 'object' ? responseData : {}),
           ...(typeof name === 'string' ? { name } : {}),
+          ...(typeof data.get('PreferredLanguage') === 'string'
+            ? { preferredLanguage: data.get('PreferredLanguage') as string }
+            : {}),
         });
         this.loaded = true;
       }),

@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PharmacySettings as PharmacySettingsService } from './Services/pharmacy-settings';
 import { ChangeDetectorRef } from '@angular/core';
-import { UserLanguage, UserLanguageCode } from './Services/user-language';
+import { UserLanguageCode } from './Services/user-language';
+import { I18nService } from '../../../Core/Services/i18n.service';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { Spinner } from '../../../Shared/Components/spinner/spinner';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../Shared/Components/searchable-select/searchable-select';
 import { LocationService } from '../../subscribe/Services/location.service';
 import { City, CountryWithCities } from '../../subscribe/Models/country-with-cities.model';
 import { forkJoin } from 'rxjs';
+import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
 
 interface PharmacySettingsFormState {
   name: string;
@@ -23,7 +25,7 @@ interface PharmacySettingsFormState {
 
 @Component({
   selector: 'app-pharmacy-settings',
-  imports: [CommonModule, FormsModule, Spinner, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, Spinner, SearchableSelectComponent, PageHeaderComponent],
   templateUrl: './pharmacy-settings.html',
   styleUrl: './pharmacy-settings.css',
 })
@@ -41,8 +43,8 @@ export class PharmacySettings implements OnInit, OnDestroy {
   cities: City[] = [];
 
   languages = [
-    { value: 'en', label: 'English' },
-    { value: 'ar', label: 'Arabic' },
+    { value: 'en', label: 'language.english' },
+    { value: 'ar', label: 'language.arabic' },
   ];
 
   settings: PharmacySettingsFormState = {
@@ -61,11 +63,15 @@ export class PharmacySettings implements OnInit, OnDestroy {
 
   constructor(
     private settingsService: PharmacySettingsService,
-    private userLanguageService: UserLanguage,
+    private i18n: I18nService,
     private cdr: ChangeDetectorRef,
     private toast: Toast,
     private locationService: LocationService,
   ) {}
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
+  }
 
   ngOnInit(): void {
     this.loadLocations();
@@ -75,19 +81,15 @@ export class PharmacySettings implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }, (err) => {
       this.settingsLoading = false;
-      this.toast.show('Could not load pharmacy settings.', 'error');
+      this.toast.show(this.i18n.text('settings.loadError'), 'error');
       this.cdr.detectChanges();
     });
-    this.userLanguageService.getLanguage().subscribe((res) => {
-      this.selectedLanguage = this.userLanguageService.language();
-      this.cdr.detectChanges();
-    });
+    this.selectedLanguage = this.i18n.tenantDefault();
   }
 
   ngOnDestroy(): void {
     this.revokePreviewUrl();
     this.settingsService.clearLogoPreview();
-    this.userLanguageService.restoreSaved();
   }
 
   get governorateOptions(): SearchableSelectOption[] {
@@ -103,7 +105,7 @@ export class PharmacySettings implements OnInit, OnDestroy {
   }
 
   get languageOptions(): SearchableSelectOption[] {
-    return this.languages.map((language) => ({ value: language.value, label: language.label }));
+    return this.languages.map((language) => ({ value: language.value, label: this.i18n.text(language.label) }));
   }
 
   private loadLocations(): void {
@@ -115,14 +117,14 @@ export class PharmacySettings implements OnInit, OnDestroy {
           this.countries = result.data;
           this.syncLocationSelection();
         } else {
-          this.locationError = 'Could not load locations.';
+          this.locationError = this.i18n.text('settings.locationError');
         }
         this.locationLoading = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.locationLoading = false;
-        this.locationError = 'Could not load locations.';
+        this.locationError = this.i18n.text('settings.locationError');
         this.cdr.detectChanges();
       },
     });
@@ -169,7 +171,6 @@ export class PharmacySettings implements OnInit, OnDestroy {
 
   onLanguageChange(value: string): void {
     this.selectedLanguage = value === 'ar' ? 'ar' : 'en';
-    this.userLanguageService.preview(this.selectedLanguage);
   }
 
   onSubmit(): void {
@@ -189,6 +190,9 @@ export class PharmacySettings implements OnInit, OnDestroy {
     formData.append('Country', this.settings.country);
     formData.append('Phone', this.settings.phone);
     formData.append('TaxRegistrationNumber', this.settings.taxRegistrationNumber);
+    // Settings controls the tenant default; the Navbar controls the user override.
+    formData.append('PreferredLanguage', this.selectedLanguage === 'ar' ? 'Arabic' : 'English');
+    formData.append('DefaultLanguage', this.selectedLanguage);
 
     if (this.selectedFile) {
       formData.append('LogoFile', this.selectedFile);
@@ -199,20 +203,20 @@ export class PharmacySettings implements OnInit, OnDestroy {
 
     forkJoin({
       settings: this.settingsService.updateSettings(formData),
-      language: this.userLanguageService.updateLanguage(this.selectedLanguage),
     }).subscribe({
       next: () => {
         this.settingsService.getSettings(true).subscribe({
           next: (res) => {
             this.applySavedSettings(res.data);
+            this.i18n.setTenantDefault(this.selectedLanguage);
             this.isLoading = false;
             this.cdr.detectChanges();
-            this.toast.show('Settings saved successfully!', 'success');
+            this.toast.show(this.i18n.text('settings.saveSuccess'), 'success');
           },
           error: () => {
             this.isLoading = false;
             this.cdr.detectChanges();
-            this.toast.show('Settings saved. Refresh to confirm the latest logo.', 'success');
+            this.toast.show(this.i18n.text('settings.saveFallback'), 'success');
           },
         });
       },
@@ -225,9 +229,9 @@ export class PharmacySettings implements OnInit, OnDestroy {
           Object.keys(errors).forEach((key) => {
             this.validationErrors[key] = errors[key][0].errorMessage;
           });
-          this.toast.show('Please fix the errors below.', 'error');
+            this.toast.show(this.i18n.text('settings.validationError'), 'error');
         } else {
-          this.toast.show('Something went wrong.', 'error');
+          this.toast.show(this.i18n.text('common.somethingWentWrong'), 'error');
         }
         this.cdr.detectChanges();
       },
@@ -240,8 +244,7 @@ export class PharmacySettings implements OnInit, OnDestroy {
     this.logoRemovalRequested = false;
     this.revokePreviewUrl();
     this.settingsService.clearLogoPreview();
-    this.userLanguageService.restoreSaved();
-    this.selectedLanguage = this.userLanguageService.savedLanguage();
+    this.selectedLanguage = this.i18n.tenantDefault();
     this.validationErrors = {};
     this.fileInput?.nativeElement && (this.fileInput.nativeElement.value = '');
     this.syncLocationSelection();
@@ -283,6 +286,13 @@ export class PharmacySettings implements OnInit, OnDestroy {
     };
 
     this.settings = next;
+    const tenantLanguage = this.i18n.normalize(
+      data?.preferredLanguage ?? data?.defaultLanguage ?? data?.language,
+    );
+    if (tenantLanguage) {
+      this.selectedLanguage = tenantLanguage;
+      this.i18n.setTenantDefault(tenantLanguage);
+    }
     this.savedSettings = { ...next };
     this.selectedFile = null;
     this.logoRemovalRequested = false;

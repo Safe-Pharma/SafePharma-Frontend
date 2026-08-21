@@ -5,6 +5,7 @@ import { PortalAuthService } from '../../Services/portal-auth.service';
 import { Toast } from '../../../../Shared/Toasts/toast';
 import { ToastComponent } from '../../../../Shared/Toasts/toast/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
+import { PortalI18nService } from '../../Services/portal-i18n.service';
 
 @Component({
   selector: 'app-portal-otp',
@@ -17,6 +18,7 @@ export class PortalOtp {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(Toast);
+  readonly i18n = inject(PortalI18nService);
 
   readonly phone = signal(this.route.snapshot.queryParamMap.get('phone') ?? '');
   readonly otp = signal('');
@@ -45,15 +47,15 @@ export class PortalOtp {
       next: (res) => {
         this.loading.set(false);
         if (!res.success || !res.data?.accessToken) {
-          this.toast.show(res.message || 'Invalid or expired code. Please try again.', 'error');
+          this.toast.show(res.message || this.i18n.t('toast.invalidCode'), 'error');
           return;
         }
-        this.toast.show(res.message || 'Welcome back!', 'success');
+        this.toast.show(res.message || this.i18n.t('toast.welcome'), 'success');
         this.router.navigateByUrl('/portal/dashboard');
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Invalid or expired code. Please try again.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.invalidCode')), 'error');
       },
     });
   }
@@ -65,14 +67,14 @@ export class PortalOtp {
       next: (res) => {
         this.resending.set(false);
         if (!res.success) {
-          this.toast.show(res.message || 'Could not resend the code.', 'error');
+          this.toast.show(res.message || this.i18n.t('toast.resendError'), 'error');
           return;
         }
-        this.toast.show(res.message || 'A new code was sent.', 'success');
+        this.toast.show(res.message || this.i18n.t('toast.codeSent'), 'success');
       },
       error: (err) => {
         this.resending.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not resend the code.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.resendError')), 'error');
       },
     });
   }

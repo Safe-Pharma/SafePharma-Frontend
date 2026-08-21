@@ -3,6 +3,7 @@ import { ModalShellComponent } from '../modal-shell/modal-shell';
 import { UserFormComponent } from '../user-form/user-form';
 import { UsersService } from '../../services/users.service';
 import { extractErrors } from '../../../../Shared/utils/extract-errors.util';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-create-user-dialog',
@@ -14,6 +15,7 @@ import { extractErrors } from '../../../../Shared/utils/extract-errors.util';
 })
 export class CreateUserDialogComponent {
   private readonly usersService = inject(UsersService);
+  protected readonly i18n = inject(I18nService);
   private readonly userForm     = viewChild.required(UserFormComponent);
 
   closed  = output<void>();
