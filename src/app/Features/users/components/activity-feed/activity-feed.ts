@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { UserActivity } from '../../models/activity.model';
 import { TimeAgoPipe } from '../../../../Shared/Pipes/Date/time-ago-pipe';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-activity-feed',
@@ -11,5 +12,6 @@ import { TimeAgoPipe } from '../../../../Shared/Pipes/Date/time-ago-pipe';
   styleUrl: './activity-feed.css',
 })
 export class ActivityFeedComponent {
+  protected readonly i18n = inject(I18nService);
   activities = input.required<UserActivity[]>();
 }

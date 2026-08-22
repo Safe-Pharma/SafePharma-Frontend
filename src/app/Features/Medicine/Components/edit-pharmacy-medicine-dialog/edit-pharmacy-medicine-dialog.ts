@@ -5,11 +5,13 @@ import { TaxesService } from '../../../Tax/Services/tax';
 import { Tax } from '../../../Tax/Models/tax';
 import { MedicineDetails, MedicineEditFields } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-edit-pharmacy-medicine-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ModalOverlayDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-pharmacy-medicine-dialog.html',
 })
@@ -17,6 +19,7 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
   private readonly api = inject(MedicinesApiService);
   private readonly taxesApi = inject(TaxesService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly i18n = inject(I18nService);
 
   // id used for the PUT — this is the global Medicine.Id, same one the details route/page uses
   medicineId = input.required<string>();
@@ -29,6 +32,8 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
   protected readonly errorMsg = signal<string | null>(null);
 
   protected readonly taxes = signal<Tax[]>([]);
+  protected readonly taxesLoading = signal(true);
+  protected readonly taxesError = signal<string | null>(null);
   protected readonly selectedTaxIds = signal<Set<string>>(new Set());
 
   readonly form = this.fb.group({
@@ -46,9 +51,22 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
     });
     this.selectedTaxIds.set(new Set(m.taxes.map((t) => t.id)));
 
+    this.loadTaxes();
+  }
+
+  protected loadTaxes(): void {
+    this.taxesLoading.set(true);
+    this.taxesError.set(null);
     this.taxesApi.getAll().subscribe({
-      next: (list) => this.taxes.set(list),
-      error: () => this.taxes.set([]),
+      next: (list) => {
+        this.taxes.set(list.filter((tax) => tax.status === 'Active'));
+        this.taxesLoading.set(false);
+      },
+      error: () => {
+        this.taxes.set([]);
+        this.taxesLoading.set(false);
+        this.taxesError.set(this.text('medicine.loadingTaxes'));
+      },
     });
   }
 
@@ -66,7 +84,7 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
     if (this.form.invalid || this.selectedTaxIds().size === 0) {
       this.form.markAllAsTouched();
       if (this.selectedTaxIds().size === 0) {
-        this.errorMsg.set('At least one tax is required.');
+        this.errorMsg.set(this.text('common.required'));
       }
       return;
     }
@@ -92,8 +110,14 @@ export class EditPharmacyMedicineDialogComponent implements OnInit {
         },
         error: (err) => {
           this.submitting.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not save these changes.'));
+          this.errorMsg.set(getErrorMessage(err, this.text('medicine.errorSave')));
         },
       });
   }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
+  }
 }
+
+export { EditPharmacyMedicineDialogComponent as EditPharmacyMedicineDialog };

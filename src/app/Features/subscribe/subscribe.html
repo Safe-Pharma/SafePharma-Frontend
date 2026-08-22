@@ -1,9 +1,8 @@
 <div class="min-h-screen bg-background">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mx-auto max-w-6xl space-y-8 px-6 py-10">
         <div>
-            <h1 class="text-3xl font-semibold tracking-tight">Create your MediRx account</h1>
-            <p class="mt-2 text-sm text-muted-foreground">Three quick sections and you're in. 14-day free trial
-                included.</p>
+            <h1 class="text-3xl font-semibold tracking-tight">{{ i18n.text('subscribe.title') }}</h1>
+            <p class="mt-2 text-sm text-muted-foreground">{{ i18n.text('subscribe.subtitle') }}</p>
         </div>
 
         <!-- Section 1: Plan -->
@@ -13,9 +12,8 @@
                     class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
                     1</div>
                 <div>
-                    <h2 class="text-lg font-semibold tracking-tight">Select your plan</h2>
-                    <p class="text-sm text-muted-foreground">Switch anytime. You won't be charged until your trial ends.
-                    </p>
+                    <h2 class="text-lg font-semibold tracking-tight">{{ i18n.text('subscribe.selectPlan') }}</h2>
+                    <p class="text-sm text-muted-foreground">{{ i18n.text('subscribe.planDescription') }}</p>
                 </div>
             </div>
 
@@ -26,7 +24,7 @@
                     [class.text-foreground]="form.controls.billingCycle.value === 'monthly'"
                     [class.shadow-card]="form.controls.billingCycle.value === 'monthly'"
                     [class.text-muted-foreground]="form.controls.billingCycle.value !== 'monthly'">
-                    monthly
+                    {{ i18n.text('subscribe.monthly') }}
                 </button>
                 <button type="button" (click)="selectBilling('yearly')"
                     class="rounded-md px-4 py-1.5 capitalize transition-colors"
@@ -34,21 +32,21 @@
                     [class.text-foreground]="form.controls.billingCycle.value === 'yearly'"
                     [class.shadow-card]="form.controls.billingCycle.value === 'yearly'"
                     [class.text-muted-foreground]="form.controls.billingCycle.value !== 'yearly'">
-                    yearly
+                    {{ i18n.text('subscribe.yearly') }}
                     @if (yearlyDiscountLabel(); as discount) {
-                    <span class="ml-1.5 rounded bg-success-soft px-1.5 py-0.5 text-[10px] text-success">{{ discount
+                    <span class="ms-1.5 rounded bg-success-soft px-1.5 py-0.5 text-[10px] text-success">{{ discount
                         }}</span>
                     }
                 </button>
             </div>
 
             @if (isLoadingPlans()) {
-            <p class="text-sm text-muted-foreground">Loading plans…</p>
+            <p class="text-sm text-muted-foreground">{{ i18n.text('subscribe.loadingPlans') }}</p>
             } @else {
             <div class="grid gap-4 lg:grid-cols-3">
                 @for (plan of plans(); track plan.tier) {
                 <button type="button" (click)="selectPlan(plan.tier)"
-                    class="relative rounded-xl border bg-card p-5 text-left transition-all"
+                    class="relative rounded-xl border bg-card p-5 text-start transition-all"
                     [class.border-primary]="form.controls.planTier.value === plan.tier"
                     [class.shadow-elevated]="form.controls.planTier.value === plan.tier"
                     [class.ring-1]="form.controls.planTier.value === plan.tier"
@@ -57,7 +55,7 @@
                     [class.shadow-card]="form.controls.planTier.value !== plan.tier"
                     [class.hover:border-border-strong]="form.controls.planTier.value !== plan.tier">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm font-semibold">{{ plan.displayName }}</div>
+                        <div class="text-sm font-semibold">{{ planName(plan) }}</div>
                         @if (form.controls.planTier.value === plan.tier) {
                         <span class="grid size-5 place-items-center rounded-full bg-primary text-primary-foreground">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -78,7 +76,7 @@
                                 stroke-linecap="round" stroke-linejoin="round" class="size-3 text-success">
                                 <path d="M20 6 9 17l-5-5"></path>
                             </svg>
-                            {{ feature }}
+                            {{ planFeature(feature) }}
                         </li>
                         }
                     </ul>
@@ -95,15 +93,15 @@
                     class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
                     2</div>
                 <div>
-                    <h2 class="text-lg font-semibold tracking-tight">Pharmacy information</h2>
-                    <p class="text-sm text-muted-foreground">Tell us about your business.</p>
+                    <h2 class="text-lg font-semibold tracking-tight">{{ i18n.text('subscribe.pharmacyInformation') }}</h2>
+                    <p class="text-sm text-muted-foreground">{{ i18n.text('subscribe.businessDescription') }}</p>
                 </div>
             </div>
 
             <div class="grid gap-5 md:grid-cols-2">
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="pname">Pharmacy name</label>
-                    <input formControlName="name" id="pname" placeholder="MediRx Pharmacy"
+                    <label class="text-sm font-medium leading-none" for="pname">{{ i18n.text('subscribe.pharmacyName') }}</label>
+                    <input formControlName="name" id="pname" [placeholder]="i18n.text('subscribe.pharmacyNamePlaceholder')"
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.name)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.name)"
                         class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
@@ -113,7 +111,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none">Pharmacy logo</label>
+                    <label class="text-sm font-medium leading-none">{{ i18n.text('subscribe.pharmacyLogo') }}</label>
                     <label
                         class="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-border-strong bg-muted/30 px-3 text-sm text-muted-foreground hover:bg-muted/50">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -123,11 +121,11 @@
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         </svg>
                         @if (isUploadingLogo()) {
-                        Uploading…
+                        {{ i18n.text('subscribe.uploading') }}
                         } @else if (logoFileName()) {
                         {{ logoFileName() }}
                         } @else {
-                        Click to upload (PNG, SVG)
+                        {{ i18n.text('subscribe.clickToUploadLogo') }}
                         }
                         <input type="file" accept="image/png,image/svg+xml,image/jpeg" class="hidden"
                             (change)="onLogoSelected($event)">
@@ -135,7 +133,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="tax">Tax number</label>
+                    <label class="text-sm font-medium leading-none" for="tax">{{ i18n.text('subscribe.taxNumber') }}</label>
                     <input formControlName="taxNumber" id="tax" placeholder="100-..."
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.taxNumber)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.taxNumber)"
@@ -146,7 +144,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="cr">Commercial registration</label>
+                    <label class="text-sm font-medium leading-none" for="cr">{{ i18n.text('subscribe.commercialRegistration') }}</label>
                     <input formControlName="commercialRegistration" id="cr" placeholder="CR-..."
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.commercialRegistration)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.commercialRegistration)"
@@ -157,7 +155,7 @@
                 </div>
 
                 <div class="space-y-2 md:col-span-2">
-                    <label class="text-sm font-medium leading-none" for="addr">Address</label>
+                    <label class="text-sm font-medium leading-none" for="addr">{{ i18n.text('subscribe.address') }}</label>
                     <input formControlName="address" id="addr" placeholder="Street, building, area"
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.address)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.address)"
@@ -168,41 +166,42 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none">Country</label>
-                    <select formControlName="country" (change)="onCountryChange()"
-                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.country)"
-                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.country)"
-                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="" disabled selected>Select a country</option>
-                        @for (country of countries(); track country.id) {
-                        <option [value]="country.id">
-                            {{ country.name }}
-                        </option>
-                        }
-                    </select>
+                    <label class="text-sm font-medium leading-none">{{ i18n.text('subscribe.country') }}</label>
+                    <app-searchable-select
+                        [options]="countryOptions"
+                        [value]="form.controls.pharmacy.controls.country.value"
+                        [placeholder]="i18n.text('subscribe.selectCountry')"
+                        [searchPlaceholder]="i18n.text('subscribe.searchCountries')"
+                        [loading]="isLoadingLocations()"
+                        [error]="locationError()"
+                        (valueChange)="onCountryChange($event)"
+                        (retry)="retryLocations()"
+                    />
                     @if (getErrorMessage(form.controls.pharmacy.controls.country); as error) {
                     <p class="text-xs text-destructive">{{ error }}</p>
                     }
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none">City</label>
-                    <select formControlName="city"
-                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.city)"
-                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.city)"
-                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="" disabled selected>Select a city</option>
-                        @for (city of cities(); track city.id) {
-                        <option [value]="city.name">{{ city.name }}</option>
-                        }
-                    </select>
+                    <label class="text-sm font-medium leading-none">{{ i18n.text('subscribe.city') }}</label>
+                    <app-searchable-select
+                        [options]="cityOptions"
+                        [value]="form.controls.pharmacy.controls.city.value"
+                        [placeholder]="i18n.text('subscribe.selectCity')"
+                        [searchPlaceholder]="i18n.text('subscribe.searchCities')"
+                        [disabled]="!form.controls.pharmacy.controls.country.value"
+                        [loading]="isLoadingLocations()"
+                        [error]="locationError()"
+                        (valueChange)="form.controls.pharmacy.controls.city.setValue($event)"
+                        (retry)="retryLocations()"
+                    />
                     @if (getErrorMessage(form.controls.pharmacy.controls.city); as error) {
                     <p class="text-xs text-destructive">{{ error }}</p>
                     }
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="phone">Phone</label>
+                    <label class="text-sm font-medium leading-none" for="phone">{{ i18n.text('subscribe.phone') }}</label>
                     <input formControlName="phone" id="phone" placeholder="+971 ..."
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.phone)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.phone)"
@@ -213,7 +212,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="bemail">Email</label>
+                    <label class="text-sm font-medium leading-none" for="bemail">{{ i18n.text('subscribe.email') }}</label>
                     <input type="email" formControlName="businessEmail" id="bemail" placeholder="ops@pharmacy.com"
                         [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.businessEmail)"
                         [class.border-input]="!isInvalid(form.controls.pharmacy.controls.businessEmail)"
@@ -224,33 +223,25 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="br">Number of branches</label>
-                    <input type="number" formControlName="numberOfBranches" id="br" min="1"
-                        [class.border-destructive]="isInvalid(form.controls.pharmacy.controls.numberOfBranches)"
-                        [class.border-input]="!isInvalid(form.controls.pharmacy.controls.numberOfBranches)"
-                        class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
-                    @if (getErrorMessage(form.controls.pharmacy.controls.numberOfBranches); as error) {
-                    <p class="text-xs text-destructive">{{ error }}</p>
-                    }
+                    <label class="text-sm font-medium leading-none">{{ i18n.text('subscribe.preferredLanguage') }}</label>
+                    <app-searchable-select
+                        [options]="languageOptions"
+                        [value]="form.controls.pharmacy.controls.preferredLanguage.value"
+                        [placeholder]="i18n.text('subscribe.selectLanguage')"
+                        [searchPlaceholder]="i18n.text('subscribe.searchLanguages')"
+                        (valueChange)="form.controls.pharmacy.controls.preferredLanguage.setValue($event)"
+                    />
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none">Preferred language</label>
-                    <select formControlName="preferredLanguage"
-                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="English">English</option>
-                        <option value="Arabic">العربية</option>
-                    </select>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none">Time zone</label>
-                    <select formControlName="timeZone"
-                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-hidden focus:ring-1 focus:ring-ring">
-                        <option value="(GMT+4) Gulf Standard Time">(GMT+4) Gulf Standard Time</option>
-                        <option value="(GMT+3) Arabia Standard Time">(GMT+3) Arabia Standard Time</option>
-                        <option value="(GMT+2) Eastern European Time">(GMT+2) Eastern European Time</option>
-                    </select>
+                    <label class="text-sm font-medium leading-none">{{ i18n.text('subscribe.timeZone') }}</label>
+                    <app-searchable-select
+                        [options]="timeZoneOptions"
+                        [value]="form.controls.pharmacy.controls.timeZone.value"
+                        [placeholder]="i18n.text('subscribe.selectTimeZone')"
+                        [searchPlaceholder]="i18n.text('subscribe.searchTimeZones')"
+                        (valueChange)="form.controls.pharmacy.controls.timeZone.setValue($event)"
+                    />
                 </div>
             </div>
         </section>
@@ -262,14 +253,14 @@
                     class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
                     3</div>
                 <div>
-                    <h2 class="text-lg font-semibold tracking-tight">Primary contact</h2>
-                    <p class="text-sm text-muted-foreground">This person will be your account admin.</p>
+                    <h2 class="text-lg font-semibold tracking-tight">{{ i18n.text('subscribe.primaryContact') }}</h2>
+                    <p class="text-sm text-muted-foreground">{{ i18n.text('subscribe.primaryContactDescription') }}</p>
                 </div>
             </div>
 
             <div class="grid gap-5 md:grid-cols-2">
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="cname">Full name</label>
+                    <label class="text-sm font-medium leading-none" for="cname">{{ i18n.text('subscribe.fullName') }}</label>
                     <input formControlName="fullName" id="cname" placeholder="Jane Doe"
                         [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.fullName)"
                         [class.border-input]="!isInvalid(form.controls.primaryContact.controls.fullName)"
@@ -280,7 +271,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="cmob">Mobile</label>
+                    <label class="text-sm font-medium leading-none" for="cmob">{{ i18n.text('subscribe.mobile') }}</label>
                     <input formControlName="mobile" id="cmob" placeholder="+971 ..."
                         [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.mobile)"
                         [class.border-input]="!isInvalid(form.controls.primaryContact.controls.mobile)"
@@ -291,7 +282,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="cemail">Email</label>
+                    <label class="text-sm font-medium leading-none" for="cemail">{{ i18n.text('subscribe.email') }}</label>
                     <input type="email" formControlName="email" id="cemail" placeholder="you@pharmacy.com"
                         [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.email)"
                         [class.border-input]="!isInvalid(form.controls.primaryContact.controls.email)"
@@ -302,8 +293,8 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none" for="cpass">Password</label>
-                    <input type="password" formControlName="password" id="cpass" placeholder="At least 8 characters"
+                    <label class="text-sm font-medium leading-none" for="cpass">{{ i18n.text('subscribe.password') }}</label>
+                    <input type="password" formControlName="password" id="cpass" [placeholder]="i18n.text('subscribe.requiredPassword')"
                         [class.border-destructive]="isInvalid(form.controls.primaryContact.controls.password)"
                         [class.border-input]="!isInvalid(form.controls.primaryContact.controls.password)"
                         class="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring md:text-sm">
@@ -322,10 +313,10 @@
 
         <div
             class="sticky bottom-0 -mx-6 flex items-center justify-between border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
-            <p class="text-xs text-muted-foreground">By subscribing you agree to our Terms and Privacy Policy.</p>
+            <p class="text-xs text-muted-foreground">{{ i18n.text('subscribe.terms') }}</p>
             <button type="submit" [disabled]="isSubmitting()"
                 class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 rounded-md px-8">
-                {{ isSubmitting() ? 'Submitting...' : 'Subscribe now' }}
+                {{ isSubmitting() ? i18n.text('subscribe.submitting') : i18n.text('subscribe.submit') }}
             </button>
         </div>
     </form>

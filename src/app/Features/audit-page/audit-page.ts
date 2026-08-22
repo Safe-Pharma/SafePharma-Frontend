@@ -1,8 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuditService } from './Service/audit_service';
 import { AuditDetailModalComponent } from './Components/audit-detail-modal-component/audit-detail-modal-component';
+import { Spinner } from '../../Shared/Components/spinner/spinner';
+import { I18nService } from '../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../Shared/Components/page-header/page-header';
 
 interface AuditLog {
   date: string; // ISO format like "2026-03-03T09:10:00"
@@ -10,14 +14,18 @@ interface AuditLog {
   entity: string; // "Category", "Product", "Order"
   device: string; // "Edge - Windows"
   userFullName: string; // "user", "admin"
+  newValues?: unknown;
+  oldValues?: unknown;
 }
 @Component({
   selector: 'app-audit-page',
-  imports: [CommonModule, FormsModule, AuditDetailModalComponent],
+  imports: [CommonModule, FormsModule, AuditDetailModalComponent, Spinner, PageHeaderComponent],
   templateUrl: './audit-page.html',
   styleUrl: './audit-page.css',
 })
 export class AuditPage implements OnInit {
+  protected readonly i18n = inject(I18nService);
+  text(key: string): string { return this.i18n.text(key); }
   // Filter states
   searchQuery: string = '';
   selectedUser: string = '';
@@ -26,6 +34,8 @@ export class AuditPage implements OnInit {
   selectedDate: string = '';
 
   isModalOpen = signal(false);
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
   selectedLog = signal<AuditLog | null>(null);
 
   constructor(private auditService: AuditService) {}
@@ -33,11 +43,17 @@ export class AuditPage implements OnInit {
   audits = signal([] as AuditLog[]);
   filteredLogs = signal([] as AuditLog[]);
   ngOnInit() {
+    this.loading.set(true);
     this.auditService.getAllAudits().subscribe({
       next: (data) => {
         this.audits.set(data);
         this.filteredLogs.set(data);
+        this.loading.set(false);
         console.log(this.audits());
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set(this.text('audit.error'));
       },
     });
   }
@@ -53,7 +69,7 @@ export class AuditPage implements OnInit {
       const matchUser = !this.selectedUser || log.userFullName === this.selectedUser;
       const matchAction = !this.selectedAction || log.action === this.selectedAction;
       const matchEntity = !this.selectedEntity || log.entity === this.selectedEntity;
-      const matchDate = !this.selectedDate || log.date === this.selectedDate;
+      const matchDate = !this.selectedDate || log.date.startsWith(this.selectedDate);
 
       return matchSearch && matchUser && matchAction && matchEntity && matchDate;
     });
@@ -83,6 +99,28 @@ export class AuditPage implements OnInit {
     };
     return colors[action] || 'text-gray-700 bg-gray-50 border-gray-200';
   }
+
+  actionLabel(action: string): string {
+    const key = action.trim().toLowerCase().replace(/[^a-z]+/g, '');
+    const labels: Record<string, string> = {
+      create: 'audit.actionCreate', created: 'audit.actionCreate',
+      update: 'audit.actionUpdate', updated: 'audit.actionUpdate',
+      delete: 'audit.actionDelete', deleted: 'audit.actionDelete',
+      login: 'audit.actionLogin', loggedin: 'audit.actionLogin',
+      logout: 'audit.actionLogout', loggedout: 'audit.actionLogout',
+    };
+    return labels[key] ? this.text(labels[key]) : action;
+  }
+
+  entityLabel(entity: string): string {
+    const key = entity.trim().toLowerCase().replace(/[^a-z]+/g, '');
+    const labels: Record<string, string> = {
+      tax: 'audit.entityTax', batch: 'audit.entityBatch', category: 'audit.entityCategory',
+      product: 'audit.entityProduct', order: 'audit.entityOrder', medicine: 'audit.entityMedicine',
+      user: 'audit.entityUser', customer: 'audit.entityCustomer', supplier: 'audit.entitySupplier',
+    };
+    return labels[key] ? this.text(labels[key]) : entity;
+  }
   // Get unique actions
   getUniqueActions(): string[] {
     const actions = this.audits().map((log) => log.action);
@@ -109,5 +147,14 @@ export class AuditPage implements OnInit {
       Login: 'bg-purple-500',
     };
     return colors[action] || 'bg-gray-500';
+  }
+
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedUser = '';
+    this.selectedAction = '';
+    this.selectedEntity = '';
+    this.selectedDate = '';
+    this.filteredLogs.set(this.audits());
   }
 }

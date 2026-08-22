@@ -9,12 +9,38 @@ button:hover{
 
 /* Smooth row transitions */
 table tbody tr {
-  transition: background-color 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, opacity 0.18s ease, transform 0.18s ease;
+}
+
+table tbody tr:nth-child(even) td[colspan] > div {
+  animation: inventory-details-in 180ms ease-out both;
+}
+
+@keyframes inventory-details-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Expand/collapse icon rotation */
 .rotate-90 {
   transform: rotate(90deg);
+}
+
+.directional-icon {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+[dir='rtl'] .directional-icon {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .inventory-expand-icon {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .inventory-expand-icon.rotate-90 {
+  transform: scaleX(-1) rotate(90deg);
 }
 
 /* Card hover effects */

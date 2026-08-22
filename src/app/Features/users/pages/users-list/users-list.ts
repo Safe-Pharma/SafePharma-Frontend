@@ -7,6 +7,8 @@ import { UsersTableComponent } from '../../components/users-table/users-table';
 import { PaginationComponent } from '../../components/pagination/pagination';
 import { CreateUserDialogComponent } from '../../components/create-user-dialog/create-user-dialog';
 import { EditUserDialogComponent } from '../../components/edit-user-dialog/edit-user-dialog';
+import { I18nService } from '../../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../../Shared/Components/page-header/page-header';
 
 @Component({
   selector: 'app-users-list',
@@ -17,6 +19,7 @@ import { EditUserDialogComponent } from '../../components/edit-user-dialog/edit-
     PaginationComponent,
     CreateUserDialogComponent,
     EditUserDialogComponent,
+    PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './users-list.html',
@@ -24,6 +27,7 @@ import { EditUserDialogComponent } from '../../components/edit-user-dialog/edit-
 })
 export class UsersListComponent {
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
   protected readonly usersService = inject(UsersService);
 
   protected readonly isCreateDialogOpen = signal(false);
@@ -35,10 +39,6 @@ export class UsersListComponent {
 
   onCreateDialogClosed(): void {
     this.isCreateDialogOpen.set(false);
-  }
-
-  onExport(): void {
-    // Hook up to an export service when the backend endpoint is ready.
   }
 
   onView(user: User): void {

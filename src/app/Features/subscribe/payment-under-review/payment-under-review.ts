@@ -5,6 +5,7 @@ import { interval, startWith, switchMap, takeWhile } from 'rxjs';
 import { PaymentVerificationService } from '../Services/payment-verification.service';
 import { PaymentVerificationRead } from '../Models/payment-verification.model';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 const POLL_INTERVAL_MS = 10_000;
 
@@ -17,6 +18,7 @@ const POLL_INTERVAL_MS = 10_000;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentUnderReview implements OnInit {
+  protected readonly i18n = inject(I18nService);
   private route = inject(ActivatedRoute);
   private paymentService = inject(PaymentVerificationService);
   private toast = inject(Toast);
@@ -30,11 +32,11 @@ export class PaymentUnderReview implements OnInit {
   readonly statusLabel = computed(() => {
     switch (this.verification()?.status) {
       case 'Approved':
-        return 'Approved';
+        return this.i18n.text('subscription.approved');
       case 'Rejected':
-        return 'Rejected';
+        return this.i18n.text('subscription.rejected');
       default:
-        return 'Pending Verification';
+        return this.i18n.text('subscription.pendingVerification');
     }
   });
 
@@ -72,13 +74,13 @@ export class PaymentUnderReview implements OnInit {
           } else if (!this.verification()) {
             // Only surface the error before we've ever had a successful read —
             // a transient failure on a later poll shouldn't nuke what's on screen.
-            this.toast.show(result.message ?? 'Could not load submission status.', 'error');
+            this.toast.show(result.message ?? this.i18n.text('subscription.loadStatusError'), 'error');
           }
         },
         error: () => {
           this.isLoading.set(false);
           if (!this.verification()) {
-            this.toast.show('Could not load submission status.', 'error');
+            this.toast.show(this.i18n.text('subscription.loadStatusError'), 'error');
           }
         },
       });

@@ -1,11 +1,10 @@
-<p>edit-pharmacy-medicine-dialog works!</p>
-<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+<div appModalOverlay class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/30 p-3 pt-20 backdrop-blur-[1px] sm:p-4 sm:pt-20" (click)="onClose()">
   <div
     class="relative grid w-full max-w-lg gap-4 rounded-lg border border-border bg-background p-6 shadow-lg"
     (click)="$event.stopPropagation()">
     <button type="button"
-      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
-      (click)="onClose()" aria-label="Close">
+      class="absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      (click)="onClose()" [attr.aria-label]="text('common.actions.close')">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" class="size-4">
         <path d="M18 6 6 18"></path>
@@ -14,43 +13,50 @@
     </button>
 
     <div>
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Edit pharmacy information</h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">These values apply only to your pharmacy. Global fields are read-only.</p>
+      <h2 class="text-lg font-semibold leading-none tracking-tight">{{ text('medicine.editPharmacy') }}</h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">{{ text('medicine.pharmacyOnly') }}</p>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="space-y-1.5">
-          <label class="text-sm font-medium" for="sellingPrice">Sell price</label>
+          <label class="text-sm font-medium" for="sellingPrice">{{ text('medicine.sellPrice') }}</label>
           <input id="sellingPrice" type="number" min="0" step="0.01" formControlName="sellingPrice"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
           @if (form.controls.sellingPrice.invalid && form.controls.sellingPrice.touched) {
-            <p class="text-xs text-destructive">Sell price is required.</p>
+            <p class="text-xs text-destructive">{{ text('medicine.sellPriceRequired') }}</p>
           }
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-sm font-medium" for="purchasePrice">Purchase price</label>
+          <label class="text-sm font-medium" for="purchasePrice">{{ text('medicine.purchasePrice') }}</label>
           <input id="purchasePrice" type="number" min="0" step="0.01" formControlName="purchasePrice"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
           @if (form.controls.purchasePrice.invalid && form.controls.purchasePrice.touched) {
-            <p class="text-xs text-destructive">Purchase price is required.</p>
+            <p class="text-xs text-destructive">{{ text('medicine.purchasePriceRequired') }}</p>
           }
         </div>
 
         <div class="space-y-1.5 sm:col-span-2">
-          <label class="text-sm font-medium" for="minStockLevel">Minimum stock</label>
+          <label class="text-sm font-medium" for="minStockLevel">{{ text('medicine.minimumStock') }}</label>
           <input id="minStockLevel" type="number" min="0" step="1" formControlName="minStockLevel"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
           @if (form.controls.minStockLevel.invalid && form.controls.minStockLevel.touched) {
-            <p class="text-xs text-destructive">Minimum stock is required.</p>
+            <p class="text-xs text-destructive">{{ text('medicine.minimumStockRequired') }}</p>
           }
         </div>
       </div>
 
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Taxes</label>
+        <label class="text-sm font-medium">{{ text('medicine.taxes') }}</label>
         <div class="flex flex-wrap gap-2">
+          @if (taxesLoading()) {
+            <div class="flex items-center gap-2 text-xs text-muted-foreground"><span class="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-primary"></span> {{ text('medicine.loadingTaxes') }}</div>
+          } @else if (taxesError(); as error) {
+            <button type="button" class="text-xs text-destructive underline" (click)="loadTaxes()">{{ error }} Retry</button>
+          } @else if (taxes().length === 0) {
+            <span class="text-xs text-muted-foreground">{{ text('medicine.noActiveTaxes') }}</span>
+          } @else {
           @for (tax of taxes(); track tax.id) {
             <label
               class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium"
@@ -60,6 +66,7 @@
               {{ tax.name }} ({{ tax.rate }}%)
             </label>
           }
+          }
         </div>
       </div>
 
@@ -67,14 +74,14 @@
         <p class="text-sm text-destructive">{{ msg }}</p>
       }
 
-      <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-2">
+      <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-2">
         <button type="button" (click)="onClose()"
           class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-background px-4 h-9 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-          Cancel
+          {{ text('common.actions.cancel') }}
         </button>
         <button type="submit" [disabled]="submitting()"
           class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 h-9 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ submitting() ? 'Saving…' : 'Save changes' }}
+          {{ submitting() ? text('common.saving') : text('common.actions.save') }}
         </button>
       </div>
     </form>

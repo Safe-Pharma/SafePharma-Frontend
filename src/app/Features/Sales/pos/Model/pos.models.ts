@@ -2,8 +2,8 @@ export type SalePaymentMethod = 'Cash' | 'Card' | 'Mixed';
 
 export enum SaleStatus {
   Open = 0,
-  Completed = 1,
-  Cancelled = 2,
+  Cancelled = 1,
+  Completed = 2,
 }
 export interface RelativeListItem {
   relativeId: string;
@@ -15,6 +15,7 @@ export interface MedicineSearchResult {
   tradeNameEn: string;
   scientificName: string;
   barcode: string | null;
+  purchasePrice?: number;
   sellingPrice: number;
   stockQuantity: number;
 }
@@ -37,6 +38,8 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  status?: 'Active' | 'Inactive';
+  isActive?: boolean;
 }
 
 export interface SaleItem {
@@ -148,4 +151,12 @@ export interface CheckoutDto {
   taxId?: string;
   amountPaidByCash: number;
   amountPaidByCard: number;
+}
+
+export interface BarcodeScanData {
+  medicineId: string;
+  pharmacyMedicineId: string;
+  medicineName: string;
+  price: number;
+  barcodeSource: string;
 }

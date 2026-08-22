@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { EMPTY, Observable, catchError, switchMap, tap, timer } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Observable, catchError, map, switchMap, tap, timer } from 'rxjs';
 // ASSUMPTION: GeneralResult lives at Core/Models/general-result.model.ts —
 // point this at wherever it actually is in your project.
 import { GeneralResult } from '../../../Core/Models/general-result.model';
 import { Notification, NotificationCount } from '../Models/notification.model';
+import { environment } from '../../../../environments/environment.production';
 
 const POLL_INTERVAL_MS = 30000;
 
@@ -22,7 +23,10 @@ const POLL_INTERVAL_MS = 30000;
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/Notification`;
+  private readonly apiRoot = environment.apiUrl.replace(/\/+$/, '');
+  // The backend notification controller is exposed at /api/Notification.
+  // Do not add /v1/notifications here: that route is not registered by the API.
+  private readonly baseUrl = `${this.apiRoot}/Notification`;
 
   private readonly notificationsState = signal<Notification[]>([]);
   private readonly unreadCountState = signal<number>(0);
@@ -54,30 +58,19 @@ export class NotificationService {
         // switchMap cancels any in-flight request before starting the
         // next tick, so slow responses can never overlap with the next
         // poll and pile up concurrent HTTP calls.
-        switchMap(() =>
-          this.http
-            .get<GeneralResult<NotificationCount>>(`${this.baseUrl}/unread-count`)
-            .pipe(
-              // Swallow errors into EMPTY (not re-thrown) so a single
-              // failed request doesn't kill the timer — polling keeps
-              // going on the next tick.
-              catchError(() => EMPTY)
-            )
-        )
+        switchMap(() => this.getUnreadNotificationCount().pipe(catchError(() => EMPTY))),
+        takeUntilDestroyed(),
       )
-      .subscribe(response => {
-        if (response?.success && response.data) {
-          this.unreadCountState.set(response.data.count);
-        }
-      });
+      .subscribe(count => this.unreadCountState.set(count));
   }
 
   getAllNotifications(): Observable<GeneralResult<Notification[]>> {
     this.loadingState.set(true);
-    return this.http.get<GeneralResult<Notification[]>>(this.baseUrl).pipe(
+    return this.getNotificationCollection().pipe(
+      map(response => this.normalizeNotificationsResponse(response)),
       tap({
         next: response => {
-          if (response?.success && response.data) {
+          if (Array.isArray(response.data)) {
             this.notificationsState.set(response.data);
           }
           this.loadingState.set(false);
@@ -87,16 +80,54 @@ export class NotificationService {
     );
   }
 
-  getUnreadCount(): Observable<GeneralResult<NotificationCount>> {
+  private getNotificationCollection(): Observable<unknown> {
+    // The documented GET endpoint returns the notification collection and
+    // applies the authenticated user's visibility rules server-side.
+    return this.http.get<unknown>(this.baseUrl);
+  }
+
+  private getUnreadNotificationCount(): Observable<number> {
     return this.http
       .get<GeneralResult<NotificationCount>>(`${this.baseUrl}/unread-count`)
-      .pipe(
-        tap(response => {
-          if (response?.success && response.data) {
-            this.unreadCountState.set(response.data.count);
-          }
-        })
-      );
+      .pipe(map(response => response?.data?.count ?? 0));
+  }
+
+  private normalizeNotificationsResponse(response: unknown): GeneralResult<Notification[]> {
+    if (Array.isArray(response)) {
+      return { success: true, message: '', errors: null, data: response as Notification[] };
+    }
+
+    const payload = (response ?? {}) as Partial<GeneralResult<unknown>> & {
+      items?: Notification[];
+      notifications?: Notification[];
+    };
+    const candidate = payload.data as unknown;
+    const nestedData = (candidate as { data?: unknown } | null)?.data;
+    const data = Array.isArray(candidate)
+      ? candidate
+      : Array.isArray(nestedData)
+        ? nestedData
+      : Array.isArray(payload.items)
+        ? payload.items
+        : Array.isArray(payload.notifications)
+          ? payload.notifications
+          : [];
+
+    return {
+      success: payload.success ?? true,
+      message: payload.message ?? '',
+      errors: payload.errors ?? null,
+      data,
+    };
+  }
+
+  getUnreadCount(): Observable<GeneralResult<NotificationCount>> {
+    return this.getUnreadNotificationCount().pipe(
+      map(count => {
+        this.unreadCountState.set(count);
+        return { success: true, message: '', errors: null, data: { count } };
+      }),
+    );
   }
 
   markAsRead(notificationId: string): Observable<GeneralResult<null>> {

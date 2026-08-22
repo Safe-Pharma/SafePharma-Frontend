@@ -1,16 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from '../../../../environments/environment';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PurchaseOrderApiService {
-  private api = `https://localhost:7259/api/PurchaseOrder`;
-  private SupplierApi = `https://localhost:7259/api/Suppliers`;
-  private PharmacyMedicineApi = `https://localhost:7259/api/pharmacy-medicines`;
-  private PurchaseReceiptApi = `https://localhost:7259/api/PurchaseReceipt`;
+  private api = `${environment.apiUrl}/PurchaseOrder`;
+  private SupplierApi = `${environment.apiUrl}/Suppliers`;
+  private PharmacyMedicineApi = `${environment.apiUrl}/pharmacy-medicines`;
+  private PurchaseReceiptApi = `${environment.apiUrl}/PurchaseReceipt`;
 
   constructor(private http: HttpClient) {}
 
@@ -39,3 +39,5 @@ export class PurchaseOrderApiService {
     return this.http.put(`${this.PurchaseReceiptApi}/item/${id}`, data);
   }
 }
+
+export { PurchaseOrderApiService as PurchaseOrderApi };

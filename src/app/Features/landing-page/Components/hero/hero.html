@@ -1,56 +1,68 @@
 <!-- Hero section wrapper: centers content, adds vertical padding -->
-<section class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
+<section class="landing-hero mx-auto max-w-7xl px-6 py-20 lg:py-28">
 
   <!-- Top text block: badge, headline, subtext, CTA buttons -->
-  <div class="mx-auto max-w-3xl text-center">
+  <div class="landing-hero-copy mx-auto max-w-3xl text-center">
 
     <!-- Trust badge (green dot + "Trusted by 2,400+ pharmacies") -->
-    <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted-foreground shadow-card">
+    <div class="landing-hero-badge mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted-foreground shadow-card">
       <span class="inline-block h-1.5 w-1.5 rounded-full bg-success"></span>
-      Trusted by 2,400+ pharmacies across MENA
+      {{ i18n.text('landing.trusted') }}
     </div>
 
     <!-- Main headline, with gradient text on "Modern Pharmacies" -->
-    <h1 class="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-      Complete ERP Solution for
-      <span class="bg-linear-to-r from-primary to-success bg-clip-text text-transparent">Modern Pharmacies</span>
+    <h1 class="landing-hero-title text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+      {{ i18n.text('landing.heroTitle') }}
+      <span class="bg-linear-to-r from-primary to-success bg-clip-text text-transparent">{{ i18n.text('landing.modernPharmacies') }}</span>
     </h1>
 
     <!-- Subheading / description paragraph -->
-    <p class="mt-6 text-pretty text-lg leading-relaxed text-muted-foreground">
-      Run inventory, POS, purchasing, sales, reporting, users and audit tracking from a single, secure platform — designed for the pace of pharmacy operations.
+    <p class="landing-hero-description mt-6 text-pretty text-lg leading-relaxed text-muted-foreground">
+      {{ i18n.text('landing.heroDescription') }}
     </p>
 
-    <!-- CTA buttons row -->
-    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+    <!-- Public entry actions: pharmacy acquisition is primary, patient access stays distinct. -->
+    <div class="landing-hero-actions mt-8 flex flex-wrap items-center justify-center gap-3">
 
       <!-- Primary CTA: "Start Free Trial" (filled button, links to /subscribe) -->
-      <a href="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 rounded-md px-8">
-        Start Free Trial
+      <a routerLink="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 rounded-md px-8">
+        {{ i18n.text('public.subscribePharmacy') }}
         <!-- Arrow icon (Lucide "arrow-right") -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right ml-1 h-4 w-4" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right ms-1 h-4 w-4" aria-hidden="true">
           <path d="M5 12h14"></path>
           <path d="m12 5 7 7-7 7"></path>
         </svg>
       </a>
 
-      <!-- Secondary CTA: "Book a Demo" (outlined button, scrolls to #contact section) -->
-      <a href="#contact" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 rounded-md px-8">
-        Book a Demo
+      <!-- Existing pharmacy authentication entry -->
+      <a routerLink="/login" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 rounded-md px-8">
+        {{ i18n.text('public.pharmacySignIn') }}
+      </a>
+    </div>
+
+    <!-- Patient authentication remains a separate OTP journey. -->
+    <div class="landing-patient-entry mt-6 flex flex-col items-center justify-center gap-2 text-sm sm:flex-row">
+      <span class="text-muted-foreground">{{ i18n.text('landing.patientPrompt') }}</span>
+      <a routerLink="/portal/login" class="inline-flex items-center gap-1 font-semibold text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline">
+        {{ i18n.text('public.patientPortal') }}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 rtl:rotate-180" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
       </a>
     </div>
   </div>
 
   <!-- Dashboard mockup preview (the "fake browser window" showing stats + chart) -->
-  <div class="mx-auto mt-16 max-w-6xl">
-    <div class="overflow-hidden rounded-2xl border border-border bg-surface shadow-elevated">
+  <div class="landing-preview-wrap mx-auto mt-16 max-w-6xl">
+    <div class="landing-preview overflow-hidden rounded-2xl border border-border bg-surface shadow-elevated">
 
       <!-- Fake browser top bar: red/yellow/green dots + fake URL -->
       <div class="flex items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-2.5">
         <span class="h-2.5 w-2.5 rounded-full bg-destructive/40"></span>
         <span class="h-2.5 w-2.5 rounded-full bg-warning/50"></span>
         <span class="h-2.5 w-2.5 rounded-full bg-success/40"></span>
-        <span class="ml-3 text-xs text-muted-foreground">app.safepharma.io / dashboard</span>
+        <span class="ms-3 text-xs text-muted-foreground">{{ i18n.text('landing.dashboardUrl') }}</span>
       </div>
 
       <!-- Dashboard body: 12-column grid — stat cards (left) + sales chart (right) -->
@@ -60,26 +72,26 @@
         <div class="col-span-12 grid grid-cols-2 gap-4 lg:col-span-4">
 
           <!-- Stat card: Revenue MTD -->
-          <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Revenue MTD</div>
-            <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-primary-soft text-primary">$284,920</div>
+          <div class="landing-preview-stat rounded-xl border border-border bg-card p-4 shadow-card">
+            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ i18n.text('landing.revenueMtd') }}</div>
+            <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-primary-soft text-primary">{{ 284920 | egpCurrency }}</div>
           </div>
 
           <!-- Stat card: Orders -->
-          <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Orders</div>
+          <div class="landing-preview-stat rounded-xl border border-border bg-card p-4 shadow-card">
+            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ i18n.text('landing.orders') }}</div>
             <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-success-soft text-success">1,284</div>
           </div>
 
           <!-- Stat card: Low Stock -->
-          <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Low Stock</div>
+          <div class="landing-preview-stat rounded-xl border border-border bg-card p-4 shadow-card">
+            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ i18n.text('landing.lowStock') }}</div>
             <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-warning-soft text-warning">37</div>
           </div>
 
           <!-- Stat card: Branches -->
-          <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Branches</div>
+          <div class="landing-preview-stat rounded-xl border border-border bg-card p-4 shadow-card">
+            <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ i18n.text('landing.branches') }}</div>
             <div class="mt-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium bg-accent text-accent-foreground">8</div>
           </div>
         </div>
@@ -89,19 +101,19 @@
 
           <!-- Chart header: title + total -->
           <div class="mb-3 flex items-center justify-between">
-            <div class="text-sm font-semibold">Sales — Last 7 days</div>
-            <div class="text-xs text-muted-foreground">$166,600 total</div>
+            <div class="text-sm font-semibold">{{ i18n.text('landing.salesLast7Days') }}</div>
+            <div class="text-xs text-muted-foreground">{{ i18n.text('landing.total', { amount: (166600 | egpCurrency) }) }}</div>
           </div>
 
           <!-- Chart bars: each div is one day, height set inline (hardcoded, not real data) -->
           <div class="flex h-40 items-end gap-2">
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 40%;"></div>
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 55%;"></div>
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 48%;"></div>
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 70%;"></div>
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 82%;"></div>
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 95%;"></div>
-            <div class="flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 65%;"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 40%; --bar-delay: 0ms"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 55%; --bar-delay: 70ms"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 48%; --bar-delay: 140ms"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 70%; --bar-delay: 210ms"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 82%; --bar-delay: 280ms"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 95%; --bar-delay: 350ms"></div>
+            <div class="landing-chart-bar flex-1 rounded-md bg-linear-to-t from-primary to-success/80" style="height: 65%; --bar-delay: 420ms"></div>
           </div>
         </div>
       </div>

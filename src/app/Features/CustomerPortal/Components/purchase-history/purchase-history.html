@@ -3,14 +3,14 @@
   import { fadeSlideIn, staggerList } from '../shared/portal-animations';
   @Component({ ..., animations: [fadeSlideIn, staggerList] })
 -->
-<div class="mx-auto max-w-6xl space-y-5" @fadeSlideIn>
+<div class="portal-motion-page mx-auto max-w-6xl space-y-5" @fadeSlideIn>
   <div>
     <h2 class="text-xl font-semibold tracking-tight text-foreground">{{ i18n.t('purchases.title') }}</h2>
     <p class="text-sm text-muted-foreground">{{ i18n.t('purchases.subtitle') }}</p>
   </div>
 
   <!-- Sticky filter bar -->
-  <div class="sticky top-0 z-10 -mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card/95 p-4 backdrop-blur transition-shadow duration-200 sm:flex-row sm:flex-wrap sm:items-end">
+  <div class="portal-motion-toolbar sticky top-0 z-10 -mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card/95 p-4 backdrop-blur transition-shadow duration-200 sm:flex-row sm:flex-wrap sm:items-end">
     <div class="min-w-[180px] flex-1">
       <label for="receiptSearch" class="mb-1 block text-xs font-medium text-muted-foreground">{{ i18n.t('purchases.searchLabel') }}</label>
       <input
@@ -91,7 +91,7 @@
       </portal-empty-state>
     </div>
   } @else {
-    <div class="overflow-hidden rounded-xl border border-border bg-card" @fadeSlideIn>
+    <div class="portal-motion-panel overflow-hidden rounded-xl border border-border bg-card" @fadeSlideIn>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-muted/50">
@@ -112,9 +112,9 @@
                 <td class="px-4 py-3 text-muted-foreground">{{ r.createdAt | date: 'mediumDate' }}</td>
                 <td class="px-4 py-3 text-muted-foreground">{{ r.pharmacyName || '—' }}</td>
                 <td class="px-4 py-3 text-end text-muted-foreground">{{ r.items.length }}</td>
-                <td class="px-4 py-3 text-end font-medium text-foreground">{{ r.grandTotal | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-end font-medium text-foreground">{{ r.grandTotal | egpCurrency }}</td>
                 <td class="px-4 py-3">
-                  <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="receiptStatusLabel(r.status)" />
+                  <portal-status-badge [tone]="receiptStatusTone(r.status)" [label]="i18n.statusLabel(r.status)" />
                 </td>
                 <td class="px-4 py-3 text-end">
                   <a

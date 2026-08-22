@@ -8,11 +8,16 @@
         </svg>
       </div>
       <div class="leading-tight">
-        <div class="text-sm font-semibold tracking-tight text-foreground">MediRx</div>
-        <div class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pharmacy ERP</div>
+        <div class="text-sm font-semibold tracking-tight text-foreground">{{ text('brand.name') }}</div>
+        <div class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{{ text('public.pharmacyErp') }}</div>
       </div>
     </div>
 
+    <div class="flex items-center gap-3">
+    <button type="button" class="rounded-md px-2 py-1 text-xs font-semibold hover:bg-accent" (click)="toggleLanguage()"
+      [attr.aria-label]="i18n.lang() === 'ar' ? text('language.switchToEnglish') : text('language.switchToArabic')">
+      {{ i18n.lang() === 'ar' ? 'EN' : 'AR' }}
+    </button>
     <a
       routerLink="/"
       class="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -21,7 +26,8 @@
         <path d="m12 19-7-7 7-7"></path>
         <path d="M19 12H5"></path>
       </svg>
-      Back
+      {{ text('public.back') }}
     </a>
+    </div>
   </div>
 </header>

@@ -9,13 +9,15 @@ import { Tax } from '../../../Tax/Models/tax';
 import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { NgTemplateOutlet } from '@angular/common';
+import { ModalOverlayDirective } from '../../../../Shared/Components/modal-overlay/modal-overlay';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 type Step = 'search' | 'link' | 'create';
 
 @Component({
   selector: 'app-add-medicine-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule,NgTemplateOutlet ],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, ModalOverlayDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-medicine-dialog.html',
 })
@@ -24,6 +26,7 @@ export class AddMedicineDialogComponent {
   private readonly taxesApi = inject(TaxesService);
   private readonly auth = inject(AuthSessionService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly i18n = inject(I18nService);
 
   closed = output<void>();
   created = output<void>();
@@ -37,6 +40,8 @@ export class AddMedicineDialogComponent {
   protected readonly errorMsg = signal<string | null>(null);
 
   protected readonly taxes = signal<Tax[]>([]);
+  protected readonly taxesLoading = signal(true);
+  protected readonly taxesError = signal<string | null>(null);
   protected readonly selectedTaxIds = signal<Set<string>>(new Set());
 
   private readonly query$ = toObservable(this.query).pipe(debounceTime(300), distinctUntilChanged());
@@ -49,6 +54,10 @@ export class AddMedicineDialogComponent {
   );
   protected readonly results = toSignal(this.results$, { initialValue: [] as GlobalMedicineSearchResult[] });
   protected readonly searched = computed(() => this.query().trim().length >= 2);
+
+  displayName(medicine: GlobalMedicineSearchResult): string {
+    return this.i18n.lang() === 'ar' ? medicine.tradeNameAr || medicine.tradeNameEn : medicine.tradeNameEn || medicine.tradeNameAr;
+  }
 
   // Shared pharmacy-specific fields — used for both "link existing" and "create new"
   readonly pharmacyForm = this.fb.group({
@@ -77,9 +86,22 @@ export class AddMedicineDialogComponent {
   });
 
   constructor() {
+    this.loadTaxes();
+  }
+
+  protected loadTaxes(): void {
+    this.taxesLoading.set(true);
+    this.taxesError.set(null);
     this.taxesApi.getAll().subscribe({
-      next: (list) => this.taxes.set(list),
-      error: () => this.taxes.set([]),
+      next: (list) => {
+        this.taxes.set(list.filter((tax) => tax.status === 'Active'));
+        this.taxesLoading.set(false);
+      },
+      error: () => {
+        this.taxes.set([]);
+        this.taxesLoading.set(false);
+        this.taxesError.set(this.text('medicine.loadingTaxes'));
+      },
     });
   }
 
@@ -120,7 +142,7 @@ export class AddMedicineDialogComponent {
     const selected = this.selected();
     if (!selected || this.pharmacyForm.invalid || this.selectedTaxIds().size === 0) {
       this.pharmacyForm.markAllAsTouched();
-      if (this.selectedTaxIds().size === 0) this.errorMsg.set('Select at least one tax.');
+      if (this.selectedTaxIds().size === 0) this.errorMsg.set(this.text('common.required'));
       return;
     }
 
@@ -146,7 +168,7 @@ export class AddMedicineDialogComponent {
         },
         error: (err) => {
           this.submitting.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not add this medicine to your pharmacy.'));
+          this.errorMsg.set(getErrorMessage(err, this.text('medicine.errorAdd')));
         },
       });
   }
@@ -155,7 +177,7 @@ export class AddMedicineDialogComponent {
     if (this.newMedicineForm.invalid || this.pharmacyForm.invalid || this.selectedTaxIds().size === 0) {
       this.newMedicineForm.markAllAsTouched();
       this.pharmacyForm.markAllAsTouched();
-      if (this.selectedTaxIds().size === 0) this.errorMsg.set('Select at least one tax.');
+      if (this.selectedTaxIds().size === 0) this.errorMsg.set(this.text('common.required'));
       return;
     }
 
@@ -183,8 +205,14 @@ export class AddMedicineDialogComponent {
       },
       error: (err) => {
         this.submitting.set(false);
-        this.errorMsg.set(getErrorMessage(err, 'Could not create this medicine.'));
+        this.errorMsg.set(getErrorMessage(err, this.text('medicine.errorCreate')));
       },
     });
   }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
+  }
 }
+
+export { AddMedicineDialogComponent as AddMedicineDialog };

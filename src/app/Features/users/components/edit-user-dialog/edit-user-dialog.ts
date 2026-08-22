@@ -5,6 +5,7 @@ import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user.model';
 import { UserFormValue } from '../../models/user-form.model';
 import { extractErrors } from '../../../../Shared/utils/extract-errors.util';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-edit-user-dialog',
@@ -16,6 +17,7 @@ import { extractErrors } from '../../../../Shared/utils/extract-errors.util';
 })
 export class EditUserDialogComponent {
   private readonly usersService = inject(UsersService);
+  protected readonly i18n = inject(I18nService);
   private readonly userForm     = viewChild.required(UserFormComponent);
 
   user = input.required<User>();

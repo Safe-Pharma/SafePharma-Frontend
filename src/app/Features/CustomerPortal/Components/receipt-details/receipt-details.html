@@ -3,7 +3,7 @@
   import { fadeSlideIn } from '../shared/portal-animations';
   @Component({ ..., animations: [fadeSlideIn] })
 -->
-<div class="mx-auto max-w-3xl space-y-5" @fadeSlideIn>
+<div class="portal-motion-page mx-auto max-w-3xl space-y-5" @fadeSlideIn>
   <button
     type="button"
     class="flex items-center gap-1.5 rounded text-sm font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -33,13 +33,13 @@
     </div>
   } @else {
     <!-- Receipt header -->
-    <div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+    <div class="portal-motion-panel rounded-xl border border-border bg-card p-5" @fadeSlideIn>
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ i18n.t('receiptDetail.receiptLabel') }}</div>
           <h2 class="text-lg font-semibold text-foreground">{{ receipt()!.invoiceNumber }}</h2>
         </div>
-        <portal-status-badge [tone]="receiptStatusTone(receipt()!.status)" [label]="receiptStatusLabel(receipt()!.status)" />
+        <portal-status-badge [tone]="receiptStatusTone(receipt()!.status)" [label]="i18n.statusLabel(receipt()!.status)" />
       </div>
 
       <div class="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4 text-sm sm:grid-cols-4">
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Items table -->
-    <div class="overflow-hidden rounded-xl border border-border bg-card" @fadeSlideIn>
+    <div class="portal-motion-panel overflow-hidden rounded-xl border border-border bg-card" @fadeSlideIn>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-muted/50">
@@ -85,9 +85,9 @@
                   }
                 </td>
                 <td class="px-4 py-3 text-end text-muted-foreground">{{ item.quantity }}</td>
-                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.price | number: '1.2-2' }}</td>
-                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.discount | number: '1.2-2' }}</td>
-                <td class="px-4 py-3 text-end font-medium text-foreground">{{ item.total | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.price | egpCurrency }}</td>
+                <td class="px-4 py-3 text-end text-muted-foreground">{{ item.discount | egpCurrency }}</td>
+                <td class="px-4 py-3 text-end font-medium text-foreground">{{ item.total | egpCurrency }}</td>
               </tr>
             }
           </tbody>
@@ -96,27 +96,27 @@
     </div>
 
     <!-- Totals -->
-    <div class="rounded-xl border border-border bg-card p-5" @fadeSlideIn>
+    <div class="portal-motion-panel rounded-xl border border-border bg-card p-5" @fadeSlideIn>
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.subtotal') }}</dt>
-          <dd class="font-medium text-foreground">{{ subtotal() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-foreground">{{ subtotal() | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.tax') }}</dt>
-          <dd class="font-medium text-foreground">{{ tax() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-foreground">{{ tax() | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.discount') }}</dt>
-          <dd class="font-medium text-destructive">− {{ discount() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-destructive">− {{ discount() | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between border-t border-border pt-2 text-base">
           <dt class="font-semibold text-foreground">{{ i18n.t('receiptDetail.grandTotal') }}</dt>
-          <dd class="font-semibold text-foreground">{{ receipt()!.grandTotal | number: '1.2-2' }}</dd>
+          <dd class="font-semibold text-foreground">{{ receipt()!.grandTotal | egpCurrency }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="text-muted-foreground">{{ i18n.t('receiptDetail.paidAmount') }}</dt>
-          <dd class="font-medium text-success">{{ paidAmount() | number: '1.2-2' }}</dd>
+          <dd class="font-medium text-success">{{ paidAmount() | egpCurrency }}</dd>
         </div>
       </dl>
     </div>

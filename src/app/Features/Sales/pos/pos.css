@@ -1,0 +1,46 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.pos-cart-main {
+  min-width: 0;
+}
+
+.pos-cart-row {
+  position: relative;
+  transition: background-color 150ms ease, opacity 140ms ease, transform 140ms ease;
+}
+
+/*
+ * Cart rows are animated with transform, so each row gets its own stacking
+ * context. Raise the whole row while a menu is open; the menu's z-index alone
+ * cannot paint above a following row's stacking context.
+ */
+.pos-cart-row-overlay-open {
+  z-index: 40;
+}
+
+.pos-cart-row-active {
+  background: color-mix(in srgb, var(--primary-soft, #eff6ff) 72%, white);
+  box-shadow: inset 3px 0 0 var(--primary, #2563eb);
+}
+
+.pos-cart-row-removing {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+@media (max-width: 1023px) {
+  .pos-cart-main {
+    flex-wrap: wrap;
+    row-gap: 0.65rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .pos-cart-row {
+    padding-inline: 0.85rem;
+  }
+}

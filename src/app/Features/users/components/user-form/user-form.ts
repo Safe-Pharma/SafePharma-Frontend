@@ -4,6 +4,7 @@ import { ALL_BRANCHES, ALL_STATUSES } from '../../models/user.model';
 import { UserFormValue } from '../../models/user-form.model';
 import { passwordsMatchValidator } from '../../models/user-form.validator';
 import { RolesStateService } from '../../services/roles-state.service';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-user-form',
@@ -16,6 +17,7 @@ import { RolesStateService } from '../../services/roles-state.service';
 export class UserFormComponent implements OnInit {
   private readonly fb         = inject(NonNullableFormBuilder);
   private readonly rolesState = inject(RolesStateService);
+  protected readonly i18n = inject(I18nService);
 
   mode         = input<'create' | 'edit'>('create');
   initialValue = input<Partial<UserFormValue> | null>(null);
@@ -82,11 +84,11 @@ export class UserFormComponent implements OnInit {
     const control = this.form.controls[field];
     if (!control.invalid || !control.touched) return null;
 
-    if (control.hasError('required'))  return 'This field is required.';
-    if (control.hasError('email'))     return 'Enter a valid email address.';
-    if (control.hasError('minlength')) return `Minimum ${control.getError('minlength').requiredLength} characters.`;
+    if (control.hasError('required'))  return this.i18n.text('users.required');
+    if (control.hasError('email'))     return this.i18n.text('users.validEmail');
+    if (control.hasError('minlength')) return this.i18n.text('users.minCharacters', { count: control.getError('minlength').requiredLength });
 
-    return 'Invalid value.';
+    return this.i18n.text('users.invalid');
   }
 
   getValue(): UserFormValue | null {

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortalApiService } from '../../Services/portal-api.service';
@@ -14,14 +15,14 @@ import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, success
 import {PortalSectionHeaderComponent  } from '../../Shared/portal-section-header.component';
 
 import { PortalStatusBadge } from '../../Shared/status-badge';
-import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
+import { receiptStatusTone } from '../../Shared/receipt-status';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-purchase-history',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
+  imports: [FormsModule, RouterLink, DatePipe, EgpCurrencyPipe, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge, PortalSectionHeaderComponent],
   templateUrl: './purchase-history.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 })
@@ -43,7 +44,6 @@ export class PurchaseHistoryPage implements OnInit {
   readonly dateTo = signal('');
   readonly page = signal(1);
 
-  receiptStatusLabel = receiptStatusLabel;
   receiptStatusTone = receiptStatusTone;
 
   private searchDebounce: ReturnType<typeof setTimeout> | undefined;
@@ -63,7 +63,7 @@ export class PurchaseHistoryPage implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load your purchase history.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadPurchasesError')), 'error');
       },
     });
   }

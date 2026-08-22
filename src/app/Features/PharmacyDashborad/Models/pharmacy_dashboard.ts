@@ -38,6 +38,7 @@ export interface PharmacyMedicineRow {
   id: string;
   pharmacyMedicineId: string;
   tradeNameEn: string;
+  tradeNameAr?: string;
   category: string;
   sku: string;
   availableQuantity: number;

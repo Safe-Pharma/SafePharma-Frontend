@@ -1,6 +1,7 @@
 <app-modal-shell
-  title="Create new user"
-  subtitle="Invite a team member and assign role and branch."
+  size="lg"
+  [title]="i18n.text('users.createTitle')"
+  [subtitle]="i18n.text('users.createSubtitle')"
   (close)="onCancel()"
 >
   <app-user-form
@@ -10,10 +11,10 @@
 
   <div modalFooter class="footer-actions">
     <button class="btn btn-secondary" (click)="onCancel()" [disabled]="isSubmitting()">
-      Cancel
+      {{ i18n.text('users.cancel') }}
     </button>
     <button class="btn btn-primary" (click)="onSubmit()" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? 'Creating...' : 'Create user' }}
+      {{ isSubmitting() ? i18n.text('users.creating') : i18n.text('users.create') }}
     </button>
   </div>
 </app-modal-shell>

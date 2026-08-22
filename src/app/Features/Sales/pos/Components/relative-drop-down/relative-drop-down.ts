@@ -8,9 +8,13 @@ import {
   signal,
   Output,
   EventEmitter,
+  inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RelativesService } from '../../Services/relatives';
+import { Spinner } from '../../../../../Shared/Components/spinner/spinner';
+import { I18nService } from '../../../../../Core/Services/i18n.service';
+import { POS_DICT } from '../../pos.i18n';
 interface Relative {
   relativeId: string;
   relativeName: string;
@@ -18,11 +22,12 @@ interface Relative {
 
 @Component({
   selector: 'app-relative-drop-down',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Spinner],
   templateUrl: './relative-drop-down.html',
   styleUrl: './relative-drop-down.css',
 })
 export class RelativeDropDown implements OnInit, OnChanges {
+  private readonly i18n = inject(I18nService);
   // Input: customer id يتم تمريره من الـ parent component
   @Input() customerId: string = '';
 
@@ -39,6 +44,7 @@ export class RelativeDropDown implements OnInit, OnChanges {
 
   relatives = signal<Relative[]>([]);
   selectedRelativeId = signal<string>('');
+  menuOpen = signal(false);
   isLoading = signal(false);
   error = signal<string | null>(null);
 
@@ -79,7 +85,7 @@ export class RelativeDropDown implements OnInit, OnChanges {
       },
       error: (error) => {
         console.error('❌ Error loading relatives:', error);
-        this.error.set('Failed to load relatives');
+        this.error.set(this.t('relative.loadFailed'));
         this.relatives.set([]);
         this.selectedRelativeId.set('');
         this.relativesLoaded.emit({ customerId: this.customerId, relatives: [] });
@@ -95,4 +101,19 @@ export class RelativeDropDown implements OnInit, OnChanges {
       this.relativeSelected.emit(selected);
     }
   }
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  choose(relativeId: string): void {
+    this.menuOpen.set(false);
+    this.onSelectionChange(relativeId);
+  }
+
+  selectedRelativeName(): string {
+    return this.relatives().find((relative) => relative.relativeId === this.selectedRelativeId())?.relativeName ?? this.t('relative.label');
+  }
+
+  t(key: string): string { return this.i18n.t(POS_DICT, key); }
 }

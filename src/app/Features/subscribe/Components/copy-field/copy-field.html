@@ -5,7 +5,7 @@
       type="button"
       (click)="copy()"
       class="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      [attr.aria-label]="'Copy ' + (label() ?? 'value')"
+[attr.aria-label]="i18n.text('subscribe.copy', { value: label() ?? '' })"
     >
       <ng-container [ngTemplateOutlet]="icon" />
     </button>
@@ -19,7 +19,7 @@
         type="button"
         (click)="copy()"
         class="grid size-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        [attr.aria-label]="'Copy ' + label()"
+[attr.aria-label]="i18n.text('subscribe.copy', { value: label() ?? '' })"
       >
         <ng-container [ngTemplateOutlet]="icon" />
       </button>

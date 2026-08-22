@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PortalApiService } from '../../Services/portal-api.service';
@@ -13,7 +14,7 @@ import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
 import { Customer, CustomerAllergy, CustomerChronicCondition } from '../../../Customer/Models/customer.model';
 import { PortalReceiptListItem } from '../../Models/portal-sales.model';
-import { receiptStatusTone, receiptStatusLabel } from '../../Shared/receipt-status';
+import { receiptStatusTone } from '../../Shared/receipt-status';
 import { fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse } from '../../Shared/portal-animations';
 
 
@@ -27,7 +28,7 @@ const ICONS = {
 @Component({
   selector: 'app-portal-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, PortalStatCard, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge],
+  imports: [RouterLink, DatePipe, EgpCurrencyPipe, PortalStatCard, PortalSkeleton, PortalEmptyStateComponent, PortalStatusBadge],
   templateUrl: './dashboard.html',
     animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
 
@@ -55,7 +56,6 @@ export class PortalDashboard implements OnInit {
       .slice(0, 5);
 
   receiptStatusTone = receiptStatusTone;
-  receiptStatusLabel = receiptStatusLabel;
 
   ngOnInit(): void {
     this.load();
@@ -91,7 +91,7 @@ export class PortalDashboard implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.error.set(true);
-        this.toast.show(getErrorMessage(err, 'Could not load your dashboard.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadDashboardError')), 'error');
       },
     });
   }

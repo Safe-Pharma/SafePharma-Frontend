@@ -1,7 +1,13 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { InventoryService } from './Service/inventory_service';
+import { Spinner } from '../../Shared/Components/spinner/spinner';
+import { ModalOverlayDirective } from '../../Shared/Components/modal-overlay/modal-overlay';
+import { EgpCurrencyPipe } from '../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../Shared/Components/page-header/page-header';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -28,7 +34,7 @@ interface Medicine {
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalOverlayDirective, EgpCurrencyPipe, Spinner, PageHeaderComponent],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.css',
 })
@@ -37,20 +43,30 @@ export class InventoryPage implements OnInit {
 
   medicines = signal<Medicine[]>([]);
   filteredMedicines = signal<Medicine[]>([]);
+  loading = signal(true);
+  errorMessage = signal<string | null>(null);
   selectedBatch: Batch | null = null;
   newQuantity = 0;
   isEditModalOpen = false;
   isDeleteModalOpen = false;
+  isSaving = signal(false);
+  isDeleting = signal(false);
 
-  constructor(private inventoryService: InventoryService) {}
+  constructor(private inventoryService: InventoryService, private i18n: I18nService) {}
 
   ngOnInit() {
+    this.loading.set(true);
     this.inventoryService.getAllInventory().subscribe({
       next: (data) => {
         const normalized = this.normalizeInventoryData(data);
         this.medicines.set(normalized);
         this.filteredMedicines.set(normalized);
+        this.loading.set(false);
         console.log('Fetched inventory data:', this.medicines());
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set(this.text('inventory.error'));
       },
     });
   }
@@ -111,7 +127,7 @@ export class InventoryPage implements OnInit {
 
       return {
         sku: medicine?.sku ?? medicine?.medeicineCode ?? `MED-${index + 1}`,
-        name: medicine?.name ?? medicine?.medeicineName ?? 'Unknown Medicine',
+        name: medicine?.name ?? medicine?.medeicineName ?? this.text('inventory.unknownMedicine'),
         category: medicine?.category ?? medicine?.medeicineCategory ?? 'Uncategorized',
         batches,
         onHand,
@@ -190,9 +206,13 @@ export class InventoryPage implements OnInit {
     return colors[status] || 'bg-gray-500';
   }
 
+  statusLabel(status: Medicine['status']): string {
+    return status === 'In Stock' ? this.text('inventory.inStock') : status === 'Low' ? this.text('inventory.low') : this.text('inventory.out');
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    return date.toLocaleDateString(this.i18n.lang() === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
   }
 
   getDaysLeftColor(daysLeft: number): string {
@@ -230,44 +250,51 @@ export class InventoryPage implements OnInit {
   }
 
   closeEditModal() {
+    if (this.isSaving()) return;
     this.isEditModalOpen = false;
     this.selectedBatch = null;
     this.newQuantity = 0;
   }
 
   saveQuantity() {
-    if (!this.selectedBatch) return;
+    if (!this.selectedBatch || this.isSaving()) return;
 
-    const batchId = String(this.selectedBatch?.id ?? '').trim();
+    const selectedBatch = this.selectedBatch;
+
+    const batchId = String(selectedBatch.id ?? '').trim();
 
     const newStockBatchDto: newStockBatchDto = {
       batchId: batchId,
       newStock: this.newQuantity,
     };
 
-    this.inventoryService.editBatchStock(newStockBatchDto).subscribe({
-      next: () => {
-        this.medicines.update((items) =>
-          items.map((medicine) => {
-            const updatedBatches = medicine.batches.map((batch) =>
-              batch.id === this.selectedBatch?.id ||
-              batch.batchNumber === this.selectedBatch?.batchNumber
-                ? { ...batch, quantityRemaining: this.newQuantity }
-                : batch,
-            );
+    this.isSaving.set(true);
+    this.inventoryService
+      .editBatchStock(newStockBatchDto)
+      .pipe(finalize(() => this.isSaving.set(false)))
+      .subscribe({
+        next: () => {
+          this.medicines.update((items) =>
+            items.map((medicine) => {
+              const updatedBatches = medicine.batches.map((batch) =>
+                batch.id === selectedBatch.id || batch.batchNumber === selectedBatch.batchNumber
+                  ? { ...batch, quantityRemaining: this.newQuantity }
+                  : batch,
+              );
 
-            return this.refreshMedicineState(medicine, updatedBatches);
-          }),
-        );
+              return this.refreshMedicineState(medicine, updatedBatches);
+            }),
+          );
 
-        this.filteredMedicines.set(this.medicines());
-        this.closeEditModal();
-      },
-      error: (err) => {
-        console.error('Failed to update batch stock', err);
-        alert('Failed to update stock.');
-      },
-    });
+          this.filteredMedicines.set(this.medicines());
+          this.isSaving.set(false);
+          this.closeEditModal();
+        },
+        error: (err) => {
+          console.error('Failed to update batch stock', err);
+          alert(this.text('inventory.updateError'));
+        },
+      });
   }
 
   openDeleteDialog(batch: Batch) {
@@ -276,45 +303,70 @@ export class InventoryPage implements OnInit {
   }
 
   closeDeleteModal() {
+    if (this.isDeleting()) return;
     this.isDeleteModalOpen = false;
     this.selectedBatch = null;
   }
 
   deleteBatch() {
-    if (!this.selectedBatch) return;
+    if (!this.selectedBatch || this.isDeleting()) return;
 
-    const batchId = String(this.selectedBatch?.id ?? this.selectedBatch?.batchNumber ?? '').trim();
+    const batchToDelete = this.selectedBatch;
+    const batchId = String(batchToDelete.id ?? batchToDelete.batchNumber ?? '').trim();
     if (!batchId) {
-      alert('Batch identifier is missing.');
+      alert(this.text('inventory.missingBatch'));
       return;
     }
 
-    this.inventoryService.deleteBatch(batchId).subscribe({
-      next: () => {
-        this.medicines.update((items) =>
-          items.map((medicine) => {
-            const updatedBatches = medicine.batches.filter(
-              (batch) =>
-                batch.id !== this.selectedBatch?.id &&
-                batch.batchNumber !== this.selectedBatch?.batchNumber,
-            );
+    this.isDeleting.set(true);
+    this.inventoryService
+      .deleteBatch(batchId)
+      .pipe(finalize(() => this.isDeleting.set(false)))
+      .subscribe({
+        next: () => {
+          const updatedMedicines = this.medicines()
+            .map((medicine) => {
+              const updatedBatches = medicine.batches.filter(
+                (batch) => !this.isSameBatch(batch, batchToDelete),
+              );
 
-            return this.refreshMedicineState(medicine, updatedBatches);
-          }),
-        );
-        this.filteredMedicines.set(this.medicines());
-        this.closeDeleteModal();
-      },
-      error: (err) => {
-        console.error('Failed to delete batch', err);
-        alert('Failed to delete batch.');
-      },
-    });
+              return this.refreshMedicineState(medicine, updatedBatches);
+            })
+            .filter((medicine) => medicine.batches.length > 0);
+
+          this.medicines.set(updatedMedicines);
+          this.onSearch(this.searchQuery);
+          this.isDeleting.set(false);
+          this.closeDeleteModal();
+        },
+        error: (err) => {
+          console.error('Failed to delete batch', err);
+          alert(this.text('inventory.deleteError'));
+        },
+      });
+  }
+
+  private isSameBatch(first: Batch, second: Batch): boolean {
+    if (first.id && second.id) {
+      return first.id === second.id;
+    }
+
+    return (
+      Boolean(first.batchNumber && second.batchNumber) && first.batchNumber === second.batchNumber
+    );
   }
 
   shouldShowDelete(batch: Batch): boolean {
     const expiryDate = batch?.expiryDate ?? '';
     const normalizedExpiry = String(expiryDate).trim();
     return normalizedExpiry === '0' || normalizedExpiry === '' || batch.daysLeft <= 0;
+  }
+
+  scrollToAlerts(): void {
+    document.querySelector('[data-inventory-table]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
   }
 }

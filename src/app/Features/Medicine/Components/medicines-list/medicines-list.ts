@@ -17,20 +17,24 @@ import { Medicine, MedicineStats } from '../../Models/medicine.model';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
 import { AddMedicineDialogComponent } from '../add-medicine-dialog/add-medicine-dialog';
 import { EditPharmacyMedicineDialogComponent } from '../edit-pharmacy-medicine-dialog/edit-pharmacy-medicine-dialog';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../../Core/Services/i18n.service';
+import { PageHeaderComponent } from '../../../../Shared/Components/page-header/page-header';
 
 @Component({
   selector: 'app-medicines-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, AddMedicineDialogComponent, EditPharmacyMedicineDialogComponent],
+  imports: [CommonModule, RouterLink, AddMedicineDialogComponent, EditPharmacyMedicineDialogComponent, EgpCurrencyPipe, PageHeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicines-list.html',
 })
 export class MedicinesListComponent implements AfterViewChecked {
   private readonly api = inject(MedicinesApiService);
+  private readonly i18n = inject(I18nService);
 
   protected readonly search = signal('');
   protected readonly showInactive = signal(false);
-  protected readonly loading = signal(false);
+  protected readonly loading = signal(true);
   protected readonly errorMsg = signal<string | null>(null);
   private readonly refreshTick = signal(0);
 
@@ -48,13 +52,17 @@ export class MedicinesListComponent implements AfterViewChecked {
         tap(() => this.loading.set(false)),
         catchError((err) => {
           this.loading.set(false);
-          this.errorMsg.set(getErrorMessage(err, 'Could not load medicines.'));
+          this.errorMsg.set(getErrorMessage(err, this.text('medicine.errorLoad')));
           return of<Medicine[]>([]);
         }),
       ),
     ),
   );
   protected readonly medicines = toSignal(this.medicines$, { initialValue: [] as Medicine[] });
+
+  displayName(medicine: Medicine): string {
+    return this.i18n.lang() === 'ar' ? medicine.tradeNameAr || medicine.tradeNameEn : medicine.tradeNameEn || medicine.tradeNameAr;
+  }
 
   private readonly stats$ = this.refresh$.pipe(
     switchMap(() => this.api.getStats().pipe(catchError(() => of(null as MedicineStats | null)))),
@@ -81,11 +89,11 @@ export class MedicinesListComponent implements AfterViewChecked {
   statusBadge(status: Medicine['stockStatus']): { label: string; classes: string } {
     switch (status) {
       case 'Low':
-        return { label: 'Low', classes: 'bg-warning-soft text-warning' };
+        return { label: this.text('medicine.low'), classes: 'bg-warning-soft text-warning' };
       case 'Out':
-        return { label: 'Out', classes: 'bg-destructive-soft text-destructive' };
+        return { label: this.text('medicine.out'), classes: 'bg-destructive-soft text-destructive' };
       default:
-        return { label: 'In Stock', classes: 'bg-success-soft text-success' };
+        return { label: this.text('medicine.inStock'), classes: 'bg-success-soft text-success' };
     }
   }
 
@@ -111,16 +119,16 @@ export class MedicinesListComponent implements AfterViewChecked {
     this.openMenuId.set(null);
     this.api.toggleStatus(med.id).subscribe({
       next: () => this.onRefresh(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not update status.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.text('medicine.updateStatusError'))),
     });
   }
 
   onDelete(med: Medicine): void {
     this.openMenuId.set(null);
-    if (!confirm(`Delete "${med.tradeNameEn}"?`)) return;
+    if (!confirm(this.text('medicine.deleteConfirm', { name: this.displayName(med) }))) return;
     this.api.delete(med.id).subscribe({
       next: () => this.onRefresh(),
-      error: (err) => this.errorMsg.set(getErrorMessage(err, 'Could not delete medicine.')),
+      error: (err) => this.errorMsg.set(getErrorMessage(err, this.text('medicine.deleteError'))),
     });
   }
 
@@ -151,7 +159,7 @@ export class MedicinesListComponent implements AfterViewChecked {
     const menuWidth = 176; // w-44, used only for the provisional placement pre-measurement
     this.menuPosition.set({
       top: btn.bottom + 4,
-      left: Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8),
+      left: Math.max(8, Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8)),
     });
     this.openMenuId.set(id);
   }
@@ -168,7 +176,7 @@ export class MedicinesListComponent implements AfterViewChecked {
 
       this.menuPosition.set({
         top: openUpward ? btn.top - menuHeight - gap : btn.bottom + gap,
-        left: Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8),
+        left: Math.max(8, Math.min(btn.right - menuWidth, window.innerWidth - menuWidth - 8)),
       });
       this.menuVisible.set(true);
     }
@@ -199,4 +207,10 @@ export class MedicinesListComponent implements AfterViewChecked {
     this.editingMedicineId.set(null);
     this.onRefresh();
   }
+
+  text(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.text(key, params);
+  }
 }
+
+export { MedicinesListComponent as MedicinesList };

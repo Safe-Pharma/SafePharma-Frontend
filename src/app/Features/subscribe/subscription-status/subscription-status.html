@@ -1,13 +1,13 @@
 <div class="mx-auto max-w-3xl space-y-6 px-6 py-10">
   @if (isLoading()) {
-    <p class="text-sm text-muted-foreground">Loading…</p>
+    <p class="text-sm text-muted-foreground">{{ i18n.text('subscription.loading') }}</p>
   } @else if (latest(); as data) {
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight">Subscription status</h1>
+      <h1 class="text-2xl font-semibold tracking-tight">{{ i18n.text('subscription.subscriptionStatus') }}</h1>
       <p class="mt-1.5 text-sm text-muted-foreground">
-        Reference
+        {{ i18n.text('subscription.referenceShort') }}
         <span class="font-mono font-semibold text-foreground">{{ data.referenceCode }}</span>
-        · {{ data.planTier }} · ${{ data.paidAmount }}
+        · {{ data.planTier }} · {{ data.paidAmount | egpCurrency }}
       </p>
     </div>
 
@@ -30,11 +30,11 @@
           </div>
           <p class="mt-1 text-sm text-muted-foreground">
             @if (data.status === 'Rejected') {
-              Your payment proof was rejected{{ data.rejectionReason ? ': ' + data.rejectionReason : '.' }} Please resubmit your proof of payment.
+              {{ i18n.text('subscription.rejectedDescription') }}{{ data.rejectionReason ? ' ' + data.rejectionReason : '' }}
             } @else if (data.status === 'Approved') {
-              Your payment has been verified. Your subscription is active.
+              {{ i18n.text('subscription.approvedDescription') }}
             } @else {
-              Your payment proof is under review. You'll be notified once it's verified — usually within 1 business day.
+              {{ i18n.text('subscription.pendingDescription') }}
             }
           </p>
         </div>
@@ -46,20 +46,20 @@
         <a    [routerLink]="['/subscribe', subscriptionId, 'payment', 'proof']"
             class="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
           >
-            Resubmit proof
+            {{ i18n.text('subscription.resubmit') }}
           </a>
         }
         
         <a  routerLink="/"
           class="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
         >
-          Back to home
+          {{ i18n.text('subscription.backHome') }}
         </a>
       </div>
     </div>
 
     <div class="rounded-2xl border border-border bg-card p-6 shadow-card">
-      <h3 class="text-sm font-semibold">Submission history</h3>
+      <h3 class="text-sm font-semibold">{{ i18n.text('subscription.submissionHistory') }}</h3>
       <div class="mt-4 divide-y divide-border">
         @for (item of history(); track item.id) {
           <div class="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
@@ -68,18 +68,18 @@
                 {{ item.paymentMethod }} · <span class="font-mono">{{ item.transactionReference }}</span>
               </div>
               <div class="text-xs text-muted-foreground">
-                Submitted {{ item.createdAt | date: 'yyyy-MM-dd' }} · Paid on {{ item.paymentDate | date: 'yyyy-MM-dd' }} · ${{ item.paidAmount }}
+                {{ i18n.text('subscription.submitted', { created: ((item.createdAt | date: 'yyyy-MM-dd') ?? ''), paid: ((item.paymentDate | date: 'yyyy-MM-dd') ?? ''), amount: (item.paidAmount | egpCurrency) }) }}
               </div>
             </div>
             <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" [class]="classesForStatus(item.status)">
               <span class="size-1.5 rounded-full bg-current"></span>
-              {{ item.status }}
+              {{ item.status === 'Approved' ? i18n.text('subscription.approved') : item.status === 'Rejected' ? i18n.text('subscription.rejected') : i18n.text('subscription.pendingVerification') }}
             </span>
           </div>
         }
       </div>
     </div>
   } @else {
-    <p class="text-sm text-muted-foreground">No submissions found for this subscription.</p>
+    <p class="text-sm text-muted-foreground">{{ i18n.text('subscription.noSubmissions') }}</p>
   }
 </div>

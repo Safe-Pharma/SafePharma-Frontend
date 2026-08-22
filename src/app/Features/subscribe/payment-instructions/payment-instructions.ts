@@ -4,6 +4,8 @@ import { CopyField } from '../Components/copy-field/copy-field';
 import { PaymentInstructions as PaymentInstructionsModel } from '../Models/payment-instructions.model';
 import { PaymentVerificationService } from '../Services/payment-verification.service';
 import { Toast } from '../../../Shared/Toasts/toast';
+import { formatCurrency } from '../../../Shared/utils/currency.util';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-payment-instructions',
@@ -14,6 +16,7 @@ import { Toast } from '../../../Shared/Toasts/toast';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentInstructions implements OnInit {
+  protected readonly i18n = inject(I18nService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private paymentService = inject(PaymentVerificationService);
@@ -31,7 +34,7 @@ export class PaymentInstructions implements OnInit {
 
   readonly amountLabel = computed(() => {
     const data = this.instructions();
-    return data ? `${data.currency} ${data.amountDue}` : '';
+    return data ? formatCurrency(data.amountDue) : '';
   });
 
   ngOnInit(): void {
@@ -41,12 +44,12 @@ export class PaymentInstructions implements OnInit {
         if (result.success && result.data) {
           this.instructions.set(result.data);
         } else {
-          this.toast.show(result.message ?? 'Could not load payment instructions.', 'error');
+          this.toast.show(result.message ?? this.i18n.text('subscription.loadInstructionsError'), 'error');
         }
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.show('Could not load payment instructions.', 'error');
+        this.toast.show(this.i18n.text('subscription.loadInstructionsError'), 'error');
       },
     });
   }

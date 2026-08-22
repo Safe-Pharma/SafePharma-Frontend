@@ -1,10 +1,10 @@
-<div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" (click)="onClose()">
+<div appModalOverlay class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/30 p-3 pt-20 backdrop-blur-[1px] sm:p-4 sm:pt-20" (click)="onClose()">
   <div
     class="relative grid w-full max-w-2xl gap-4 rounded-lg border border-border bg-background p-6 shadow-lg max-h-[92vh] overflow-y-auto"
     (click)="$event.stopPropagation()">
     <button type="button"
-      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
-      (click)="onClose()" aria-label="Close">
+      class="absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
+      (click)="onClose()" [attr.aria-label]="text('common.actions.close')">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
         stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
         <path d="M18 6 6 18"></path>
@@ -13,25 +13,25 @@
     </button>
 
     @if (step() === 'search') {
-    <div class="text-center sm:text-left">
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Add medicine</h2>
+    <div class="text-start">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">{{ text('medicine.add') }}</h2>
       <p class="mt-1.5 text-sm text-muted-foreground">
-        Search the global medicine catalog, then set your pharmacy-specific price, minimum stock and taxes.
+        {{ text('medicine.subtitle') }}
       </p>
     </div>
 
     <div class="space-y-2">
-      <label class="text-sm font-medium" for="med-search">Search Medicine</label>
+      <label class="text-sm font-medium" for="med-search">{{ text('medicine.searchMedicine') }}</label>
       <div class="relative">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"
-          class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground">
+          class="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground">
           <path d="m21 21-4.34-4.34"></path>
           <circle cx="11" cy="11" r="8"></circle>
         </svg>
         <input id="med-search"
-          class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm h-9 pl-8"
-          placeholder="Search by name, category or barcode…" autocomplete="off" [value]="query()"
+          class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm h-9 ps-8"
+          [placeholder]="text('medicine.searchCatalog')" autocomplete="off" [value]="query()"
           (input)="onQueryInput($any($event.target).value)" />
       </div>
     </div>
@@ -40,63 +40,63 @@
     <div class="max-h-72 space-y-1 overflow-y-auto">
       @for (r of results(); track r.id) {
       <button type="button" (click)="selectResult(r)" [disabled]="r.isAlreadyInPharmacy"
-        class="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50">
+        class="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-start text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50">
         <span>
-          <span class="font-medium">{{ r.tradeNameEn }}</span>
+          <span class="font-medium">{{ displayName(r) }}</span>
           <span class="ms-2 text-xs text-muted-foreground">{{ r.category }} · {{ r.strength }}</span>
         </span>
         @if (r.isAlreadyInPharmacy) {
-        <span class="text-[11px] font-medium text-muted-foreground">Already in your pharmacy</span>
+        <span class="text-[11px] font-medium text-muted-foreground">{{ text('medicine.alreadyInPharmacy') }}</span>
         }
       </button>
       } @empty {
       <div class="rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-        No matches in the global catalog.
+        {{ text('shared.noCatalogMatches') }}
       </div>
       }
     </div>
 
     <button type="button" (click)="startCreateNew()"
       class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors border border-input bg-background shadow-sm hover:bg-accent h-9 rounded-md px-3 text-sm">
-      Can't find it? Create "{{ query() }}" as a new medicine →
+      {{ text('medicine.create') }} "{{ query() }}" →
     </button>
     }
     }
 
     @if (step() === 'link' && selected(); as sel) {
-    <div class="text-center sm:text-left">
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Add "{{ sel.tradeNameEn }}" to your pharmacy</h2>
-      <p class="mt-1.5 text-sm text-muted-foreground">Set your pharmacy-specific price, minimum stock and taxes.</p>
+    <div class="text-start">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">{{ text('medicine.add') }} "{{ displayName(sel) }}"</h2>
+      <p class="mt-1.5 text-sm text-muted-foreground">{{ text('medicine.pharmacySettings') }}</p>
     </div>
 
     <div class="grid grid-cols-1 gap-3 rounded-lg border border-border bg-muted/20 p-3 sm:grid-cols-2">
       <div>
-        <span class="text-xs font-medium text-muted-foreground">Trade name (AR)</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.tradeNameAr') }}</span>
         <p class="text-sm">{{ sel.tradeNameAr }}</p>
       </div>
       <div>
-        <span class="text-xs font-medium text-muted-foreground">Scientific name</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.scientificName') }}</span>
         <p class="text-sm">{{ sel.scientificName }}</p>
       </div>
       <div>
-        <span class="text-xs font-medium text-muted-foreground">Category</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.category') }}</span>
         <p class="text-sm">{{ sel.category }}</p>
       </div>
       <div>
-        <span class="text-xs font-medium text-muted-foreground">Unit of sale</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.unitOfSale') }}</span>
         <p class="text-sm">{{ sel.unitOfSale }} · {{ sel.unitsPerPackage }} per package</p>
       </div>
       <div>
-        <span class="text-xs font-medium text-muted-foreground">Dosage form / Strength</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.dosageForm') }} / {{ text('medicine.strength') }}</span>
         <p class="text-sm">{{ sel.dosageForm }} · {{ sel.strength }}</p>
       </div>
       <div>
-        <span class="text-xs font-medium text-muted-foreground">Manufacturer</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.manufacturer') }}</span>
         <p class="text-sm">{{ sel.manufacturer || '—' }}</p>
       </div>
 
       <div class="sm:col-span-2">
-        <span class="text-xs font-medium text-muted-foreground">Global barcodes</span>
+        <span class="text-xs font-medium text-muted-foreground">{{ text('medicine.barcodes') }}</span>
         <div class="mt-1 flex flex-wrap gap-2">
           @for (barcode of sel.manufacturerBarcodes; track barcode) {
           <span
@@ -126,82 +126,80 @@
     }
 
     <div class="flex items-center justify-between">
-      <button type="button" (click)="backToSearch()" class="text-sm text-muted-foreground hover:underline">← Back to
-        search</button>
+      <button type="button" (click)="backToSearch()" class="text-sm text-muted-foreground hover:underline">{{ text('medicine.back') }} {{ text('medicine.backArrow') }}</button>
       <button type="button" [disabled]="submitting()" (click)="submitLink()"
         class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
-        {{ submitting() ? 'Adding…' : 'Add to pharmacy' }}
+        {{ submitting() ? text('medicine.adding') : text('medicine.add') }}
       </button>
     </div>
     }
 
     @if (step() === 'create') {
-    <div class="text-center sm:text-left">
-      <h2 class="text-lg font-semibold leading-none tracking-tight">Create new medicine</h2>
+    <div class="text-start">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">{{ text('medicine.create') }}</h2>
       <p class="mt-1.5 text-sm text-muted-foreground">
-        {{ isOwner() ? 'This will be added to the shared global catalog.' : 'This medicine will be visible only to your
-        pharmacy.' }}
+        {{ isOwner() ? text('medicine.sharedAllPharmacies') : text('medicine.pharmacyOnly') }}
       </p>
     </div>
 
     <form [formGroup]="newMedicineForm" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Trade name (EN)</label>
+        <label class="text-sm font-medium">{{ text('medicine.tradeNameEn') }}</label>
         <input formControlName="tradeNameEn"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Trade name (AR)</label>
+        <label class="text-sm font-medium">{{ text('medicine.tradeNameAr') }}</label>
         <input formControlName="tradeNameAr"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Scientific name</label>
+        <label class="text-sm font-medium">{{ text('medicine.scientificName') }}</label>
         <input formControlName="scientificName"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Category</label>
+        <label class="text-sm font-medium">{{ text('medicine.category') }}</label>
         <input formControlName="category"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Unit of sale</label>
+        <label class="text-sm font-medium">{{ text('medicine.unitOfSale') }}</label>
         <input formControlName="unitOfSale"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Units per package</label>
+        <label class="text-sm font-medium">{{ text('medicine.unitsPerPackage') }}</label>
         <input type="number" formControlName="unitsPerPackage"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Dosage form</label>
+        <label class="text-sm font-medium">{{ text('medicine.dosageForm') }}</label>
         <input formControlName="dosageForm"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Strength</label>
+        <label class="text-sm font-medium">{{ text('medicine.strength') }}</label>
         <input formControlName="strength"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Manufacturer</label>
+        <label class="text-sm font-medium">{{ text('medicine.manufacturer') }}</label>
         <input formControlName="manufacturer"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Country of origin</label>
+        <label class="text-sm font-medium">{{ text('medicine.countryOrigin') }}</label>
         <input formControlName="countryOfOrigin"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
       </div>
-      <label class="flex items-center gap-2 text-sm">
+        <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" formControlName="isPrescriptionRequired"
-          class="h-4 w-4 rounded-sm border border-primary" /> Prescription required
+          class="h-4 w-4 rounded-sm border border-primary" /> {{ text('medicine.prescriptionRequired') }}
       </label>
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" formControlName="isControlled" class="h-4 w-4 rounded-sm border border-primary" />
-        Controlled substance
+        {{ text('medicine.controlled') }}
       </label>
     </form>
 
@@ -212,11 +210,10 @@
     }
 
     <div class="flex items-center justify-between">
-      <button type="button" (click)="backToSearch()" class="text-sm text-muted-foreground hover:underline">← Back to
-        search</button>
+      <button type="button" (click)="backToSearch()" class="text-sm text-muted-foreground hover:underline">{{ text('medicine.back') }} {{ text('medicine.backArrow') }}</button>
       <button type="button" [disabled]="submitting()" (click)="submitCreate()"
         class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 h-9 rounded-md px-4 text-sm">
-        {{ submitting() ? 'Creating…' : (isOwner() ? 'Create global medicine' : 'Create local medicine') }}
+        {{ submitting() ? text('medicine.creating') : (isOwner() ? text('medicine.createGlobal') : text('medicine.createLocal')) }}
       </button>
     </div>
     }
@@ -224,30 +221,37 @@
     <ng-template #pharmacyFields>
       <form [formGroup]="pharmacyForm" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="space-y-1.5">
-          <label class="text-sm font-medium">Purchase price</label>
+          <label class="text-sm font-medium">{{ text('medicine.purchasePrice') }}</label>
           <input type="number" step="0.01" formControlName="purchasePrice"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
         </div>
         <div class="space-y-1.5">
-          <label class="text-sm font-medium">Selling price</label>
+          <label class="text-sm font-medium">{{ text('medicine.sellingPrice') }}</label>
           <input type="number" step="0.01" formControlName="sellingPrice"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
         </div>
         <div class="space-y-1.5">
-          <label class="text-sm font-medium">Min stock level</label>
+          <label class="text-sm font-medium">{{ text('medicine.minStock') }}</label>
           <input type="number" formControlName="minStockLevel"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
         </div>
         <div class="space-y-1.5 sm:col-span-3">
-          <label class="text-sm font-medium">SKU (optional — auto-generated if left blank)</label>
-          <input formControlName="sKU" placeholder="RX-1001"
+          <label class="text-sm font-medium">{{ text('medicine.skuOptional') }}</label>
+          <input formControlName="sKU" [placeholder]="text('medicine.skuPlaceholder')"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm" />
         </div>
       </form>
 
       <div class="space-y-1.5">
-        <label class="text-sm font-medium">Taxes</label>
+        <label class="text-sm font-medium">{{ text('medicine.taxes') }}</label>
         <div class="flex flex-wrap gap-2">
+          @if (taxesLoading()) {
+            <div class="flex items-center gap-2 text-xs text-muted-foreground"><span class="h-3 w-3 animate-spin rounded-full border-2 border-muted border-t-primary"></span> {{ text('medicine.loadingTaxes') }}</div>
+          } @else if (taxesError(); as error) {
+            <button type="button" class="text-xs text-destructive underline" (click)="loadTaxes()">{{ error }} Retry</button>
+          } @else if (taxes().length === 0) {
+            <span class="text-xs text-muted-foreground">{{ text('medicine.noActiveTaxes') }}</span>
+          } @else {
           @for (tax of taxes(); track tax.id) {
           <label
             class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium"
@@ -256,6 +260,7 @@
               (change)="toggleTax(tax.id)" />
             {{ tax.name }} ({{ tax.rate }}%)
           </label>
+          }
           }
         </div>
       </div>

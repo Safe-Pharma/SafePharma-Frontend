@@ -1,0 +1,73 @@
+@if (open) {
+  <button
+    type="button"
+    class="owner-sidebar-backdrop"
+    [attr.aria-label]="text('nav.closeSidebar')"
+    (click)="close()"
+  ></button>
+}
+
+<aside
+  class="owner-sidebar"
+  [class.owner-sidebar-open]="open"
+  [class.owner-sidebar-rtl]="i18n.isRtl()"
+  [attr.aria-label]="text('ownerDashboard.navigation')"
+>
+  <div class="owner-sidebar-header">
+    <div class="owner-brand">
+      <div class="owner-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 20V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v15"></path>
+          <path d="M4 20h16M9 7h6M9 11h6M9 15h6"></path>
+        </svg>
+      </div>
+      <div class="owner-brand-copy">
+        <strong>SafePharma</strong>
+        <span>{{ text('ownerDashboard.portal') }}</span>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="owner-sidebar-close"
+      [attr.aria-label]="text('nav.closeSidebar')"
+      (click)="close()"
+    >
+      <span aria-hidden="true">×</span>
+    </button>
+  </div>
+
+  <nav class="owner-sidebar-nav" [attr.aria-label]="text('ownerDashboard.navigation')">
+    @for (item of navItems; track item.route) {
+      <a
+        class="owner-nav-item"
+        [routerLink]="item.route"
+        routerLinkActive="owner-nav-item-active"
+        #rla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        [attr.aria-current]="rla.isActive ? 'page' : null"
+        (click)="close()"
+      >
+        <span class="owner-nav-icon" aria-hidden="true">
+          @if (item.icon === 'dashboard') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <path d="M2 10h20M6 15h4"></path>
+            </svg>
+          }
+        </span>
+        <span class="owner-nav-label">{{ text(item.label) }}</span>
+        @if (rla.isActive) {
+          <span class="owner-nav-current" aria-hidden="true"></span>
+        }
+      </a>
+    }
+  </nav>
+</aside>

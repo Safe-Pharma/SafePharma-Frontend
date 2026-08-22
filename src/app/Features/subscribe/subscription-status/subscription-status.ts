@@ -4,16 +4,19 @@ import { PaymentVerificationService } from '../Services/payment-verification.ser
 import { PaymentVerificationRead } from '../Models/payment-verification.model';
 import { Toast } from '../../../Shared/Toasts/toast';
 import { DatePipe } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-subscription-status',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, EgpCurrencyPipe],
   templateUrl: './subscription-status.html',
   styleUrl: './subscription-status.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubscriptionStatus implements OnInit {
+  protected readonly i18n = inject(I18nService);
   private route = inject(ActivatedRoute);
   private paymentService = inject(PaymentVerificationService);
   private toast = inject(Toast);
@@ -29,11 +32,11 @@ export class SubscriptionStatus implements OnInit {
   readonly statusLabel = computed(() => {
     switch (this.latest()?.status) {
       case 'Approved':
-        return 'Approved';
+        return this.i18n.text('subscription.approved');
       case 'Rejected':
-        return 'Rejected';
+        return this.i18n.text('subscription.rejected');
       default:
-        return 'Pending Verification';
+        return this.i18n.text('subscription.pendingVerification');
     }
   });
 
@@ -57,12 +60,12 @@ export class SubscriptionStatus implements OnInit {
         if (result.success && result.data) {
           this.history.set(result.data);
         } else {
-          this.toast.show(result.message ?? 'Could not load subscription status.', 'error');
+          this.toast.show(result.message ?? this.i18n.text('subscription.loadStatusError'), 'error');
         }
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.show('Could not load subscription status.', 'error');
+        this.toast.show(this.i18n.text('subscription.loadStatusError'), 'error');
       },
     });
   }

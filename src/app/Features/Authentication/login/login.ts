@@ -9,13 +9,14 @@ import { Toast } from '../../../Shared/Toasts/toast';
 import { passwordComplexityValidator } from '../../subscribe/Validators/custom-validators';
 import { Router } from '@angular/router';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, Spinner],
   templateUrl: './login.html',
-  
+  styleUrl: './login.css',
 })
 export class Login {
   private fb = inject(FormBuilder);
@@ -23,9 +24,12 @@ export class Login {
   private toast = inject(Toast);
   private authSession = inject(AuthSessionService);
   private router = inject(Router);
+  private i18n = inject(I18nService);
 
   loading = signal(false);
   formError = signal<string | null>(null);
+
+  text(key: string, params?: Record<string, string | number>): string { return this.i18n.text(key, params); }
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -45,16 +49,19 @@ export class Login {
 
     const errors = control.errors;
     if (errors['server']) return errors['server'];
-    if (errors['required']) return 'This field is required.';
-    if (errors['email']) return 'Please enter a valid email address.';
-    if (errors['minlength']) return `Must be at least ${errors['minlength'].requiredLength} characters.`;
-    if (errors['maxlength']) return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
-    if (errors['missingUppercase']) return 'Password must contain at least one uppercase letter.';
-    if (errors['missingLowercase']) return 'Password must contain at least one lowercase letter.';
-    if (errors['missingDigit']) return 'Password must contain at least one number.';
-    if (errors['missingSpecialChar']) return 'Password must contain at least one special character.';
-    if (errors['pattern']) return 'Invalid format.';
-    return 'Invalid value.';
+    if (errors['required']) return this.i18n.text('common.required');
+    if (errors['email']) return this.i18n.text('auth.invalidEmail');
+    if (errors['minlength'])
+      return this.i18n.text('auth.passwordMin', { count: errors['minlength'].requiredLength });
+    if (errors['maxlength'])
+      return `Must not exceed ${errors['maxlength'].requiredLength} characters.`;
+    if (errors['missingUppercase']) return this.i18n.text('auth.passwordUpper');
+    if (errors['missingLowercase']) return this.i18n.text('auth.passwordLower');
+    if (errors['missingDigit']) return this.i18n.text('auth.passwordDigit');
+    if (errors['missingSpecialChar'])
+      return this.i18n.text('auth.passwordSpecial');
+    if (errors['pattern']) return this.i18n.text('common.invalid');
+    return this.i18n.text('common.invalid');
   }
 
   onSubmit() {
@@ -62,7 +69,7 @@ export class Login {
 
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      const message = 'Please fix the highlighted fields before signing in.';
+      const message = this.i18n.text('auth.fixFields');
       this.formError.set(message);
       // this.toast.show(message, 'error');
       return;
@@ -74,16 +81,30 @@ export class Login {
     this.auth.login(this.loginForm.getRawValue()).subscribe({
       next: (res: any) => {
         const token = res?.data?.accessToken ?? res?.token;
-        if (token) {
-          this.authSession.setToken(token);
+        if (!token) {
+          this.loading.set(false);
+          this.formError.set(this.i18n.text('auth.loginResponseError'));
+          return;
         }
+
+        this.authSession.setToken(token);
+        this.i18n.initializeForCurrentSession();
+        const user = this.authSession.user();
+
+        if (user?.role.trim().toLowerCase() === 'owner') {
+          this.authSession.clearToken();
+          this.loading.set(false);
+          this.formError.set(this.i18n.text('auth.unableSignIn'));
+          return;
+        }
+
         this.loading.set(false);
-        this.toast.show('Welcome back — you are signed in.', 'success');
-        this.router.navigate(['/app/users']);
+        this.toast.show(this.i18n.text('auth.welcome'), 'success');
+        this.router.navigate(['/app/dashboard'], { replaceUrl: true });
       },
       error: (err) => {
         this.loading.set(false);
-        const message = getErrorMessage(err, 'Unable to sign in. Please try again.');
+        const message = getErrorMessage(err, this.i18n.text('auth.unableSignIn'));
         this.formError.set(message);
         this.toast.show(message, 'error');
       },

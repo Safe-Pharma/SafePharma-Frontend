@@ -1,0 +1,53 @@
+<div class="relative" (click)="$event.stopPropagation()">
+  <button
+    type="button"
+    class="flex min-h-10 w-full items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-start text-sm transition hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+    [disabled]="disabled()"
+    [attr.aria-expanded]="open()"
+    aria-haspopup="listbox"
+    (click)="toggle()"
+  >
+    <span class="truncate" [class.text-gray-400]="!value()" [class.text-gray-800]="!!value()">
+      {{ selectedLabel() }}
+    </span>
+    @if (loading()) {
+      <span class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" [attr.aria-label]="text('shared.loading')"></span>
+    } @else {
+      <svg class="h-4 w-4 shrink-0 text-gray-400 transition-transform" [class.rotate-180]="open()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+    }
+  </button>
+
+  @if (open()) {
+    <div class="searchable-select-menu absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg" role="listbox">
+      <div class="border-b border-gray-100 p-2">
+        <input
+          type="search"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+          [placeholder]="searchPlaceholder()"
+          class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          [attr.aria-label]="text('shared.searchOptions')"
+        />
+      </div>
+      @if (error()) {
+        <div class="px-3 py-3 text-xs text-red-600" role="alert">
+          {{ error() }}
+          <button type="button" class="ms-1 font-semibold underline" (click)="retry.emit()">{{ text('shared.retry') }}</button>
+        </div>
+      } @else if (loading()) {
+        <div class="flex items-center gap-2 px-3 py-4 text-xs text-gray-400"><span class="h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></span> {{ text('shared.loadingOptions') }}</div>
+      } @else if (filteredOptions().length === 0) {
+        <div class="px-3 py-4 text-xs text-gray-400">{{ text('shared.noOptions') }}</div>
+      } @else {
+        <div class="max-h-56 overflow-y-auto py-1">
+          @for (option of filteredOptions(); track option.value) {
+            <button type="button" class="block w-full px-3 py-2 text-start text-sm hover:bg-blue-50" [class.bg-blue-50]="option.value === value()" role="option" [attr.aria-selected]="option.value === value()" (click)="select(option)">
+              <span class="block truncate font-medium text-gray-800">{{ option.label }}</span>
+              @if (option.secondary) { <span class="block truncate text-xs text-gray-400">{{ option.secondary }}</span> }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

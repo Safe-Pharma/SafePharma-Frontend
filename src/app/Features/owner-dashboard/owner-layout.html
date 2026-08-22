@@ -1,0 +1,10 @@
+<div class="owner-shell" [attr.dir]="i18n.dir()">
+  <app-owner-sidebar [open]="sidebarOpen()" (closed)="closeSidebar()" />
+
+  <div class="owner-shell-content">
+    <app-owner-navbar (menuToggle)="toggleSidebar()" (logout)="logout()" />
+    <main class="owner-shell-main">
+      <router-outlet />
+    </main>
+  </div>
+</div>

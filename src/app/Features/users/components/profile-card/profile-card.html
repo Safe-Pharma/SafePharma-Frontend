@@ -1,6 +1,6 @@
 <div class="profile-card">
   <app-user-avatar [name]="user().name" size="lg" />
   <h2 class="name">{{ user().name }}</h2>
-  <p class="role">{{ user().role }}</p>
+  <p class="role">{{ i18n.roleLabel(user().role) }}</p>
   <app-status-badge [isActive]="user().isActive" variant="pill" />
 </div>

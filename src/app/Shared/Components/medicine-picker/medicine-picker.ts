@@ -4,6 +4,8 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { MedicinesApiService } from '../../../Features/Medicine/Services/medicines-api.service';
 import { GlobalMedicineSearchResult } from '../../../Features/Medicine/Models/medicine.model';
+import { Spinner } from '../spinner/spinner';
+import { I18nService } from '../../../Core/Services/i18n.service';
 
 // medicineId set   -> picked from the global catalog (label = trade name)
 // medicineId null  -> typed manually, not found in the catalog
@@ -17,12 +19,19 @@ export interface MedicineSelection {
 @Component({
   selector: 'app-medicine-picker',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Spinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './medicine-picker.html',
 })
 export class MedicinePickerComponent {
   private readonly medicinesApi = inject(MedicinesApiService);
+  private readonly i18n = inject(I18nService);
+
+  text(key: string): string { return this.i18n.text(key); }
+
+  displayName(item: GlobalMedicineSearchResult): string {
+    return this.i18n.lang() === 'ar' ? item.tradeNameAr || item.tradeNameEn : item.tradeNameEn || item.tradeNameAr;
+  }
 
   // Emits the current selection (or null once cleared/still typing) — the consumer
   // just stores whatever comes out, same pattern as tag-picker's selectionChange.
@@ -41,7 +50,9 @@ export class MedicinePickerComponent {
     if (!this.manualMode() || !this.manualTouched()) return null;
     const name = this.manualTradeName().trim();
     const sci = this.manualScientificName().trim();
-    if (!name || !sci) return 'Both the medicine name and scientific name are required.';
+    if (!name || !sci) return this.i18n.lang() === 'ar'
+      ? 'اسم الدواء والاسم العلمي كلاهما مطلوبان.'
+      : 'Both the medicine name and scientific name are required.';
     return null;
   });
 
@@ -82,7 +93,10 @@ export class MedicinePickerComponent {
   }
 
   onSelectResult(item: GlobalMedicineSearchResult): void {
-    const selection: MedicineSelection = { medicineId: item.id, label: item.tradeNameEn };
+    const selection: MedicineSelection = {
+      medicineId: item.id,
+      label: this.i18n.lang() === 'ar' ? item.tradeNameAr || item.tradeNameEn : item.tradeNameEn || item.tradeNameAr,
+    };
     this.selected.set(selection);
     this.showDropdown.set(false);
     this.query.set('');

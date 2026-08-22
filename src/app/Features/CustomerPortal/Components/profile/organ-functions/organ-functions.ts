@@ -18,6 +18,7 @@ import {
   successPulse,
 } from '../../../Shared/portal-animations';
 import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-header.component';
+import { ModalOverlayDirective } from '../../../../../Shared/Components/modal-overlay/modal-overlay';
 
 @Component({
   selector: 'app-organ-functions-section',
@@ -28,6 +29,7 @@ import { PortalSectionHeaderComponent } from '../../../Shared/portal-section-hea
     PortalSkeleton,
     PortalEmptyStateComponent,
     PortalSectionHeaderComponent,
+    ModalOverlayDirective,
   ],
   templateUrl: './organ-functions.html',
   animations: [fadeSlideIn, staggerList, listItem, dialogOverlay, dialogPanel, successPulse],
@@ -72,7 +74,7 @@ export class OrganFunctionsSection implements OnChanges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load organ functions.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadOrganError')), 'error');
       },
     });
   }
@@ -128,11 +130,11 @@ export class OrganFunctionsSection implements OnChanges {
         });
         this.saving.set(false);
         this.editorOpen.set(false);
-        this.toast.show('Organ function updated.', 'success');
+        this.toast.show(this.i18n.t('toast.organUpdated'), 'success');
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not update organ function.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.updateOrganError')), 'error');
       },
     });
   }

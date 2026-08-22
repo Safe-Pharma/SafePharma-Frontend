@@ -1,5 +1,5 @@
-<div class="backdrop" (click)="close.emit()">
-  <div class="panel" (click)="$event.stopPropagation()">
+<div appModalOverlay class="backdrop" role="presentation" (click)="close.emit()">
+  <div class="panel" role="dialog" aria-modal="true" [attr.aria-label]="title()" [class]="'panel panel-' + size()" (click)="$event.stopPropagation()">
 
     <header class="panel-header">
       <div>
@@ -8,7 +8,7 @@
           <p class="subtitle">{{ subtitle() }}</p>
         }
       </div>
-      <button class="close-btn" (click)="close.emit()" aria-label="Close">✕</button>
+      <button class="close-btn" (click)="close.emit()" [attr.aria-label]="i18n.text('users.close')">✕</button>
     </header>
 
     <!-- scrollable body — only this part scrolls -->

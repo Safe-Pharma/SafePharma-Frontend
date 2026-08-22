@@ -1,16 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuditService {
-  private BaseUrl = `https://localhost:7259/api/Audit/`;
+  private baseUrl = `${environment.apiUrl}/Audit/`;
 
   constructor(private http: HttpClient) {}
 
   getAllAudits(): Observable<any[]> {
-    return this.http.get<any>(this.BaseUrl).pipe(map((response) => response.data));
+    return this.http.get<any>(this.baseUrl).pipe(map((response) => response.data));
   }
 }

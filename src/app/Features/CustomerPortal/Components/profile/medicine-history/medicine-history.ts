@@ -48,7 +48,7 @@ export class MedicineHistorySection implements OnChanges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not load medicine history.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadMedicineError')), 'error');
       },
     });
   }

@@ -5,6 +5,7 @@ import { PortalAuthService } from '../../Services/portal-auth.service';
 import { Toast } from '../../../../Shared/Toasts/toast';
 import { ToastComponent } from '../../../../Shared/Toasts/toast/toast';
 import { getErrorMessage } from '../../../../Shared/utils/get-error-message';
+import { PortalI18nService } from '../../Services/portal-i18n.service';
 
 @Component({
   selector: 'app-portal-login',
@@ -16,6 +17,7 @@ export class PortalLogin {
   private readonly portalAuth = inject(PortalAuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(Toast);
+  readonly i18n = inject(PortalI18nService);
 
   readonly phone = signal('');
   readonly loading = signal(false);
@@ -32,15 +34,15 @@ export class PortalLogin {
       next: (res) => {
         this.loading.set(false);
         if (!res.success) {
-          this.toast.show(res.message || 'Could not send the code. Please try again.', 'error');
+          this.toast.show(res.message || this.i18n.t('toast.sendCodeError'), 'error');
           return;
         }
-        this.toast.show(res.message || 'We sent a WhatsApp code to your phone.', 'success');
+        this.toast.show(res.message || this.i18n.t('toast.whatsappSent'), 'success');
         this.router.navigate(['/portal/otp'], { queryParams: { phone: this.phone().trim() } });
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(getErrorMessage(err, 'Could not send the code. Please try again.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.sendCodeError')), 'error');
       },
     });
   }

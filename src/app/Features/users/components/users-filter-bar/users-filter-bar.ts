@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, input, output } fro
 import { FormsModule } from '@angular/forms';
 import { ALL_STATUSES } from '../../models/user.model';
 import { RolesStateService } from '../../services/roles-state.service';
+import { I18nService } from '../../../../Core/Services/i18n.service';
 
 type StatusFilter = 'All' | 'Active' | 'Inactive';
 
@@ -15,6 +16,7 @@ type StatusFilter = 'All' | 'Active' | 'Inactive';
 })
 export class UsersFilterBarComponent implements OnInit {
   private readonly rolesState = inject(RolesStateService);
+  protected readonly i18n = inject(I18nService);
 
   search = input('');
   role   = input<string>('');

@@ -1,20 +1,16 @@
-<div class="users-page">
-  <header class="page-header">
-    <div>
-      <h1>Users</h1>
-      <p class="subtitle">Manage staff access, roles and branches.</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-primary" (click)="onCreateUser()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+<div class="module-motion-page app-page users-page">
+  <app-page-header class="module-motion-header" [icon]="'users'" [title]="i18n.text('users.title')" [description]="i18n.text('users.subtitle')">
+    <div pageHeaderActions>
+      <button type="button" class="app-page-action app-page-action-primary" (click)="onCreateUser()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path><path d="M12 5v14"></path>
         </svg>
-        Create user
+        {{ i18n.text('users.create') }}
       </button>
     </div>
-  </header>
+  </app-page-header>
 
-  <section class="card">
+  <section class="module-motion-panel app-page-section card">
     <app-users-filter-bar
       [search]="usersService.searchTerm()"
       [role]="usersService.roleFilter()"
@@ -26,14 +22,15 @@
 
     <app-users-table
       [users]="usersService.users()"
+      [loading]="usersService.isLoading()"
       (view)="onView($event)"
       (edit)="onEdit($event)"
       (delete)="onDelete($event)"
       (toggleStatus)="onToggleStatus($event)"
     />
 
-    @if (usersService.isLoading()) {
-      <div class="loading">Loading users...</div>
+    @if (usersService.isLoading() && usersService.users().length > 0) {
+      <div class="refreshing" role="status"><span class="inline-spinner"></span> {{ i18n.text('users.updating') }}</div>
     }
 
     @if (usersService.error()) {

@@ -1,73 +1,59 @@
-<div class="mx-auto w-full max-w-7xl p-6 md:p-8">
-  <div class="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
-    <div class="min-w-0">
-      <h1 class="truncate text-2xl font-semibold tracking-tight text-foreground">Customers</h1>
-      <p class="mt-1 text-sm text-muted-foreground">
-        Shared across every pharmacy — payments and status below are specific to yours.
-      </p>
-    </div>
-    <div class="flex shrink-0 items-center gap-2">
-      <button type="button" (click)="onOpenAddDialog()"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" class="me-1.5 h-4 w-4">
-          <path d="M5 12h14"></path>
-          <path d="M12 5v14"></path>
+<div class="module-motion-page app-page">
+  <app-page-header class="module-motion-header" [icon]="'customers'" [title]="text('customer.title')" [description]="text('customer.subtitle')">
+    <div pageHeaderActions>
+      <button type="button" (click)="onOpenAddDialog()" class="app-page-action app-page-action-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path><path d="M12 5v14"></path>
         </svg>
-        New customer
+        {{ text('customer.new') }}
       </button>
-
-      <button type="button" (click)="onRefresh()"
-        class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" class="me-1.5 size-4">
-          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-          <path d="M21 3v5h-5" />
-          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-          <path d="M8 16H3v5" />
+      <button type="button" (click)="onRefresh()" class="app-page-action app-page-action-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path>
         </svg>
-        Refresh
+        {{ text('customer.refresh') }}
       </button>
     </div>
-  </div>
+  </app-page-header>
 
   <!-- Stat cards -->
   @if (stats(); as s) {
-  <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total customers</div>
+  <div class="module-motion-stats app-page-section grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="module-motion-card rounded-xl border border-border bg-card p-4 shadow-card">
+      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ text('customer.total') }}</div>
       <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.totalCustomers }}</div>
     </div>
 
-    <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Active</div>
+    <div class="module-motion-card rounded-xl border border-border bg-card p-4 shadow-card">
+      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ text('customer.active') }}</div>
       <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.active }}</div>
     </div>
 
-    <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Inactive</div>
+    <div class="module-motion-card rounded-xl border border-border bg-card p-4 shadow-card">
+      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ text('customer.inactive') }}</div>
       <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.inactive }}</div>
     </div>
 
-    <div class="rounded-xl border border-border bg-card p-4 shadow-card">
-      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Paid at your pharmacy</div>
-      <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.totalPaidAllCustomers | currency }}</div>
+    <div class="module-motion-card rounded-xl border border-border bg-card p-4 shadow-card">
+      <div class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ text('customer.paidHere') }}</div>
+      <div class="mt-2 text-2xl font-semibold tracking-tight">{{ s.totalPaidAllCustomers | egpCurrency }}</div>
     </div>
   </div>
   }
 
-  <div class="rounded-xl border border-border bg-card shadow-card">
+  <div class="module-motion-panel app-page-section rounded-xl border border-border bg-card shadow-card">
     <div class="flex flex-wrap items-center gap-3 border-b border-border p-4">
       <div class="relative min-w-0 flex-1">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"
-          class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground">
+          class="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground">
           <path d="m21 21-4.34-4.34" />
           <circle cx="11" cy="11" r="8" />
         </svg>
         <input
-          class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm h-9 pl-8"
-          placeholder="Search by name, phone or email…" [value]="search()"
+          class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm h-9 ps-8"
+          [placeholder]="text('customer.search')" [value]="search()"
           (input)="onSearchInput($any($event.target).value)" />
       </div>
     </div>
@@ -76,26 +62,32 @@
     <div class="p-4 text-sm text-destructive">{{ msg }}</div>
     }
 
-    @if (loading()) {
-    <div class="p-8 text-center text-sm text-muted-foreground">Loading customers…</div>
+    @if (loading() && customers().length === 0) {
+    <div class="space-y-3 p-6" aria-busy="true">
+      @for (row of [1, 2, 3, 4, 5]; track row) {
+        <div class="grid grid-cols-4 gap-4">
+          <span class="h-4 animate-pulse rounded bg-muted"></span><span class="h-4 animate-pulse rounded bg-muted"></span><span class="h-4 animate-pulse rounded bg-muted"></span><span class="h-4 animate-pulse rounded bg-muted"></span>
+        </div>
+      }
+    </div>
     } @else if (customers().length === 0) {
-    <div class="p-8 text-center text-sm text-muted-foreground">No customers found.</div>
+    <div class="p-8 text-center text-sm text-muted-foreground">{{ text('customer.noResults') }}</div>
     } @else {
-    <div class="overflow-x-auto">
+    <div class="relative overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
-            <th class="px-4 py-3 font-medium">Customer</th>
-            <th class="px-4 py-3 font-medium">Phone</th>
-            <th class="px-4 py-3 font-medium">Email</th>
-            <th class="px-4 py-3 font-medium">Paid here</th>
-            <th class="px-4 py-3 font-medium">Status</th>
-            <th class="px-4 py-3 text-right font-medium">Actions</th>
+          <tr class="border-b border-border bg-muted/30 text-start text-xs uppercase tracking-wider text-muted-foreground">
+            <th class="px-4 py-3 font-medium">{{ text('customer.customer') }}</th>
+            <th class="px-4 py-3 font-medium">{{ text('customer.phone') }}</th>
+            <th class="px-4 py-3 font-medium">{{ text('customer.email') }}</th>
+            <th class="px-4 py-3 font-medium">{{ text('customer.paid') }}</th>
+            <th class="px-4 py-3 font-medium">{{ text('customer.status') }}</th>
+            <th class="px-4 py-3 text-end font-medium">{{ text('customer.actions') }}</th>
           </tr>
         </thead>
         <tbody>
           @for (customer of customers(); track customer.id) {
-          <tr class="border-b border-border last:border-0 hover:bg-muted/30">
+          <tr class="module-motion-row border-b border-border last:border-0 hover:bg-muted/30">
             <td class="px-4 py-3 font-medium">
               <a [routerLink]="['/app/customers', customer.id]" class="hover:text-primary hover:underline">
                 {{ customer.name }}
@@ -103,16 +95,16 @@
             </td>
             <td class="px-4 py-3 text-muted-foreground">{{ customer.phone }}</td>
             <td class="px-4 py-3 text-muted-foreground">{{ customer.email || '—' }}</td>
-            <td class="px-4 py-3">{{ customer.totalPaid | currency }}</td>
+            <td class="px-4 py-3">{{ customer.totalPaid | egpCurrency }}</td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
                 [ngClass]="statusBadge(customer.status).classes">
                 <span class="size-1.5 rounded-full bg-current"></span>{{ statusBadge(customer.status).label }}
               </span>
             </td>
-            <td class="px-4 py-3 text-right">
+            <td class="px-4 py-3 text-end">
               <div class="relative inline-block">
-                <button type="button" (click)="onToggleMenu(customer.id)"
+                <button type="button" (click)="onToggleMenu(customer.id, $event)"
                   class="inline-flex items-center justify-center rounded-md text-sm font-medium cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
@@ -120,34 +112,47 @@
                   </svg>
                 </button>
 
-                @if (openMenuId() === customer.id) {
-                <div class="absolute right-0 z-10 mt-1 w-44 rounded-md border border-border bg-card py-1 shadow-card">
-                  <a [routerLink]="['/app/customers', customer.id]"
-                    class="block px-3 py-2 text-left text-xs hover:bg-accent">View details</a>
-                  <button type="button" (click)="onOpenEditDialog(customer)"
-                    class="block w-full px-3 py-2 text-left text-xs hover:bg-accent">Edit</button>
-                  <button type="button" (click)="onToggleStatus(customer)"
-                    class="block w-full px-3 py-2 text-left text-xs hover:bg-accent">
-                    {{ customer.status === 'Active' ? 'Deactivate' : 'Activate' }}
-                  </button>
-                  @if (isOwner()) {
-                  <button type="button" (click)="onDelete(customer)"
-                    class="block w-full px-3 py-2 text-left text-xs text-destructive hover:bg-destructive-soft">
-                    Delete
-                  </button>
-                  }
-                </div>
-                }
               </div>
             </td>
           </tr>
           }
         </tbody>
       </table>
+      @if (loading()) {
+      <div class="absolute inset-x-0 top-0 flex items-center justify-center bg-card/75 py-3 text-xs text-muted-foreground backdrop-blur-[1px]">
+        {{ text('customer.refreshing') }}
+      </div>
+      }
     </div>
     }
   </div>
 </div>
+
+@if (menuCustomer(); as customer) {
+  @if (menuPosition(); as pos) {
+    <div class="fixed inset-0 z-40" (click)="closeMenu()"></div>
+    <div #menuEl
+      class="fixed z-50 w-44 overflow-hidden rounded-md border border-border bg-popover py-1 text-start shadow-popover"
+      [style.top.px]="pos.top" [style.left.px]="pos.left"
+      [style.visibility]="menuVisible() ? 'visible' : 'hidden'"
+      (click)="$event.stopPropagation()">
+      <a [routerLink]="['/app/customers', customer.id]" (click)="closeMenu()"
+        class="block px-3 py-2 text-start text-xs hover:bg-accent">{{ text('customer.view') }}</a>
+      <button type="button" (click)="onOpenEditDialog(customer)"
+        class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">{{ text('customer.edit') }}</button>
+      <button type="button" (click)="onToggleStatus(customer)"
+        class="block w-full px-3 py-2 text-start text-xs hover:bg-accent">
+        {{ customer.status === 'Active' ? text('customer.deactivate') : text('customer.activate') }}
+      </button>
+      @if (isOwner()) {
+        <button type="button" (click)="onDelete(customer)"
+          class="block w-full px-3 py-2 text-start text-xs text-destructive hover:bg-destructive-soft">
+          {{ text('customer.delete') }}
+        </button>
+      }
+    </div>
+  }
+}
 
 @if (showAddDialog()) {
 <app-add-edit-customer-dialog [customer]="editingCustomer()" (closed)="onCloseAddDialog()" (saved)="onCustomerCreated()" />

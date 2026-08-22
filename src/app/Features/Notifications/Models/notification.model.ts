@@ -1,11 +1,5 @@
-/**
- * ASSUMPTION: numeric enum values match backend declaration order as
- * listed in the spec (LowStock, BatchExpiry90, BatchExpiry60,
- * BatchExpiry30, BatchExpired / Low, Medium, High, Critical).
- * Confirm against the .NET enum definitions and adjust if they differ.
- */
 export enum NotificationType {
-  LowStock = 0,
+  LowStock = 5,
   BatchExpiry90 = 1,
   BatchExpiry60 = 2,
   BatchExpiry30 = 3,
@@ -13,16 +7,18 @@ export enum NotificationType {
 }
 
 export enum NotificationPriority {
-  Low = 0,
-  Medium = 1,
-  High = 2,
-  Critical = 3,
+  Low = 1,
+  Medium = 2,
+  High = 3,
+  Critical = 4,
 }
 
 export interface Notification {
   id: string;
-  title: string;
-  message: string;
+  titleEn: string;
+  titleAr: string;
+  messageEn: string;
+  messageAr: string;
   type: NotificationType;
   priority: NotificationPriority;
   isRead: boolean;

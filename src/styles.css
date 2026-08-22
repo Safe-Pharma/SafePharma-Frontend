@@ -3,6 +3,10 @@
 @import "tailwindcss";
 
 :root {
+  --page-padding-inline: 0.75rem;
+  --page-padding-block: 0.75rem;
+  --page-section-gap: 1.5rem;
+  --page-action-gap: 0.5rem;
   --radius: .625rem;
   --background: oklch(98.5% .003 240);
   --foreground: oklch(18% .03 250);
@@ -134,4 +138,477 @@
 }
 .animate-fade-in-up {
   animation: fade-in-up .5s ease-out both;
+}
+
+@keyframes notification-panel-enter {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.notification-panel-enter {
+  animation: notification-panel-enter 180ms cubic-bezier(.22, 1, .36, 1) both;
+  transform-origin: top right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-panel-enter { animation: none; }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-padding-inline: 1.5rem;
+    --page-padding-block: 1.5rem;
+  }
+}
+
+.app-shell-main {
+  padding-block: var(--page-padding-block);
+  padding-inline: var(--page-padding-inline);
+}
+
+.app-page {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.app-page-section {
+  margin-top: var(--page-section-gap);
+}
+
+.app-page-action {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+
+/* Page headers project their actions through this wrapper. Keep the spacing
+   between the actual buttons consistent across every page. */
+.app-page-header-actions > [pageHeaderActions] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--page-action-gap);
+}
+
+.app-page-action-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-card);
+}
+
+.app-page-action-primary:hover { opacity: 0.9; }
+
+.app-page-action-secondary {
+  border: 1px solid var(--input);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.app-page-action-secondary:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.app-page-action svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modal-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-panel-enter {
+  from { opacity: 0; transform: translateY(6px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes chart-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Shared entrance treatment for actual modal overlays only. Do not target
+   arbitrary fixed inset-0 elements such as the mobile sidebar backdrop. */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000 !important;
+  isolation: isolate;
+  overscroll-behavior: contain;
+  animation: modal-backdrop-enter 140ms ease-out both;
+}
+
+.app-modal-overlay > div {
+  animation: modal-panel-enter 160ms ease-out both;
+}
+
+/* The drawer is anchored with logical `start-0`. Keep the responsive state
+   explicit so the drawer and backdrop always follow the same mobile signal,
+   including the correct slide direction in RTL. */
+.app-sidebar.sidebar-closed { transform: translateX(-100%); }
+[dir="rtl"] .app-sidebar.sidebar-closed { transform: translateX(100%); }
+.app-sidebar.sidebar-open { transform: translateX(0); }
+
+/* Keep the backdrop mounted for a real fade-out, but make the closed state
+   completely inert so it can never become an orphan click-blocking layer. */
+.sidebar-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 140ms ease-out, visibility 0s linear 140ms;
+}
+.sidebar-backdrop-visible {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 140ms ease-out;
+}
+
+.directional-icon {
+  display: inline-block;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+[dir="rtl"] .directional-icon { transform: scaleX(-1); }
+
+/* Keep the chevron's meaning explicit instead of combining transforms. The
+   expanded control points toward the sidebar edge (collapse); the collapsed
+   control points back toward the outlet (expand). */
+.app-sidebar:not(.sidebar-collapsed) .sidebar-collapse-icon { transform: rotate(0deg); }
+.app-sidebar.sidebar-collapsed .sidebar-collapse-icon { transform: rotate(180deg); }
+[dir="rtl"] .app-sidebar:not(.sidebar-collapsed) .sidebar-collapse-icon { transform: rotate(180deg); }
+[dir="rtl"] .app-sidebar.sidebar-collapsed .sidebar-collapse-icon { transform: rotate(0deg); }
+
+/* The expanded header has room for branding plus the collapse control. In
+   the 64px collapsed rail, compact both controls so they stay inside the
+   rail while preserving their logical start/end positions in RTL and LTR. */
+@media (min-width: 1024px) {
+  .app-sidebar.sidebar-collapsed .sidebar-header {
+    flex-direction: column;
+    gap: .25rem;
+    justify-content: center;
+    padding: .25rem;
+  }
+  .app-sidebar.sidebar-collapsed .sidebar-brand-mark { height: 1.75rem; width: 1.75rem; }
+  .app-sidebar.sidebar-collapsed .sidebar-collapse-trigger { height: 1.5rem; width: 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+  .app-sidebar,
+  [dir="rtl"] .app-sidebar,
+  .app-sidebar.sidebar-open,
+  [dir="rtl"] .app-sidebar.sidebar-open,
+  .app-sidebar.sidebar-closed,
+  [dir="rtl"] .app-sidebar.sidebar-closed { transform: translateX(0); }
+}
+
+.animate-chart-enter {
+  transform-origin: center;
+  animation: chart-enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Angular inserts routed components beside router-outlet. Keeping the
+   transition here means every private module gets the same short entrance
+   without adding a loader or changing each page component. */
+router-outlet + * {
+  animation: page-enter 160ms ease-out both;
+}
+
+.animate-cart-row {
+  animation: cart-row-highlight 220ms ease-out both;
+}
+
+@keyframes cart-row-highlight {
+  from { background-color: oklch(95% .04 250); }
+  to { background-color: transparent; }
+}
+
+/* Shared motion language for operational modules. Pages opt in with
+   `module-motion-page`, keeping the dashboard-quality feel consistent while
+   leaving unrelated screens untouched. */
+.module-motion-page {
+  --module-motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+.module-motion-report-grid > *,
+.portal-motion-page {
+  animation: module-motion-enter 560ms var(--module-motion-ease) both;
+}
+
+.module-motion-report-grid > *:nth-child(1) { animation-delay: 120ms; }
+.module-motion-report-grid > *:nth-child(2) { animation-delay: 200ms; }
+.module-motion-report-grid > *:nth-child(3) { animation-delay: 280ms; }
+
+.portal-motion-page {
+  --module-motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+.portal-motion-page > div:first-child {
+  animation: module-motion-enter 520ms var(--module-motion-ease) both;
+}
+
+.portal-motion-stats > *,
+.portal-motion-panel,
+.portal-motion-toolbar,
+.portal-motion-tabs {
+  animation: module-motion-pop 560ms var(--module-motion-ease) both;
+  transition: transform 220ms var(--module-motion-ease), box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.portal-motion-stats > *:nth-child(1) { animation-delay: 100ms; }
+.portal-motion-stats > *:nth-child(2) { animation-delay: 160ms; }
+.portal-motion-stats > *:nth-child(3) { animation-delay: 220ms; }
+.portal-motion-stats > *:nth-child(4) { animation-delay: 280ms; }
+
+.portal-motion-panel:hover,
+.portal-motion-toolbar:hover,
+.portal-motion-tabs:hover {
+  border-color: color-mix(in oklch, var(--primary) 24%, var(--border));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.portal-motion-grid > * {
+  animation: module-motion-row-in 420ms var(--module-motion-ease) both;
+}
+
+.portal-motion-grid > *:nth-child(1) { animation-delay: 160ms; }
+.portal-motion-grid > *:nth-child(2) { animation-delay: 220ms; }
+.portal-motion-grid > *:nth-child(3) { animation-delay: 280ms; }
+.portal-motion-grid > *:nth-child(4) { animation-delay: 340ms; }
+
+.portal-motion-page table tbody tr {
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.portal-motion-page table tbody tr:hover {
+  background-color: color-mix(in oklch, var(--primary-soft) 55%, transparent);
+}
+
+.module-motion-header {
+  animation: module-motion-enter 560ms var(--module-motion-ease) both;
+}
+
+.module-motion-page > .app-page-section,
+.module-motion-panel,
+.module-motion-toolbar,
+.module-motion-tabs,
+.module-motion-rail {
+  animation: module-motion-enter 620ms var(--module-motion-ease) both;
+}
+
+.module-motion-page > .app-page-section:nth-child(2) { animation-delay: 90ms; }
+.module-motion-page > .app-page-section:nth-child(3) { animation-delay: 180ms; }
+.module-motion-page > .app-page-section:nth-child(4) { animation-delay: 270ms; }
+
+.module-motion-stats > *,
+.module-motion-card {
+  position: relative;
+  overflow: hidden;
+  animation: module-motion-pop 600ms var(--module-motion-ease) both;
+  transition: transform 220ms var(--module-motion-ease), box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.module-motion-stats > *::before,
+.module-motion-card::before {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  content: '';
+  transform: scaleX(0);
+  transform-origin: start;
+  transition: transform 350ms var(--module-motion-ease);
+}
+
+.module-motion-stats > *:hover,
+.module-motion-card:hover {
+  border-color: color-mix(in oklch, var(--primary) 30%, var(--border));
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.module-motion-stats > *:hover::before,
+.module-motion-card:hover::before { transform: scaleX(1); }
+
+.module-motion-stats > *:nth-child(1) { animation-delay: 90ms; }
+.module-motion-stats > *:nth-child(2) { animation-delay: 150ms; }
+.module-motion-stats > *:nth-child(3) { animation-delay: 210ms; }
+.module-motion-stats > *:nth-child(4) { animation-delay: 270ms; }
+.module-motion-stats > *:nth-child(5) { animation-delay: 330ms; }
+
+.module-motion-panel {
+  transition: transform 220ms var(--module-motion-ease), box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.module-motion-panel:hover {
+  border-color: color-mix(in oklch, var(--primary) 20%, var(--border));
+  box-shadow: var(--shadow-elevated);
+}
+
+.module-motion-page input,
+.module-motion-page select,
+.module-motion-page button,
+.module-motion-page a {
+  transition-duration: 180ms;
+}
+
+.module-motion-page input:not([type='checkbox']):hover,
+.module-motion-page select:hover {
+  border-color: var(--border-strong);
+}
+
+.module-motion-page input:not([type='checkbox']):focus,
+.module-motion-page select:focus {
+  transform: translateY(-1px);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.module-motion-page .app-page-action,
+.module-motion-page .module-motion-tabs button,
+.module-motion-page .module-motion-rail button {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.module-motion-page .app-page-action:hover,
+.module-motion-page .module-motion-tabs button:hover,
+.module-motion-page .module-motion-rail button:hover {
+  transform: translateY(-2px);
+}
+
+.module-motion-page .module-motion-row,
+.module-motion-page .module-motion-panel table tbody tr,
+.module-motion-page .users-table tbody tr,
+.module-motion-page [data-inventory-table] tbody tr {
+  animation: module-motion-row-in 450ms var(--module-motion-ease) both;
+  transition: background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.module-motion-page .module-motion-row:nth-child(1),
+.module-motion-page .module-motion-panel table tbody tr:nth-child(1),
+.module-motion-page .users-table tbody tr:nth-child(1) { animation-delay: 260ms; }
+.module-motion-page .module-motion-row:nth-child(2),
+.module-motion-page .module-motion-panel table tbody tr:nth-child(2),
+.module-motion-page .users-table tbody tr:nth-child(2) { animation-delay: 320ms; }
+.module-motion-page .module-motion-row:nth-child(3),
+.module-motion-page .module-motion-panel table tbody tr:nth-child(3),
+.module-motion-page .users-table tbody tr:nth-child(3) { animation-delay: 380ms; }
+.module-motion-page .module-motion-row:nth-child(4),
+.module-motion-page .module-motion-panel table tbody tr:nth-child(4),
+.module-motion-page .users-table tbody tr:nth-child(4) { animation-delay: 440ms; }
+.module-motion-page .module-motion-row:nth-child(5),
+.module-motion-page .module-motion-panel table tbody tr:nth-child(5),
+.module-motion-page .users-table tbody tr:nth-child(5) { animation-delay: 500ms; }
+.module-motion-page .module-motion-row:nth-child(6),
+.module-motion-page .module-motion-panel table tbody tr:nth-child(6),
+.module-motion-page .users-table tbody tr:nth-child(6) { animation-delay: 560ms; }
+
+.module-motion-page .module-motion-row:hover,
+.module-motion-page .users-table tbody tr:hover,
+.module-motion-page [data-inventory-table] tbody tr:hover {
+  background-color: color-mix(in oklch, var(--primary-soft) 55%, transparent);
+}
+
+.module-motion-list > * {
+  animation: module-motion-row-in 420ms var(--module-motion-ease) both;
+}
+
+.module-motion-list > *:nth-child(1) { animation-delay: 260ms; }
+.module-motion-list > *:nth-child(2) { animation-delay: 320ms; }
+.module-motion-list > *:nth-child(3) { animation-delay: 380ms; }
+.module-motion-list > *:nth-child(4) { animation-delay: 440ms; }
+.module-motion-list > *:nth-child(5) { animation-delay: 500ms; }
+.module-motion-list > *:nth-child(6) { animation-delay: 560ms; }
+
+.module-motion-page .shadow-lg,
+.module-motion-page .shadow-popover {
+  animation: module-motion-menu-in 180ms var(--module-motion-ease) both;
+}
+
+.pos-motion-page .module-motion-toolbar input,
+.pos-motion-page .module-motion-toolbar > div > button,
+.pos-motion-page .module-motion-panel > div > button {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.pos-motion-page .module-motion-toolbar input:focus,
+.pos-motion-page .module-motion-toolbar > div > button:hover,
+.pos-motion-page .module-motion-panel > div > button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -16px color-mix(in oklch, var(--primary) 70%, transparent);
+}
+
+@keyframes module-motion-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes module-motion-pop {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes module-motion-row-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes module-motion-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-motion-header,
+  .module-motion-report-grid > *,
+  .portal-motion-page,
+  .portal-motion-page > div:first-child,
+  .module-motion-page > .app-page-section,
+  .module-motion-panel,
+  .module-motion-toolbar,
+  .module-motion-tabs,
+  .module-motion-rail,
+  .module-motion-stats > *,
+  .module-motion-card,
+  .module-motion-page .module-motion-row,
+  .module-motion-page .module-motion-panel table tbody tr,
+  .module-motion-page .users-table tbody tr,
+  .module-motion-page [data-inventory-table] tbody tr,
+  .module-motion-list > *,
+  .portal-motion-stats > *,
+  .portal-motion-panel,
+  .portal-motion-toolbar,
+  .portal-motion-tabs,
+  .portal-motion-grid > *,
+  .module-motion-page .shadow-lg,
+  .module-motion-page .shadow-popover { animation: none; }
 }

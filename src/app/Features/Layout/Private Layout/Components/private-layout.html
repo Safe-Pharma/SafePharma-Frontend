@@ -1,13 +1,17 @@
 @if (authSession.isAuthenticated()) {
   <div class="flex h-screen overflow-hidden bg-background">
-    <app-sidebar (logout)="onLogout()" />
+    <app-sidebar
+      [mobileOpen]="mobileSidebarOpen()"
+      (mobileClosed)="closeMobileSidebar()"
+      (logout)="onLogout()"
+    />
 
     <div class="flex min-w-0 flex-1 flex-col">
-      <div class="sticky top-0 z-40 bg-background/80 backdrop-blur-md">
-      <app-Private-Header />
-    </div>
+      <div class="sticky top-0 z-30 bg-background/80 backdrop-blur-md">
+        <app-Private-Header (menuToggle)="toggleMobileSidebar()" />
+      </div>
 
-      <main class="flex-1 overflow-y-auto p-4 md:p-6">
+      <main class="app-shell-main min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
         <router-outlet />
       </main>
     </div>

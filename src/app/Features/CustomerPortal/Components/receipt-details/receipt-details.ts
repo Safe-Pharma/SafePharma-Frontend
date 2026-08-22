@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe, Location } from '@angular/common';
+import { DatePipe, Location } from '@angular/common';
+import { EgpCurrencyPipe } from '../../../../Shared/Pipes/egp-currency.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { PortalApiService } from '../../Services/portal-api.service';
 import { PortalAuthService } from '../../Services/portal-auth.service';
@@ -9,7 +10,7 @@ import { PortalReceiptDetail, PortalReceiptListItem } from '../../Models/portal-
 import { PortalSkeleton } from '../../Shared/skeleton';
 import { PortalEmptyStateComponent } from '../../Shared/empty-state';
 import { PortalStatusBadge } from '../../Shared/status-badge';
-import { receiptStatusLabel, receiptStatusTone } from '../../Shared/receipt-status';
+import { receiptStatusTone } from '../../Shared/receipt-status';
 import {
   fadeSlideIn,
   staggerList,
@@ -26,7 +27,7 @@ import { PortalI18nService } from '../../Services/portal-i18n.service';
   standalone: true,
   imports: [
     DatePipe,
-    DecimalPipe,
+    EgpCurrencyPipe,
     PortalSkeleton,
     PortalEmptyStateComponent,
     PortalStatusBadge,
@@ -48,7 +49,6 @@ export class ReceiptDetailsPage implements OnInit {
   readonly loading = signal(true);
   readonly notFound = signal(false);
   readonly receipt = signal<PortalReceiptListItem | null>(null);
-  receiptStatusLabel = receiptStatusLabel;
   receiptStatusTone = receiptStatusTone;
 
   ngOnInit(): void {
@@ -73,7 +73,7 @@ export class ReceiptDetailsPage implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.notFound.set(true);
-        this.toast.show(getErrorMessage(err, 'Could not load this receipt.'), 'error');
+        this.toast.show(getErrorMessage(err, this.i18n.t('toast.loadReceiptError')), 'error');
       },
     });
   }

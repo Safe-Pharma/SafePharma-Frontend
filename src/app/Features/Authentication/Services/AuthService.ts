@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
+import { environment } from '../../../../environments/environment.production';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-     private baseUrl = 'https://localhost:7259/api/Authentication';
+     private baseUrl = `${environment.apiUrl}/Authentication`;
     constructor(private http: HttpClient, private authSession: AuthSessionService) {}
       login(data: any) {
          return this.http.post(`${this.baseUrl}/login`, data);

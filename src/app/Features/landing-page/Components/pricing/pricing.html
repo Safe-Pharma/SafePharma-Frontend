@@ -2,23 +2,23 @@
 
   <!-- Section heading -->
   <div class="mx-auto max-w-2xl text-center">
-    <div class="text-xs font-semibold uppercase tracking-wider text-success">Pricing</div>
-    <h2 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Simple plans that scale with you</h2>
-    <p class="mt-4 text-muted-foreground">Start with a 14-day free trial. No credit card required.</p>
+    <div class="text-xs font-semibold uppercase tracking-wider text-success">{{ i18n.text('landing.pricing') }}</div>
+    <h2 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{{ i18n.text('landing.pricingTitle') }}</h2>
+    <p class="mt-4 text-muted-foreground">{{ i18n.text('landing.pricingDescription') }}</p>
   </div>
 
   <!-- Pricing cards: 3-column grid on large screens -->
-  <div class="mt-12 grid gap-6 lg:grid-cols-3">
+  <div class="landing-pricing-grid mt-12 grid gap-6 lg:grid-cols-3">
 
     <!-- Plan 1: Starter -->
     <div class="relative rounded-2xl border bg-card p-6 border-border shadow-card">
-      <div class="text-sm font-semibold text-foreground">Starter</div>
-      <p class="mt-1 text-xs text-muted-foreground">For single-branch independent pharmacies.</p>
+      <div class="text-sm font-semibold text-foreground">{{ i18n.text('landing.starter') }}</div>
+      <p class="mt-1 text-xs text-muted-foreground">{{ i18n.text('landing.starterDescription') }}</p>
 
       <!-- Price -->
       <div class="mt-5 flex items-baseline gap-1">
-        <span class="text-4xl font-semibold tracking-tight">$49</span>
-        <span class="text-sm text-muted-foreground">/ month</span>
+        <span class="text-4xl font-semibold tracking-tight">{{ 49 | egpCurrency }}</span>
+        <span class="text-sm text-muted-foreground">{{ i18n.text('landing.perMonth') }}</span>
       </div>
 
       <!-- Feature list -->
@@ -27,30 +27,30 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>1 branch</span>
+          <span>{{ i18n.text('landing.oneBranch') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Up to 5 users</span>
+          <span>{{ i18n.text('landing.upTo5Users') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Inventory + POS</span>
+          <span>{{ i18n.text('landing.inventoryPos') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Email support</span>
+          <span>{{ i18n.text('landing.emailSupport') }}</span>
         </li>
       </ul>
 
-      <a href="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 mt-7 w-full">
-        Start Free Trial
+      <a routerLink="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 mt-7 w-full">
+        {{ i18n.text('public.subscribePharmacy') }}
       </a>
     </div>
 
@@ -59,16 +59,16 @@
 
       <!-- "Most popular" badge, floats above the card -->
       <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground">
-        Most popular
+        {{ i18n.text('landing.mostPopular') }}
       </span>
 
-      <div class="text-sm font-semibold text-foreground">Professional</div>
-      <p class="mt-1 text-xs text-muted-foreground">Everything growing chains need.</p>
+      <div class="text-sm font-semibold text-foreground">{{ i18n.text('landing.professional') }}</div>
+      <p class="mt-1 text-xs text-muted-foreground">{{ i18n.text('landing.professionalDescription') }}</p>
 
       <!-- Price -->
       <div class="mt-5 flex items-baseline gap-1">
-        <span class="text-4xl font-semibold tracking-tight">$129</span>
-        <span class="text-sm text-muted-foreground">/ month</span>
+        <span class="text-4xl font-semibold tracking-tight">{{ 129 | egpCurrency }}</span>
+        <span class="text-sm text-muted-foreground">{{ i18n.text('landing.perMonth') }}</span>
       </div>
 
       <!-- Feature list -->
@@ -77,47 +77,47 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Up to 5 branches</span>
+          <span>{{ i18n.text('landing.upTo5Branches') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Unlimited users</span>
+          <span>{{ i18n.text('landing.unlimitedUsers') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Purchasing + Suppliers</span>
+          <span>{{ i18n.text('landing.purchasingSuppliers') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Advanced reports</span>
+          <span>{{ i18n.text('landing.advancedReports') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Priority support</span>
+          <span>{{ i18n.text('landing.prioritySupport') }}</span>
         </li>
       </ul>
 
-      <a href="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 mt-7 w-full">
-        Start Free Trial
+      <a routerLink="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 mt-7 w-full">
+        {{ i18n.text('public.subscribePharmacy') }}
       </a>
     </div>
 
     <!-- Plan 3: Enterprise -->
     <div class="relative rounded-2xl border bg-card p-6 border-border shadow-card">
-      <div class="text-sm font-semibold text-foreground">Enterprise</div>
-      <p class="mt-1 text-xs text-muted-foreground">For large networks with custom needs.</p>
+      <div class="text-sm font-semibold text-foreground">{{ i18n.text('landing.enterprise') }}</div>
+      <p class="mt-1 text-xs text-muted-foreground">{{ i18n.text('landing.enterpriseDescription') }}</p>
 
       <!-- Price: no number, just "Custom" -->
       <div class="mt-5 flex items-baseline gap-1">
-        <span class="text-4xl font-semibold tracking-tight">Custom</span>
+        <span class="text-4xl font-semibold tracking-tight">{{ i18n.text('landing.custom') }}</span>
       </div>
 
       <!-- Feature list -->
@@ -126,36 +126,36 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Unlimited branches</span>
+          <span>{{ i18n.text('landing.unlimitedBranches') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>SSO + SAML</span>
+          <span>{{ i18n.text('landing.ssoSaml') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Custom integrations</span>
+          <span>{{ i18n.text('landing.customIntegrations') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>Dedicated CSM</span>
+          <span>{{ i18n.text('landing.dedicatedCsm') }}</span>
         </li>
         <li class="flex items-start gap-2 text-sm text-foreground">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true">
             <path d="M20 6 9 17l-5-5"></path>
           </svg>
-          <span>99.95% SLA</span>
+          <span>{{ i18n.text('landing.sla') }}</span>
         </li>
       </ul>
 
       <a href="/subscribe" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 mt-7 w-full">
-        Contact Sales
+        {{ i18n.text('landing.contactSales') }}
       </a>
     </div>
   </div>

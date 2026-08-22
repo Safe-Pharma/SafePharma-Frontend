@@ -1,0 +1,146 @@
+<section class="owner-payment-page">
+  <app-page-header
+    [icon]="'payment'"
+    [title]="i18n.text('ownerPaymentVerifications.title')"
+    [description]="i18n.text('ownerPaymentVerifications.subtitle')"
+  />
+
+  <section class="verification-panel" [attr.aria-label]="i18n.text('ownerPaymentVerifications.title')">
+    <div class="verification-tabs" role="tablist" [attr.aria-label]="i18n.text('ownerPaymentVerifications.views')">
+      <span class="verification-tab-indicator" [class.verification-tab-indicator-all]="activeView() === 'all'" aria-hidden="true"></span>
+      <button type="button" role="tab" [attr.aria-selected]="activeView() === 'pending'" [class.verification-tab-active]="activeView() === 'pending'" (click)="setView('pending')">
+        {{ i18n.text('ownerPaymentVerifications.pending') }}
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="activeView() === 'all'" [class.verification-tab-active]="activeView() === 'all'" (click)="setView('all')">
+        {{ i18n.text('ownerPaymentVerifications.all') }}
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="owner-payment-state" role="status" aria-live="polite">
+        <app-spinner size="md" />
+        <span>{{ i18n.text('ownerPaymentVerifications.loading') }}</span>
+      </div>
+    } @else if (error()) {
+      <div class="owner-payment-state" role="alert">
+        <strong>{{ error() }}</strong>
+        <button type="button" class="retry-button" (click)="loadVerifications()">{{ i18n.text('ownerPaymentVerifications.retry') }}</button>
+      </div>
+    } @else if (verifications().length === 0) {
+      <div class="owner-payment-state">
+        <strong>{{ activeView() === 'pending' ? i18n.text('ownerPaymentVerifications.emptyPending') : i18n.text('ownerPaymentVerifications.emptyAll') }}</strong>
+      </div>
+    } @else {
+      <div class="verification-table-scroll">
+        <table class="verification-table">
+          <thead>
+            <tr>
+              <th>{{ i18n.text('ownerPaymentVerifications.reference') }}</th>
+              <th>{{ i18n.text('ownerPaymentVerifications.pharmacy') }}</th>
+              <th>{{ i18n.text('ownerPaymentVerifications.plan') }}</th>
+              <th>{{ i18n.text('ownerPaymentVerifications.amount') }}</th>
+              <th>{{ i18n.text('ownerPaymentVerifications.paymentDate') }}</th>
+              <th>{{ i18n.text('ownerPaymentVerifications.status') }}</th>
+              <th>{{ i18n.text('ownerPaymentVerifications.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (verification of verifications(); track verification.id) {
+              <tr>
+                <td class="reference-cell">{{ verification.referenceCode || '—' }}</td>
+                <td>{{ verification.pharmacyName || '—' }}</td>
+                <td>{{ verification.planTier || '—' }}</td>
+                <td>{{ formatAmount(verification.paidAmount) }}</td>
+                <td>{{ formatDate(verification.paymentDate) }}</td>
+                <td><span class="status-badge" [class]="'status-' + statusKind(verification.status)"><span class="status-dot"></span>{{ statusLabel(verification.status) }}</span></td>
+                <td><button type="button" class="review-button" (click)="openReview(verification)">{{ i18n.text('ownerPaymentVerifications.review') }}</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  @if (reviewOpen() && selectedVerification(); as verification) {
+    <app-modal-shell
+      size="lg"
+      [title]="i18n.text('ownerPaymentVerifications.reviewTitle')"
+      [subtitle]="verification.pharmacyName || '—'"
+      (close)="closeReview()"
+    >
+      <div class="detail-grid">
+        <div><span>{{ i18n.text('ownerPaymentVerifications.reference') }}</span><strong>{{ verification.referenceCode || '—' }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.subscription') }}</span><strong>{{ verification.subscriptionId || '—' }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.planTier') }}</span><strong>{{ verification.planTier || '—' }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.billingCycle') }}</span><strong>{{ verification.billingCycle || '—' }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.paidAmount') }}</span><strong>{{ formatAmount(verification.paidAmount) }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.paymentMethod') }}</span><strong>{{ verification.paymentMethod || '—' }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.paymentDate') }}</span><strong>{{ formatDate(verification.paymentDate) }}</strong></div>
+        <div><span>{{ i18n.text('ownerPaymentVerifications.status') }}</span><strong><span class="status-badge" [class]="'status-' + statusKind(verification.status)">{{ statusLabel(verification.status) }}</span></strong></div>
+      </div>
+      @if (verification.transactionReference) { <p class="transaction-reference">{{ i18n.text('ownerPaymentVerifications.transactionReference') }}: {{ verification.transactionReference }}</p> }
+      <section class="receipt-section" [attr.aria-labelledby]="'receipt-heading-' + verification.id">
+        <h3 [id]="'receipt-heading-' + verification.id">{{ i18n.text('ownerPaymentVerifications.receipt') }}</h3>
+        @if (verification.receiptUrl) {
+          <figure class="receipt-preview">
+            <div class="receipt-preview-frame" [class.receipt-preview-loading]="receiptImageLoading()">
+              @if (!receiptImageError()) {
+                <img
+                  [src]="verification.receiptUrl"
+                  [alt]="i18n.text('ownerPaymentVerifications.receiptPreview')"
+                  (load)="handleReceiptImageLoad()"
+                  (error)="handleReceiptImageError()"
+                />
+              }
+              @if (receiptImageLoading()) {
+                <div class="receipt-image-state" role="status" aria-live="polite">
+                  <app-spinner size="sm" />
+                  <span>{{ i18n.text('ownerPaymentVerifications.receiptLoading') }}</span>
+                </div>
+              } @else if (receiptImageError()) {
+                <div class="receipt-image-state" role="alert">
+                  <span>{{ i18n.text('ownerPaymentVerifications.receiptCouldNotLoad') }}</span>
+                </div>
+              }
+            </div>
+            <figcaption>
+              <a [href]="verification.receiptUrl" target="_blank" rel="noopener noreferrer">
+                {{ i18n.text('ownerPaymentVerifications.openReceipt') }}
+              </a>
+            </figcaption>
+          </figure>
+        } @else {
+          <p class="receipt-empty">{{ i18n.text('ownerPaymentVerifications.noReceipt') }}</p>
+        }
+      </section>
+      @if (mutationError()) { <div class="mutation-error" role="alert">{{ mutationError() }}</div> }
+      <div modalFooter class="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          @if (canReview()) {
+            <button type="button" class="reject-button rounded-lg px-4 py-2.5 text-sm font-semibold" [disabled]="mutationAction() !== null" (click)="openRejectDialog()">{{ mutationAction() === 'reject' ? i18n.text('ownerPaymentVerifications.rejecting') : i18n.text('ownerPaymentVerifications.reject') }}</button>
+            <button type="button" class="approve-button rounded-lg px-4 py-2.5 text-sm font-semibold" [disabled]="mutationAction() !== null" (click)="confirmApprove()">@if (mutationAction() === 'approve') { <app-spinner size="sm" /> }{{ mutationAction() === 'approve' ? i18n.text('ownerPaymentVerifications.approving') : i18n.text('ownerPaymentVerifications.confirmApproval') }}</button>
+          } @else {
+            <button type="button" class="secondary-button rounded-lg px-4 py-2.5 text-sm font-semibold" (click)="closeReview()">{{ i18n.text('common.actions.close') }}</button>
+          }
+      </div>
+    </app-modal-shell>
+  }
+
+  @if (rejectDialogOpen()) {
+    <app-modal-shell
+      size="md"
+      [title]="i18n.text('ownerPaymentVerifications.rejectTitle')"
+      [subtitle]="i18n.text('ownerPaymentVerifications.rejectDescription')"
+      (close)="cancelReject()"
+    >
+      <label for="rejection-reason" class="mb-1.5 block text-xs font-semibold text-slate-700">{{ i18n.text('ownerPaymentVerifications.rejectionReason') }}</label>
+      <textarea id="rejection-reason" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" [value]="rejectionReason()" [attr.placeholder]="i18n.text('ownerPaymentVerifications.rejectionReasonPlaceholder')" (input)="setRejectionReason($any($event.target).value)"></textarea>
+      @if (rejectionValidation()) { <p class="mt-1 text-xs text-red-600" role="alert">{{ i18n.text('ownerPaymentVerifications.rejectionReasonRequired') }}</p> }
+      @if (mutationError()) { <div class="mutation-error mt-4" role="alert">{{ mutationError() }}</div> }
+      <div modalFooter class="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50" [disabled]="mutationAction() !== null" (click)="cancelReject()">{{ i18n.text('common.actions.cancel') }}</button>
+        <button type="button" class="reject-button rounded-lg px-4 py-2.5 text-sm font-semibold" [disabled]="mutationAction() !== null" (click)="submitReject()">@if (mutationAction() === 'reject') { <app-spinner size="sm" /> }{{ mutationAction() === 'reject' ? i18n.text('ownerPaymentVerifications.rejecting') : i18n.text('ownerPaymentVerifications.reject') }}</button>
+      </div>
+    </app-modal-shell>
+  }
+</section>
