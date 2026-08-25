@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ALL_BRANCHES, ALL_STATUSES } from '../../models/user.model';
+import { ALL_STATUSES } from '../../models/user.model';
 import { UserFormValue } from '../../models/user-form.model';
 import { passwordsMatchValidator } from '../../models/user-form.validator';
 import { RolesStateService } from '../../services/roles-state.service';
 import { I18nService } from '../../../../Core/Services/i18n.service';
+import { emailWithDomainValidator } from '../../../../Shared/utils/email-validator';
 
 @Component({
   selector: 'app-user-form',
@@ -27,14 +28,13 @@ export class UserFormComponent implements OnInit {
 
   readonly roles        = this.rolesState.roles;
   readonly rolesLoading = this.rolesState.loading;
-  readonly branches     = ALL_BRANCHES;
   readonly statuses     = ALL_STATUSES;
 
   readonly form = this.fb.group(
     {
       firstName:       this.fb.control('', Validators.required),
       lastName:        this.fb.control('', Validators.required),
-      email:           this.fb.control('', [Validators.required, Validators.email]),
+      email:           this.fb.control('', [Validators.required, emailWithDomainValidator]),
       phone:           this.fb.control('', Validators.required),
       password:        this.fb.control(''),
       confirmPassword: this.fb.control(''),
@@ -85,7 +85,7 @@ export class UserFormComponent implements OnInit {
     if (!control.invalid || !control.touched) return null;
 
     if (control.hasError('required'))  return this.i18n.text('users.required');
-    if (control.hasError('email'))     return this.i18n.text('users.validEmail');
+    if (control.hasError('email') || control.hasError('emailDomain')) return this.i18n.text('users.validEmail');
     if (control.hasError('minlength')) return this.i18n.text('users.minCharacters', { count: control.getError('minlength').requiredLength });
 
     return this.i18n.text('users.invalid');

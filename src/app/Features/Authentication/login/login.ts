@@ -10,6 +10,7 @@ import { passwordComplexityValidator } from '../../subscribe/Validators/custom-v
 import { Router } from '@angular/router';
 import { AuthSessionService } from '../../../Core/Services/auth-session.service';
 import { I18nService } from '../../../Core/Services/i18n.service';
+import { emailWithDomainValidator } from '../../../Shared/utils/email-validator';
 
 @Component({
   selector: 'app-login',
@@ -32,7 +33,7 @@ export class Login {
   text(key: string, params?: Record<string, string | number>): string { return this.i18n.text(key, params); }
 
   loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, emailWithDomainValidator]],
     password: ['', [Validators.required, Validators.minLength(8), passwordComplexityValidator]],
     remember: [true],
   });
@@ -50,7 +51,7 @@ export class Login {
     const errors = control.errors;
     if (errors['server']) return errors['server'];
     if (errors['required']) return this.i18n.text('common.required');
-    if (errors['email']) return this.i18n.text('auth.invalidEmail');
+    if (errors['email'] || errors['emailDomain']) return this.i18n.text('auth.invalidEmail');
     if (errors['minlength'])
       return this.i18n.text('auth.passwordMin', { count: errors['minlength'].requiredLength });
     if (errors['maxlength'])

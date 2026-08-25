@@ -70,7 +70,6 @@
         <button (click)="toggleStatus.emit(user); closeMenu()">
           {{ user.isActive ? i18n.text('users.deactivate') : i18n.text('users.activate') }}
         </button>
-        <button class="danger" (click)="delete.emit(user); closeMenu()">{{ i18n.text('users.delete') }}</button>
       </div>
     </div>
   }

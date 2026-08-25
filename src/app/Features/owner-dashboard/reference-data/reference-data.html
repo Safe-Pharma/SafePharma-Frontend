@@ -1,0 +1,85 @@
+<section class="owner-reference-page">
+  <app-page-header
+    [icon]="'settings'"
+    [title]="i18n.text('ownerReferenceData.title')"
+    [description]="i18n.text('ownerReferenceData.subtitle')"
+  />
+
+  <div class="reference-card-grid">
+    @for (card of cards; track card.key) {
+      <article class="reference-card">
+        <div class="reference-card-heading">
+          <div class="reference-card-icon" [class]="'reference-card-icon-' + card.icon" aria-hidden="true">
+            @if (card.icon === 'condition') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v18M3 12h18"></path>
+                <circle cx="12" cy="12" r="9"></circle>
+              </svg>
+            } @else if (card.icon === 'organ') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 4a3 3 0 0 0-3 3v2a4 4 0 0 1-2 3.5A3 3 0 0 0 5.5 18H8a3 3 0 0 0 3-3V9a5 5 0 0 1 1-3 5 5 0 0 1 1 3v6a3 3 0 0 0 3 3h2.5a3 3 0 0 0 1.5-5.5A4 4 0 0 1 18 9V7a3 3 0 0 0-3-3"></path>
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 4.5 6v5.5c0 4.8 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.7 7.5-9.5V6L12 3Z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            }
+          </div>
+          <div>
+            <h2>{{ i18n.text(card.title) }}</h2>
+            <p>{{ i18n.text(card.description) }}</p>
+          </div>
+        </div>
+
+        <form [formGroup]="formFor(card.key)" (ngSubmit)="submit(card.key)" novalidate>
+          <div class="reference-field">
+            <label [for]="card.key + '-name-en'">{{ i18n.text('ownerReferenceData.nameEn') }}</label>
+            <input
+              [id]="card.key + '-name-en'"
+              type="text"
+              formControlName="nameEn"
+              autocomplete="off"
+              [class.reference-invalid]="fieldInvalid(card.key, 'nameEn')"
+            />
+            @if (fieldInvalid(card.key, 'nameEn')) {
+              <span class="reference-field-error">{{ i18n.text('common.required') }}</span>
+            }
+          </div>
+
+          <div class="reference-field">
+            <label [for]="card.key + '-name-ar'">{{ i18n.text('ownerReferenceData.nameAr') }}</label>
+            <input
+              [id]="card.key + '-name-ar'"
+              type="text"
+              formControlName="nameAr"
+              autocomplete="off"
+              dir="auto"
+              [class.reference-invalid]="fieldInvalid(card.key, 'nameAr')"
+            />
+            @if (fieldInvalid(card.key, 'nameAr')) {
+              <span class="reference-field-error">{{ i18n.text('common.required') }}</span>
+            }
+          </div>
+
+          @if (errors()[card.key]; as error) {
+            <div class="reference-error" role="alert">{{ error }}</div>
+          }
+          @if (successKey() === card.key) {
+            <div class="reference-success" role="status">{{ i18n.text('ownerReferenceData.createSuccess') }}</div>
+          }
+
+          <button type="submit" class="reference-submit" [disabled]="isSubmitting(card.key)">
+            @if (isSubmitting(card.key)) {
+              <app-spinner size="sm" />
+              {{ i18n.text('ownerReferenceData.adding') }}
+            } @else {
+              <span aria-hidden="true">+</span>
+              {{ i18n.text('ownerReferenceData.add') }}
+            }
+          </button>
+        </form>
+      </article>
+    }
+  </div>
+</section>

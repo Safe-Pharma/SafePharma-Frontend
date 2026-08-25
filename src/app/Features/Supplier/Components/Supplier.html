@@ -264,70 +264,79 @@
         </button>
       </div>
 
-      <form (ngSubmit)="submitForm()" class="space-y-4">
+      <form (ngSubmit)="submitForm()" class="space-y-4" novalidate>
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.name') }}</label>
-            <input type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [placeholder]="text('supplier.namePlaceholder')" [(ngModel)]="formModel.name" name="name" required />
+            <label for="supplier-name" class="text-sm font-medium">{{ text('supplier.name') }}</label>
+            <input id="supplier-name" type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              [class.border-destructive]="fieldError('name')" [placeholder]="text('supplier.namePlaceholder')" [(ngModel)]="formModel.name" (ngModelChange)="clearFieldError('name')" name="name" required />
+            @if (fieldError('name'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.contactPerson') }}</label>
-            <input type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [placeholder]="text('supplier.contactPlaceholder')" [(ngModel)]="formModel.contactPerson" name="contactPerson" required />
+            <label for="supplier-contact-person" class="text-sm font-medium">{{ text('supplier.contactPerson') }}</label>
+            <input id="supplier-contact-person" type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              [class.border-destructive]="fieldError('contactPerson')" [placeholder]="text('supplier.contactPlaceholder')" [(ngModel)]="formModel.contactPerson" (ngModelChange)="clearFieldError('contactPerson')" name="contactPerson" required />
+            @if (fieldError('contactPerson'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.phone') }}</label>
-            <input type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [placeholder]="text('supplier.phonePlaceholder')" [(ngModel)]="formModel.phone" name="phone" required />
+            <label for="supplier-phone" class="text-sm font-medium">{{ text('supplier.phone') }}</label>
+            <input id="supplier-phone" type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              [class.border-destructive]="fieldError('phone')" [placeholder]="text('supplier.phonePlaceholder')" [(ngModel)]="formModel.phone" (ngModelChange)="clearFieldError('phone')" name="phone" required />
+            @if (fieldError('phone'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.email') }}</label>
-            <input type="email" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [placeholder]="text('supplier.emailPlaceholder')" [(ngModel)]="formModel.email" name="email" required />
+            <label for="supplier-email" class="text-sm font-medium">{{ text('supplier.email') }}</label>
+            <input id="supplier-email" type="email" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              [class.border-destructive]="fieldError('email')" [placeholder]="text('supplier.emailPlaceholder')" [(ngModel)]="formModel.email" (ngModelChange)="clearFieldError('email')" name="email" required />
+            @if (fieldError('email'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-sm font-medium">{{ text('supplier.address') }}</label>
+          <label for="supplier-address" class="text-sm font-medium">{{ text('supplier.address') }}</label>
           <input type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            [placeholder]="text('supplier.addressPlaceholder')" [(ngModel)]="formModel.address" name="address" required />
+            id="supplier-address" [class.border-destructive]="fieldError('address')" [placeholder]="text('supplier.addressPlaceholder')" [(ngModel)]="formModel.address" (ngModelChange)="clearFieldError('address')" name="address" required />
+          @if (fieldError('address'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.country') }}</label>
+            <label for="supplier-country" class="text-sm font-medium">{{ text('supplier.country') }}</label>
             <select class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [(ngModel)]="formModel.countryId" name="countryId" required>
+              id="supplier-country" [class.border-destructive]="fieldError('countryId')" [(ngModel)]="formModel.countryId" (ngModelChange)="clearFieldError('countryId')" name="countryId" required>
               <option value="" disabled>{{ text('supplier.selectCountry') }}</option>
               @for (c of countries(); track c.id) {
                 <option [value]="c.id">{{ c.name }}</option>
               }
             </select>
+            @if (fieldError('countryId'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.taxNumber') }}</label>
+            <label for="supplier-tax-number" class="text-sm font-medium">{{ text('supplier.taxNumber') }}</label>
             <input type="text" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [placeholder]="text('supplier.taxPlaceholder')" [(ngModel)]="formModel.taxNumber" name="taxNumber" />
+              id="supplier-tax-number" [class.border-destructive]="fieldError('taxNumber')" [placeholder]="text('supplier.taxPlaceholder')" [(ngModel)]="formModel.taxNumber" (ngModelChange)="clearFieldError('taxNumber')" name="taxNumber" />
+            @if (fieldError('taxNumber'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.balance') }}</label>
+            <label for="supplier-balance" class="text-sm font-medium">{{ text('supplier.balance') }}</label>
             <input type="number" min="0" step="0.01" class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [(ngModel)]="formModel.outstanding" name="outstanding" />
+              id="supplier-balance" [class.border-destructive]="fieldError('outstanding')" [(ngModel)]="formModel.outstanding" (ngModelChange)="clearFieldError('outstanding')" name="outstanding" />
+            @if (fieldError('outstanding'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
           <div class="space-y-1.5">
-            <label class="text-sm font-medium">{{ text('supplier.status') }}</label>
+            <label for="supplier-status" class="text-sm font-medium">{{ text('supplier.status') }}</label>
             <select class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              [(ngModel)]="formModel.status" name="status">
+              id="supplier-status" [class.border-destructive]="fieldError('status')" [(ngModel)]="formModel.status" (ngModelChange)="clearFieldError('status')" name="status">
               <option value="Active">{{ text('supplier.statusActive') }}</option>
               <option value="Inactive">{{ text('supplier.statusInactive') }}</option>
             </select>
+            @if (fieldError('status'); as error) { <p class="text-xs text-destructive">{{ error }}</p> }
           </div>
         </div>
 

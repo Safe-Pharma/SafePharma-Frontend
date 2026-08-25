@@ -22,7 +22,6 @@ export class UsersTableComponent implements AfterViewChecked, OnDestroy {
  
   view         = output<User>();
   edit         = output<User>();
-  delete       = output<User>();
   toggleStatus = output<User>();
  
   openMenuId  = signal<string | null>(null);

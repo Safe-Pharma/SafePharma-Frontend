@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthSessionService } from '../../../../Core/Services/auth-session.service';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user.model';
 import { UsersFilterBarComponent } from '../../components/users-filter-bar/users-filter-bar';
@@ -27,9 +28,13 @@ import { PageHeaderComponent } from '../../../../Shared/Components/page-header/p
 })
 export class UsersListComponent {
   private readonly router = inject(Router);
+  private readonly authSession = inject(AuthSessionService);
   protected readonly i18n = inject(I18nService);
   protected readonly usersService = inject(UsersService);
 
+  protected readonly isAdmin = computed(
+    () => this.authSession.user()?.role?.trim().toLowerCase() === 'admin',
+  );
   protected readonly isCreateDialogOpen = signal(false);
   protected readonly editingUser = signal<User | null>(null);
 
@@ -51,10 +56,6 @@ export class UsersListComponent {
 
   onEditDialogClosed(): void {
     this.editingUser.set(null);
-  }
-
-  onDelete(user: User): void {
-    this.usersService.deleteUser(user.id);
   }
 
   onToggleStatus(user: User): void {

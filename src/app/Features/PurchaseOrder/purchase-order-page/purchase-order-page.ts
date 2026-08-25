@@ -13,6 +13,7 @@ import { MedicineSearchResult } from '../../Sales/pos/Model/pos.models';
 import { EgpCurrencyPipe } from '../../../Shared/Pipes/egp-currency.pipe';
 import { I18nService } from '../../../Core/Services/i18n.service';
 import { PageHeaderComponent } from '../../../Shared/Components/page-header/page-header';
+import { BarcodeScannerInputDirective } from '../../../Shared/Directives/barcode-scanner-input';
 
 interface PurchaseLineErrors {
   medicine?: string;
@@ -27,7 +28,7 @@ type PurchaseLineField = keyof PurchaseLineErrors;
 @Component({
   selector: 'app-purchase-order-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, Spinner, LoadingOverlay, ModalShellComponent, EgpCurrencyPipe, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, Spinner, LoadingOverlay, ModalShellComponent, EgpCurrencyPipe, PageHeaderComponent, BarcodeScannerInputDirective],
   templateUrl: './purchase-order-page.html',
   styleUrl: './purchase-order-page.css',
 })

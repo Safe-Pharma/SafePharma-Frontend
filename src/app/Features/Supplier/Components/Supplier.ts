@@ -47,6 +47,9 @@ interface SupplierFormModel {
   outstanding: number;
 }
 
+type SupplierFormField = keyof SupplierFormModel;
+type SupplierFormErrors = Partial<Record<SupplierFormField, string>>;
+
 const EMPTY_FORM: SupplierFormModel = {
   name: '',
   contactPerson: '',
@@ -154,6 +157,7 @@ export class Suppliers implements OnInit, OnDestroy {
   editingSupplier = signal<Supplier | null>(null);
   submitting = signal(false);
   formError = signal<string | null>(null);
+  fieldErrors = signal<SupplierFormErrors>({});
   formModel: SupplierFormModel = { ...EMPTY_FORM };
 
   confirmDeleteSupplier = signal<Supplier | null>(null);
@@ -201,7 +205,7 @@ export class Suppliers implements OnInit, OnDestroy {
   openCreateModal(): void {
     this.editingSupplier.set(null);
     this.formModel = { ...EMPTY_FORM };
-    this.formError.set(null);
+    this.clearFormErrors();
     this.showFormModal.set(true);
   }
 
@@ -224,12 +228,103 @@ export class Suppliers implements OnInit, OnDestroy {
       status: supplier.status,
       outstanding: supplier.outstanding,
     };
-    this.formError.set(null);
+    this.clearFormErrors();
     this.showFormModal.set(true);
   }
 
   closeFormModal(): void {
     this.showFormModal.set(false);
+  }
+
+  fieldError(field: SupplierFormField): string | null {
+    return this.fieldErrors()[field] ?? null;
+  }
+
+  clearFieldError(field: SupplierFormField): void {
+    if (!this.fieldErrors()[field]) return;
+
+    const errors = { ...this.fieldErrors() };
+    delete errors[field];
+    this.fieldErrors.set(errors);
+  }
+
+  private clearFormErrors(): void {
+    this.formError.set(null);
+    this.fieldErrors.set({});
+  }
+
+  private validateForm(): SupplierFormErrors {
+    const errors: SupplierFormErrors = {};
+    const name = this.formModel.name.trim();
+    const contactPerson = this.formModel.contactPerson.trim();
+    const phone = this.formModel.phone.trim();
+    const email = this.formModel.email.trim();
+    const address = this.formModel.address.trim();
+    const outstanding = Number(this.formModel.outstanding);
+
+    if (!name) errors.name = this.text('common.required');
+    if (!contactPerson) errors.contactPerson = this.text('common.required');
+    if (!phone) errors.phone = this.text('common.required');
+    if (!email) {
+      errors.email = this.text('common.required');
+    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+      errors.email = this.text('auth.invalidEmail');
+    }
+    if (!address) errors.address = this.text('common.required');
+    if (!this.formModel.countryId) errors.countryId = this.text('common.required');
+    if (Number.isNaN(outstanding) || outstanding < 0) {
+      errors.outstanding = this.text('common.invalid');
+    }
+
+    return errors;
+  }
+
+  private normalizeFieldName(field: string): SupplierFormField | null {
+    const normalized = field.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const fieldNames: Record<string, SupplierFormField> = {
+      name: 'name',
+      suppliername: 'name',
+      contact: 'contactPerson',
+      contactperson: 'contactPerson',
+      phone: 'phone',
+      phonenumber: 'phone',
+      email: 'email',
+      address: 'address',
+      country: 'countryId',
+      countryid: 'countryId',
+      tax: 'taxNumber',
+      taxnumber: 'taxNumber',
+      outstanding: 'outstanding',
+      balance: 'outstanding',
+      status: 'status',
+    };
+
+    return fieldNames[normalized] ?? null;
+  }
+
+  private getBackendFieldErrors(err: any): SupplierFormErrors {
+    const backendErrors = err?.error?.errors;
+    if (!backendErrors || typeof backendErrors !== 'object' || Array.isArray(backendErrors)) {
+      return {};
+    }
+
+    const errors: SupplierFormErrors = {};
+    for (const [field, value] of Object.entries(backendErrors)) {
+      const normalizedField = this.normalizeFieldName(field);
+      if (!normalizedField) continue;
+
+      const messages = (Array.isArray(value) ? value : [value])
+        .map((item: any) =>
+          typeof item === 'string' ? item : item?.errorMessage ?? item?.message
+        )
+        .filter((message): message is string => Boolean(message));
+
+      if (messages.length > 0) {
+        errors[normalizedField] = messages.join(' ');
+      }
+    }
+
+    return errors;
   }
 
   submitForm(): void {
@@ -239,13 +334,15 @@ export class Suppliers implements OnInit, OnDestroy {
     const email = this.formModel.email.trim();
     const address = this.formModel.address.trim();
 
-    if (!name || !contactPerson || !phone || !email || !address || !this.formModel.countryId) {
-      this.formError.set(this.text('common.required'));
+    const validationErrors = this.validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      this.formError.set(null);
+      this.fieldErrors.set(validationErrors);
       return;
     }
 
     this.submitting.set(true);
-    this.formError.set(null);
+    this.clearFormErrors();
 
     const editing = this.editingSupplier();
     const dto: SupplierCreateDto | SupplierUpdateDto = {
@@ -272,6 +369,13 @@ export class Suppliers implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.submitting.set(false);
+        const backendFieldErrors = this.getBackendFieldErrors(err);
+        if (Object.keys(backendFieldErrors).length > 0) {
+          this.fieldErrors.set(backendFieldErrors);
+          this.formError.set(null);
+          return;
+        }
+
         this.formError.set(
           err?.error?.message ??
             (err?.status === 409
