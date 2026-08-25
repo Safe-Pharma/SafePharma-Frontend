@@ -33,7 +33,7 @@
       </p>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex min-h-0 flex-1 flex-col">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex min-h-0 flex-1 flex-col" novalidate>
       <div class="dialog-form-body grid min-h-0 flex-1 gap-4 overflow-y-auto px-6 py-5">
       <div class="grid gap-4 md:grid-cols-2">
       <div class="grid gap-2">
@@ -41,18 +41,12 @@
         <input
           id="c-name"
           formControlName="name"
+          (input)="clearFieldError('name')"
+          [class.border-destructive]="fieldError('name')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-        @if (form.get('name')?.invalid && form.get('name')?.touched) {
-          <p class="text-xs text-destructive">
-            @if (form.get('name')?.hasError('required')) {
-              {{ i18n.text('customer.nameRequired') }}
-            } @else if (form.get('name')?.hasError('maxlength')) {
-              {{ i18n.text('customer.nameTooLong') }}
-            } @else if (form.get('name')?.hasError('invalidName')) {
-              {{ i18n.text('customer.invalidName') }}
-            }
-          </p>
+        @if (fieldError('name'); as error) {
+          <p class="text-xs text-destructive">{{ error }}</p>
         }
       </div>
       <div class="grid gap-2">
@@ -61,10 +55,12 @@
           id="c-email"
           type="email"
           formControlName="email"
+          (input)="clearFieldError('email')"
+          [class.border-destructive]="fieldError('email')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-        @if (form.get('email')?.invalid && form.get('email')?.touched) {
-          <p class="text-xs text-destructive">{{ i18n.text('customer.enterValidEmail') }}</p>
+        @if (fieldError('email'); as error) {
+          <p class="text-xs text-destructive">{{ error }}</p>
         }
       </div>
       </div>
@@ -73,17 +69,15 @@
         <input
           id="c-phone"
           formControlName="phone"
+          (input)="clearFieldError('phone')"
+          [class.border-destructive]="fieldError('phone')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <p class="text-xs text-muted-foreground">
           {{ i18n.text('customer.requiredWithoutParent') }}
         </p>
-        @if (form.get('phone')?.invalid && form.get('phone')?.touched) {
-          <p class="text-xs text-destructive">
-            @if (form.get('phone')?.hasError('invalidPhone')) {
-              {{ i18n.text('customer.invalidPhone') }}
-            }
-          </p>
+        @if (fieldError('phone'); as error) {
+          <p class="text-xs text-destructive">{{ error }}</p>
         }
       </div>
      
@@ -99,8 +93,13 @@
         <input
           id="c-address"
           formControlName="address"
+          (input)="clearFieldError('address')"
+          [class.border-destructive]="fieldError('address')"
           class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
+        @if (fieldError('address'); as error) {
+          <p class="text-xs text-destructive">{{ error }}</p>
+        }
       </div>
 
       <div class="grid grid-cols-2 gap-4">
@@ -110,19 +109,29 @@
             id="c-dob"
             type="date"
             formControlName="dateOfBirth"
+            (change)="clearFieldError('dateOfBirth')"
+            [class.border-destructive]="fieldError('dateOfBirth')"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
+          @if (fieldError('dateOfBirth'); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
         </div>
         <div class="grid gap-2">
           <label class="text-sm font-medium" for="c-status">{{ i18n.text('customer.status') }}</label>
           <select
             id="c-status"
             formControlName="status"
+            (change)="clearFieldError('status')"
+            [class.border-destructive]="fieldError('status')"
             class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             <option value="Active">{{ i18n.text('customer.active') }}</option>
             <option value="Inactive">{{ i18n.text('customer.inactive') }}</option>
           </select>
+          @if (fieldError('status'); as error) {
+            <p class="text-xs text-destructive">{{ error }}</p>
+          }
         </div>
       </div>
 
@@ -131,9 +140,14 @@
         <textarea
           id="c-notes"
           formControlName="notes"
+          (input)="clearFieldError('notes')"
+          [class.border-destructive]="fieldError('notes')"
           rows="2"
           class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         ></textarea>
+        @if (fieldError('notes'); as error) {
+          <p class="text-xs text-destructive">{{ error }}</p>
+        }
       </div>
 
       @if (errorMsg(); as msg) {

@@ -427,11 +427,20 @@
 
           <label class="mt-4 block text-sm font-medium text-gray-700">{{ text('inventory.newQuantity') }}</label>
           <input
+            #quantityInput="ngModel"
             type="number"
             class="mt-2 w-full rounded border border-gray-300 px-3 py-2"
+            [class.border-red-500]="quantityInput.invalid && quantityInput.touched || quantityError()"
             [(ngModel)]="newQuantity"
+            (ngModelChange)="onQuantityChange($event)"
             min="0"
+            required
           />
+          @if (quantityInput.invalid && quantityInput.touched) {
+            <p class="mt-1 text-sm text-red-600" role="alert">{{ text('inventory.invalidQuantity') }}</p>
+          } @else if (quantityError()) {
+            <p class="mt-1 text-sm text-red-600" role="alert">{{ quantityError() }}</p>
+          }
 
           <div class="mt-6 flex justify-end gap-2">
             <button

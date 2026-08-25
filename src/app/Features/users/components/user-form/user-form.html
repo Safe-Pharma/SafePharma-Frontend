@@ -103,8 +103,8 @@
     </div>
   }
 
-  <!-- ── Role / Branch ───────────────────────────────────────── -->
-  <div class="row">
+  <!-- ── Role ────────────────────────────────────────────────── -->
+  <div class="row single">
     <div class="field">
       <label for="role">{{ i18n.text('users.role') }}</label>
       <select
@@ -124,14 +124,6 @@
       @if (fieldError('role'); as err) {
         <span class="field-error">{{ err }}</span>
       }
-    </div>
-    <div class="field">
-      <label for="branch">{{ i18n.text('users.branch') }}</label>
-      <select id="branch" formControlName="branch">
-        @for (b of branches; track b) {
-          <option [value]="b">{{ i18n.branchLabel(b) }}</option>
-        }
-      </select>
     </div>
   </div>
 

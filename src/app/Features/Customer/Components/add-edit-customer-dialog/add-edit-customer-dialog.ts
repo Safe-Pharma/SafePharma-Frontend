@@ -35,6 +35,16 @@ interface OrganFunctionEntry {
   levelName: string;
 }
 
+type CustomerFormField =
+  | 'name'
+  | 'phone'
+  | 'email'
+  | 'address'
+  | 'dateOfBirth'
+  | 'notes'
+  | 'status';
+type CustomerFieldErrors = Partial<Record<CustomerFormField, string>>;
+
 @Component({
   selector: 'app-add-edit-customer-dialog',
   standalone: true,
@@ -63,6 +73,7 @@ export class AddEditCustomerDialogComponent {
   protected readonly isEdit = computed(() => this.customer() !== null);
   protected readonly submitting = signal(false);
   protected readonly errorMsg = signal<string | null>(null);
+  protected readonly fieldErrors = signal<CustomerFieldErrors>({});
   private catalogsLoaded = false;
 
   readonly form = this.fb.group({
@@ -98,6 +109,101 @@ export class AddEditCustomerDialogComponent {
 
   onClose(): void {
     this.closed.emit();
+  }
+
+  protected fieldError(field: CustomerFormField): string | null {
+    const serverError = this.fieldErrors()[field];
+    if (serverError) return serverError;
+
+    const control = this.form.controls[field];
+    if (!control.invalid || !control.touched) return null;
+
+    if (control.hasError('required')) {
+      return field === 'phone'
+        ? this.i18n.text('customer.requiredWithoutParent')
+        : field === 'name'
+          ? this.i18n.text('customer.nameRequired')
+          : this.i18n.text('common.required');
+    }
+    if (field === 'name' && control.hasError('maxlength')) {
+      return this.i18n.text('customer.nameTooLong');
+    }
+    if (field === 'name' && control.hasError('invalidName')) {
+      return this.i18n.text('customer.invalidName');
+    }
+    if (field === 'email' && control.hasError('email')) {
+      return this.i18n.text('customer.enterValidEmail');
+    }
+    if (field === 'phone' && control.hasError('invalidPhone')) {
+      return this.i18n.text('customer.invalidPhone');
+    }
+
+    return this.i18n.text('common.invalid');
+  }
+
+  protected clearFieldError(field: CustomerFormField): void {
+    if (!this.fieldErrors()[field]) return;
+
+    const errors = { ...this.fieldErrors() };
+    delete errors[field];
+    this.fieldErrors.set(errors);
+  }
+
+  private clearFormErrors(): void {
+    this.errorMsg.set(null);
+    this.fieldErrors.set({});
+  }
+
+  private clearPhoneRequiredError(): void {
+    const phone = this.form.controls.phone;
+    if (!phone.hasError('required')) return;
+
+    const errors = { ...phone.errors };
+    delete errors['required'];
+    phone.setErrors(Object.keys(errors).length > 0 ? errors : null);
+  }
+
+  private normalizeFieldName(field: string): CustomerFormField | null {
+    const normalized = field.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const fieldNames: Record<string, CustomerFormField> = {
+      name: 'name',
+      customername: 'name',
+      phone: 'phone',
+      phonenumber: 'phone',
+      email: 'email',
+      address: 'address',
+      dateofbirth: 'dateOfBirth',
+      dob: 'dateOfBirth',
+      notes: 'notes',
+      status: 'status',
+    };
+
+    return fieldNames[normalized] ?? null;
+  }
+
+  private getBackendFieldErrors(err: any): CustomerFieldErrors {
+    const backendErrors = err?.error?.errors;
+    if (!backendErrors || typeof backendErrors !== 'object' || Array.isArray(backendErrors)) {
+      return {};
+    }
+
+    const errors: CustomerFieldErrors = {};
+    for (const [field, value] of Object.entries(backendErrors)) {
+      const normalizedField = this.normalizeFieldName(field);
+      if (!normalizedField) continue;
+
+      const messages = (Array.isArray(value) ? value : [value])
+        .map((item: any) =>
+          typeof item === 'string' ? item : item?.errorMessage ?? item?.message
+        )
+        .filter((message): message is string => Boolean(message));
+
+      if (messages.length > 0) {
+        errors[normalizedField] = messages.join(' ');
+      }
+    }
+
+    return errors;
   }
 
   // --- Reference catalogs (create mode only) ---
@@ -194,13 +300,19 @@ export class AddEditCustomerDialogComponent {
 
   onParentSelectionChange(selection: CustomerPickResult | null): void {
     this.selectedParent.set(selection);
+    if (selection) this.clearPhoneRequiredError();
+    this.clearFieldError('phone');
   }
 
   // --- Submit ---
 
   onSubmit(): void {
-    if (this.customer() === null && !this.form.get('phone')?.value) {
-      this.form.get('phone')?.markAsTouched();
+    this.clearFormErrors();
+
+    if (this.customer() === null && !this.selectedParent() && !this.form.controls.phone.value) {
+      const phone = this.form.controls.phone;
+      phone.setErrors({ ...phone.errors, required: true });
+      phone.markAsTouched();
     }
 
     if (this.medicinePicker()?.hasIncompleteManualEntry()) {
@@ -241,6 +353,11 @@ export class AddEditCustomerDialogComponent {
         },
         error: (err) => {
           this.submitting.set(false);
+          const backendFieldErrors = this.getBackendFieldErrors(err);
+          if (Object.keys(backendFieldErrors).length > 0) {
+            this.fieldErrors.set(backendFieldErrors);
+            return;
+          }
           this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorSave')));
         },
       });
@@ -251,6 +368,11 @@ export class AddEditCustomerDialogComponent {
       next: (created) => this.assignExtras(created.id),
       error: (err) => {
         this.submitting.set(false);
+        const backendFieldErrors = this.getBackendFieldErrors(err);
+        if (Object.keys(backendFieldErrors).length > 0) {
+          this.fieldErrors.set(backendFieldErrors);
+          return;
+        }
         this.errorMsg.set(getErrorMessage(err, this.i18n.text('customer.errorCreate')));
       },
     });

@@ -6,7 +6,7 @@ interface OwnerNavItem {
   label: string;
   route: string;
   exact?: boolean;
-  icon: 'dashboard' | 'payments';
+  icon: 'dashboard' | 'payments' | 'catalog';
 }
 
 @Component({
@@ -29,6 +29,11 @@ export class OwnerSidebar {
       label: 'ownerPaymentVerifications.title',
       route: '/owner-dashboard/payment-verifications',
       icon: 'payments',
+    },
+    {
+      label: 'ownerReferenceData.title',
+      route: '/owner-dashboard/reference-data',
+      icon: 'catalog',
     },
   ];
 

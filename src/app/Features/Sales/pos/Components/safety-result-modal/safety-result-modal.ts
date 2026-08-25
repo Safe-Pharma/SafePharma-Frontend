@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnChanges, output, signal, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   PatientSafetyResult,
@@ -37,17 +37,23 @@ const SEVERITY_WEIGHT: Record<SafetyIssueSeverity, number> = { Minor: 1, Moderat
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './safety-result-modal.html',
 })
-export class SafetyResultModalComponent {
+export class SafetyResultModalComponent implements OnChanges {
   private readonly i18n = inject(I18nService);
   results = input.required<PatientSafetyResult[]>();
   patientNames = input<Record<string, string>>({});
   medicines = input<SafetyCheckedMedicine[]>([]);
   loading = input(false);
+  loadingMessage = input('');
   errorMessage = input<string | null>(null);
 
   closed = output<void>();
 
   protected readonly expandedMedicineIds = signal<Record<string, boolean>>({});
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['results'] || changes['medicines']) {
+      this.expandedMedicineIds.set({});
+    }
+  }
 
   protected readonly cards = computed<SafetyCardView[]>(() =>
     this.results().map((result) => {

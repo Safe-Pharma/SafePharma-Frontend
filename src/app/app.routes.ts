@@ -352,6 +352,14 @@ export const routes: Routes = [
           ),
         data: { title: 'ownerPaymentVerifications.title' },
       },
+      {
+        path: 'reference-data',
+        loadComponent: () =>
+          import('./Features/owner-dashboard/reference-data/reference-data').then(
+            (m) => m.ReferenceDataPage,
+          ),
+        data: { title: 'ownerReferenceData.title' },
+      },
     ],
   },
 ];

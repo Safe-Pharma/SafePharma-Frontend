@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -119,8 +118,9 @@ interface StoredPosTabs {
   templateUrl: './pos.html',
   styleUrl: './pos.css',
 })
-export class Pos implements OnInit, AfterViewInit {
+export class Pos implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject(ElementRef<HTMLElement>);
   private readonly service = inject(PosService);
   private readonly taxesApi = inject(TaxesService);
   private readonly toast = inject(Toast);
@@ -191,6 +191,28 @@ export class Pos implements OnInit, AfterViewInit {
   protected readonly checkingAll = signal(false);
   protected readonly checkingItemId = signal<string | null>(null);
   protected readonly safetyDetailsExpanded = signal(false);
+  private readonly safetyLoadingMessageKeys = [
+    'safety.aiThinking',
+    'safety.aiAnalyzing',
+    'safety.aiInteractions',
+    'safety.aiFetching',
+    'safety.aiReviewing',
+    'safety.aiGenerating',
+  ];
+  private readonly safetyLoadingStep = signal(0);
+  protected readonly safetyLoadingMessage = computed(
+    () => this.t(this.safetyLoadingMessageKeys[this.safetyLoadingStep() % this.safetyLoadingMessageKeys.length]),
+  );
+  private readonly safetyLoadingStatusEffect = effect((onCleanup) => {
+    if (!this.safetyLoading()) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      this.safetyLoadingStep.update((step) => (step + 1) % this.safetyLoadingMessageKeys.length);
+    }, 2200);
+    onCleanup(() => clearInterval(intervalId));
+  });
   private readonly safetySnapshots = signal<Record<string, SafetySnapshot>>({});
   protected readonly currentSafetySnapshot = computed(
     () => this.safetySnapshots()[this.activeTabId()] ?? null,
@@ -248,10 +270,15 @@ export class Pos implements OnInit, AfterViewInit {
   protected readonly barcodeLoading = signal(false);
   protected readonly recentlyAddedItemId = signal<string | null>(null);
   protected readonly removingItemId = signal<string | null>(null);
-  @ViewChild('scannerInput') private scannerInput?: ElementRef<HTMLInputElement>;
   private readonly barcodeQueue: string[] = [];
   private barcodeResolving = false;
-  private scannerFocusSuspended = false;
+  private scannerBuffer = '';
+  private scannerInputActive = false;
+  private scannerTimeout?: ReturnType<typeof setTimeout>;
+  private static readonly scannerInputTimeoutMs = 1500;
+  /** Keeps keyboard events scoped to the active POS even when body has focus
+   *  after the user clicks non-focusable POS whitespace. */
+  private posInteractionActive = true;
   private readonly query$ = toObservable(this.query).pipe(
     debounceTime(150),
     distinctUntilChanged(),
@@ -346,10 +373,6 @@ export class Pos implements OnInit, AfterViewInit {
     this.loadTaxes();
   }
 
-  ngAfterViewInit(): void {
-    this.restoreScannerFocus(true);
-  }
-
   /** Reopens whatever tabs were left open before the last reload. Everything
    *  needed is already in localStorage — there is nothing to fetch from the
    *  backend, since an in-progress cart was never sent there in the first
@@ -413,6 +436,15 @@ export class Pos implements OnInit, AfterViewInit {
 
   // ================= click-outside-to-close =================
 
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: PointerEvent): void {
+    const target = event.target as HTMLElement | null;
+    this.posInteractionActive = Boolean(
+      target &&
+        (target === this.host.nativeElement || this.host.nativeElement.contains(target)),
+    );
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     this.showCustomerDropdown.set(false);
@@ -422,48 +454,13 @@ export class Pos implements OnInit, AfterViewInit {
     this.showSaleTaxMenu.set(false);
     this.openRowTaxId.set(null);
     this.searchOpen.set(false);
-
-    const target = event.target as HTMLElement | null;
-    if (target && this.isInsidePos(target) && !this.isTextEntry(target) && !this.hasOpenOverlay()) {
-      this.restoreScannerFocus();
-    }
-  }
-
-  @HostListener('document:focusin', ['$event'])
-  onDocumentFocusIn(event: FocusEvent): void {
-    const target = event.target as HTMLElement | null;
-    if (!target || !this.isInsidePos(target)) return;
-
-    if (target === this.scannerInput?.nativeElement) {
-      this.scannerFocusSuspended = false;
-    } else if (this.isTextEntry(target)) {
-      this.scannerFocusSuspended = true;
-    }
-  }
-
-  @HostListener('document:focusout', ['$event'])
-  onDocumentFocusOut(event: FocusEvent): void {
-    const target = event.target as HTMLElement | null;
-    const next = event.relatedTarget as HTMLElement | null;
-    if (!target || !this.isInsidePos(target) || !this.isTextEntry(target)) return;
-    if (this.hasOpenOverlay()) return;
-
-    if (!next || !this.isInsidePos(next) || !this.isTextEntry(next)) {
-      this.restoreScannerFocus();
-    }
   }
 
   private isInsidePos(target: HTMLElement): boolean {
-    return Boolean(target.closest('[data-pos-root]'));
-  }
-
-  private hasOpenOverlay(): boolean {
     return (
-      this.showPaymentModal() ||
-      this.showSafetyModal() ||
-      this.showSafetyReminder() ||
-      this.showCreateCustomerModal() ||
-      this.showCustomerSearchModal()
+      target === this.host.nativeElement ||
+      this.host.nativeElement.contains(target) ||
+      (target === document.body && this.posInteractionActive)
     );
   }
 
@@ -471,6 +468,8 @@ export class Pos implements OnInit, AfterViewInit {
   onPosKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target || !this.isInsidePos(target)) return;
+
+    if (this.handleScannerKeydown(event)) return;
     if (this.isTextEntry(target)) return;
     if (
       this.showCustomerDropdown() ||
@@ -493,6 +492,69 @@ export class Pos implements OnInit, AfterViewInit {
     this.removeItemById(itemId);
   }
 
+  /**
+   * Scanner input starts with F12 and ends with Enter. Once the prefix has
+   * been seen, consume the scanner's characters here instead of allowing them
+   * to be written into whichever control currently has focus.
+   */
+  private handleScannerKeydown(event: KeyboardEvent): boolean {
+    const isF12 = event.key === 'F12' || event.code === 'F12';
+    const isEnter = event.key === 'Enter' || event.code === 'Enter';
+
+    if (isF12) {
+      this.consumeScannerEvent(event);
+      this.scannerBuffer = '';
+      this.scannerInputActive = true;
+      this.refreshScannerTimeout();
+      return true;
+    }
+
+    if (!this.scannerInputActive) return false;
+
+    if (isEnter) {
+      this.consumeScannerEvent(event);
+      const barcode = this.scannerBuffer.trim();
+      this.resetScannerInput();
+      if (barcode) this.processBarcode(barcode);
+      return true;
+    }
+
+    if (event.key === 'Escape') {
+      this.resetScannerInput();
+      return false;
+    }
+
+    // Modifier key events are part of a scanner's key sequence only when they
+    // produce a printable value; leave standalone modifiers alone.
+    if (event.key.length !== 1) return false;
+
+    this.consumeScannerEvent(event);
+    this.scannerBuffer += event.key;
+    this.refreshScannerTimeout();
+    return true;
+  }
+
+  private consumeScannerEvent(event: KeyboardEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }
+
+  private refreshScannerTimeout(): void {
+    clearTimeout(this.scannerTimeout);
+    this.scannerTimeout = setTimeout(
+      () => this.resetScannerInput(),
+      Pos.scannerInputTimeoutMs,
+    );
+  }
+
+  private resetScannerInput(): void {
+    clearTimeout(this.scannerTimeout);
+    this.scannerTimeout = undefined;
+    this.scannerBuffer = '';
+    this.scannerInputActive = false;
+  }
+
   private isTextEntry(target: HTMLElement): boolean {
     return (
       target instanceof HTMLInputElement ||
@@ -500,16 +562,6 @@ export class Pos implements OnInit, AfterViewInit {
       target instanceof HTMLSelectElement ||
       target.isContentEditable
     );
-  }
-
-  /** Focus the scanner without stealing focus from an intentionally edited
-   * control. Forced recovery is used only after a scan or a completed POS
-   * action, when the workflow is explicitly returning to scanning. */
-  private restoreScannerFocus(force = false): void {
-    if (!force && this.scannerFocusSuspended) return;
-    const input = this.scannerInput?.nativeElement;
-    if (!input || document.activeElement === input) return;
-    input.focus({ preventScroll: true });
   }
 
   /** Stops a click inside an open panel/dropdown from bubbling to the
@@ -727,7 +779,6 @@ export class Pos implements OnInit, AfterViewInit {
     this.showCustomerSearchModal.set(false);
     this.customerSearchQuery.set('');
     this.customerSearchLoading.set(false);
-    this.restoreScannerFocus(true);
   }
 
   onCustomerSearchInput(value: string): void {
@@ -773,7 +824,6 @@ export class Pos implements OnInit, AfterViewInit {
 
   closeCreateCustomerModal(): void {
     this.showCreateCustomerModal.set(false);
-    this.restoreScannerFocus(true);
   }
 
   onCustomerCreated(): void {
@@ -823,7 +873,19 @@ export class Pos implements OnInit, AfterViewInit {
    *  checkout, so this just updates the active tab's cart state. */
   selectCustomer(customer: Customer | null): void {
     this.showCustomerDropdown.set(false);
-    this.updateActiveTab((t) => ({ ...t, selectedCustomer: customer }));
+    this.updateActiveTab((t) => ({
+      ...t,
+      selectedCustomer: customer,
+      // A line starts with the sale customer, so changing the customer at the
+      // top of POS must also update the visible line customer and the checkout
+      // payload. Any previously selected relative belongs to the old customer
+      // and is intentionally cleared here.
+      items: t.items.map((item) => ({
+        ...item,
+        customerId: customer?.id ?? null,
+        customerName: customer?.name ?? '',
+      })),
+    }));
     this.loadRelativesForCustomer(customer?.id ?? null);
   }
 
@@ -835,7 +897,6 @@ export class Pos implements OnInit, AfterViewInit {
   }
 
   onSearchFocus(): void {
-    this.scannerFocusSuspended = false;
     if (this.query().trim().length >= 1) this.searchOpen.set(true);
   }
 
@@ -906,28 +967,36 @@ export class Pos implements OnInit, AfterViewInit {
         this.query.set('');
         this.searchOpen.set(false);
         this.recentlyAddedItemId.set(itemId);
-        this.restoreScannerFocus();
       },
       error: (err) => this.toast.show(getErrorMessage(err, this.t('toast.addItemFailed')), 'error'),
     });
   }
 
-  /** A scanner sends the complete value followed by Enter. Values are queued
-   *  so rapid A → B → C scans are handled in order without overlapping cart
-   *  mutations or dropping a barcode while the previous request resolves. */
+  /** Manual search Enter and scanner termination both use this same barcode
+   *  submission path. Values are queued so rapid A → B → C scans are handled
+   *  in order without overlapping cart mutations or dropping a barcode while
+   *  the previous request resolves. */
   onSearchEnter(): void {
     const barcode = this.query().trim();
     if (!barcode) return;
 
-    const results = this.searchResults();
-    const exactBarcodeResult = results.some((item) => item.barcode?.trim() === barcode);
-    if (!this.searching() && results.length === 1 && !exactBarcodeResult) {
-      this.addToCart(results[0]);
+    this.query.set('');
+    this.searchOpen.set(false);
+    this.processBarcode(barcode, this.searchResults());
+  }
+
+  private processBarcode(
+    barcode: string,
+    currentSearchResults: MedicineSearchResult[] = [],
+  ): void {
+    const exactBarcodeResult = currentSearchResults.some(
+      (item) => item.barcode?.trim() === barcode,
+    );
+    if (!this.searching() && currentSearchResults.length === 1 && !exactBarcodeResult) {
+      this.addToCart(currentSearchResults[0]);
       return;
     }
 
-    this.query.set('');
-    this.searchOpen.set(false);
     this.barcodeQueue.push(barcode);
     this.processNextBarcode();
   }
@@ -953,7 +1022,6 @@ export class Pos implements OnInit, AfterViewInit {
         finalize(() => {
           this.barcodeResolving = false;
           this.barcodeLoading.set(false);
-          this.restoreScannerFocus(true);
           this.processNextBarcode();
         }),
       )
@@ -1079,7 +1147,6 @@ export class Pos implements OnInit, AfterViewInit {
         activeItemId: nextActive?.id ?? null,
       }));
       this.removingItemId.set(null);
-      this.restoreScannerFocus(true);
     }, 140);
   }
 
@@ -1174,7 +1241,6 @@ export class Pos implements OnInit, AfterViewInit {
 
   closeDiscountEditor(): void {
     this.showDiscountEditor.set(false);
-    this.restoreScannerFocus(true);
   }
 
   /** Purely local — nothing to PATCH on a backend Sale that doesn't exist yet. */
@@ -1213,7 +1279,6 @@ export class Pos implements OnInit, AfterViewInit {
 
   closeTaxEditor(): void {
     this.showTaxEditor.set(false);
-    this.restoreScannerFocus(true);
   }
 
   /** Purely local — nothing to PATCH on a backend Sale that doesn't exist yet. */
@@ -1240,7 +1305,6 @@ export class Pos implements OnInit, AfterViewInit {
 
     this.toast.show(this.t('toast.saleCancelled'), 'success');
     this.removeTabLocally(this.activeTabId());
-    this.restoreScannerFocus(true);
   }
 
   clearCart(): void {
@@ -1250,7 +1314,6 @@ export class Pos implements OnInit, AfterViewInit {
 
     this.updateActiveTab((t) => ({ ...t, items: [] }));
     this.toast.show(this.t('toast.cartCleared'), 'success');
-    this.restoreScannerFocus(true);
   }
 
   // ================= AI patient safety check =================
@@ -1354,7 +1417,6 @@ export class Pos implements OnInit, AfterViewInit {
 
   closeSafetyModal(): void {
     this.showSafetyModal.set(false);
-    if (!this.safetyLoading()) this.restoreScannerFocus(true);
   }
 
   /** Per-line "Check" button — validates a single cart line against its own
@@ -1378,6 +1440,7 @@ export class Pos implements OnInit, AfterViewInit {
     const requestId = ++this.safetyRequestId;
     this.safetyRequestKey = requestKey;
     this.checkingItemId.set(item.id);
+    this.safetyLoadingStep.set(0);
     this.safetyLoading.set(true);
     this.safetyError.set(null);
     this.showSafetyModal.set(true);
@@ -1466,6 +1529,7 @@ export class Pos implements OnInit, AfterViewInit {
     this.safetyRequestKey = requestKey;
 
     this.checkingAll.set(true);
+    this.safetyLoadingStep.set(0);
     this.safetyLoading.set(true);
     this.safetyError.set(null);
     this.showSafetyModal.set(true);
@@ -1532,7 +1596,6 @@ export class Pos implements OnInit, AfterViewInit {
 
   closeSafetyReminder(): void {
     this.showSafetyReminder.set(false);
-    this.restoreScannerFocus(true);
   }
 
   runSafetyCheckFromReminder(): void {
@@ -1549,7 +1612,6 @@ export class Pos implements OnInit, AfterViewInit {
   closePaymentModal(): void {
     if (this.payingInProgress()) return;
     this.showPaymentModal.set(false);
-    this.restoreScannerFocus(true);
   }
 
   /** The only moment the cart ever touches the database: everything the
@@ -1586,7 +1648,6 @@ export class Pos implements OnInit, AfterViewInit {
           const finishedTabId = this.activeTabId();
           this.tabs.update((list) => list.filter((t) => t.tabId !== finishedTabId));
           this.openNewTab();
-          this.restoreScannerFocus(true);
         } else {
           this.toast.show(res.message || this.t('toast.paymentFailed'), 'error');
         }

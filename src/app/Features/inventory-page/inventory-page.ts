@@ -8,6 +8,7 @@ import { ModalOverlayDirective } from '../../Shared/Components/modal-overlay/mod
 import { EgpCurrencyPipe } from '../../Shared/Pipes/egp-currency.pipe';
 import { I18nService } from '../../Core/Services/i18n.service';
 import { PageHeaderComponent } from '../../Shared/Components/page-header/page-header';
+import { extractErrors } from '../../Shared/utils/extract-errors.util';
 interface newStockBatchDto {
   batchId: string;
   newStock: number;
@@ -46,7 +47,8 @@ export class InventoryPage implements OnInit {
   loading = signal(true);
   errorMessage = signal<string | null>(null);
   selectedBatch: Batch | null = null;
-  newQuantity = 0;
+  newQuantity: number | null = 0;
+  quantityError = signal<string | null>(null);
   isEditModalOpen = false;
   isDeleteModalOpen = false;
   isSaving = signal(false);
@@ -246,6 +248,7 @@ export class InventoryPage implements OnInit {
   openEditQuantityDialog(batch: Batch) {
     this.selectedBatch = batch;
     this.newQuantity = Number(batch.quantityRemaining ?? 0);
+    this.quantityError.set(null);
     this.isEditModalOpen = true;
   }
 
@@ -254,10 +257,22 @@ export class InventoryPage implements OnInit {
     this.isEditModalOpen = false;
     this.selectedBatch = null;
     this.newQuantity = 0;
+    this.quantityError.set(null);
+  }
+
+  onQuantityChange(value: number | null): void {
+    this.newQuantity = value;
+    this.quantityError.set(null);
   }
 
   saveQuantity() {
     if (!this.selectedBatch || this.isSaving()) return;
+
+    const newQuantity = this.newQuantity;
+    if (newQuantity === null || !Number.isFinite(newQuantity) || newQuantity < 0) {
+      this.quantityError.set(this.text('inventory.invalidQuantity'));
+      return;
+    }
 
     const selectedBatch = this.selectedBatch;
 
@@ -265,9 +280,10 @@ export class InventoryPage implements OnInit {
 
     const newStockBatchDto: newStockBatchDto = {
       batchId: batchId,
-      newStock: this.newQuantity,
+      newStock: newQuantity,
     };
 
+    this.quantityError.set(null);
     this.isSaving.set(true);
     this.inventoryService
       .editBatchStock(newStockBatchDto)
@@ -278,7 +294,7 @@ export class InventoryPage implements OnInit {
             items.map((medicine) => {
               const updatedBatches = medicine.batches.map((batch) =>
                 batch.id === selectedBatch.id || batch.batchNumber === selectedBatch.batchNumber
-                  ? { ...batch, quantityRemaining: this.newQuantity }
+                  ? { ...batch, quantityRemaining: newQuantity }
                   : batch,
               );
 
@@ -292,9 +308,23 @@ export class InventoryPage implements OnInit {
         },
         error: (err) => {
           console.error('Failed to update batch stock', err);
-          alert(this.text('inventory.updateError'));
+          this.quantityError.set(this.getQuantityErrorMessage(err));
         },
       });
+  }
+
+  private getQuantityErrorMessage(err: any): string {
+    const error = err?.error;
+    const message = error?.message ?? error?.title ?? err?.message;
+
+    if (error?.errors) {
+      const [validationMessage] = extractErrors(err);
+      if (validationMessage) return validationMessage;
+    }
+
+    return typeof message === 'string' && message.trim()
+      ? message.trim()
+      : this.text('inventory.updateError');
   }
 
   openDeleteDialog(batch: Batch) {
